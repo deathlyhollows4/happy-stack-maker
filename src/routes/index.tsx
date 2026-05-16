@@ -29,6 +29,9 @@ function LandingPage() {
             </span>
           </Link>
           <nav className="flex items-center gap-6 text-sm">
+            <Link to="/pricing" className="text-muted-foreground hover:text-foreground">
+              Pricing
+            </Link>
             <Link to="/login" className="text-muted-foreground hover:text-foreground">
               Sign in
             </Link>
@@ -178,10 +181,16 @@ function LandingPage() {
         </div>
       </section>
 
-      <footer className="py-10 text-center">
+      <footer className="py-10 text-center space-y-3">
         <p className="font-mono text-xs text-muted-foreground">
           CodeWise · Built for CS students who'd rather understand than autocomplete.
         </p>
+        <div className="flex justify-center gap-4 font-mono text-[11px] text-muted-foreground">
+          <Link to="/pricing" className="hover:text-foreground">Pricing</Link>
+          <Link to="/terms" className="hover:text-foreground">Terms</Link>
+          <Link to="/refunds" className="hover:text-foreground">Refunds</Link>
+          <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
+        </div>
       </footer>
     </div>
   );
