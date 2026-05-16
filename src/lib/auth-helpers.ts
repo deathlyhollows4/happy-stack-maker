@@ -1,4 +1,4 @@
-import { lovable } from "@/integrations/lovable";
+import { lovable } from "@/integrations/lovable/index";
 
 const getRedirectUri = () => `${window.location.origin}/auth/callback`;
 
