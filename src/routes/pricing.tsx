@@ -12,7 +12,7 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "CodeWise Pro: 1500 code reviews, all premium content, 15 roadmap generations per day, and the best AI learning resources.",
+          "CodeWise Pro: 1500 code reviews per month and 15 roadmap generations per day. Cancel anytime.",
       },
     ],
   }),
