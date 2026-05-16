@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { generatePractice, listPractice } from "@/lib/codewise.functions";
+import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 
