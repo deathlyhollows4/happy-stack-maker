@@ -8,6 +8,7 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { reviewCode } from "@/lib/codewise.functions";
+import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
 import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
