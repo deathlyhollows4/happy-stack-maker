@@ -1,30 +1,64 @@
-## Problem
+## Goal
 
-After signing in, the dashboard renders for ~1–2 seconds then bounces back to `/login`. This is an SSR/hydration race, not a credential issue (auth logs show successful login).
+Produce an updated `.docx` document for the user to hand to Cursor AI, reflecting (a) the **actual tech stack that got built** (not the original Next.js + FastAPI plan), and (b) a **clear "what's done / what's left" status** so Cursor can pick up where Lovable left off.
 
-Root cause: `src/routes/_authenticated/route.tsx` runs its session check in `beforeLoad` using `supabase.auth.getSession()`. That call also executes during server-side rendering and during the live-preview reload (the `__lovable_sha=...` reload visible in the session replay right before the bounce). On the server there is no `localStorage`, so `getSession()` returns `null` and `beforeLoad` throws `redirect({ to: "/login" })`. The browser briefly shows the client-rendered dashboard, then the SSR/reload result wins and the URL flips to `/login`.
+This is a one-off artifact generation — no app code changes.
 
-## Fix
+## Source of truth (verified)
 
-Make the auth gate client-only and wait for the Supabase session to actually hydrate before deciding.
+**Actual stack now in the repo (replaces the original Next.js + FastAPI + Prisma plan):**
+- TanStack Start v1 (React 19, Vite 7) — file-based routing under `src/routes/`
+- TypeScript (strict)
+- Tailwind CSS v4 + shadcn/ui (Radix primitives) + Fraunces (display) / Inter (body) typography
+- TanStack Router + TanStack React Query
+- Server logic: TanStack `createServerFn` (in `src/lib/codewise.functions.ts`) — no separate Python/FastAPI backend, no Prisma
+- Supabase (via Lovable Cloud) — Postgres + Auth (email/password); RLS-backed tables
+- AI: Lovable AI Gateway (`google/gemini-3-flash-preview`) using `LOVABLE_API_KEY`
+- CodeMirror 6 editor (Python/JS/Java/C++)
+- Hosting: Lovable (Cloudflare Workers via `@cloudflare/vite-plugin`)
 
-### `src/routes/_authenticated/route.tsx`
-- In `beforeLoad`, short-circuit when running on the server (`if (typeof window === "undefined") return;`). The component-level gate handles the real check on the client.
-- In the `AuthLayout` component, replace the bare `if (!user) return null;` with a proper redirect once `loading` is false and `user` is still null — use `useEffect` + `nav({ to: "/login" })` so it only fires after the Supabase session has had a chance to restore from `localStorage`. While `loading` is true, keep showing the existing "Loading…" state.
+**DB tables already live:** `profiles`, `topics`, `submissions`, `review_issues`, `progress`, `practice_problems` (with the `handle_new_user` trigger for profile creation).
 
-### `src/routes/__root.tsx` (small hardening)
-- Inside `RootComponent`, add a single `useEffect` that subscribes to `supabase.auth.onAuthStateChange` and calls `router.invalidate()` + `queryClient.invalidateQueries()` on every event. This prevents the previous user's cached dashboard data from sticking around after sign-in/out and is the pattern recommended for TanStack + Supabase.
+**Routes already built:**
+- `/` landing page (CodeWise marketing)
+- `/login`, `/signup` (email + password)
+- `/_authenticated` layout (sidebar + auth gate, client-side session check)
+- `/_authenticated/dashboard` (stats + topic mastery + recent reviews)
+- `/_authenticated/review` (code editor → AI review)
+- `/_authenticated/practice` (AI-generated practice problems)
 
-No other files need to change. Login/signup flow, server functions, and the dashboard query stay as-is.
+**Server functions already built** (`src/lib/codewise.functions.ts`):
+`reviewCode`, `getDashboard`, `getSubmission`, `generatePractice`, `listPractice` — all behind `requireSupabaseAuth`, with BKT-lite mastery update logic.
 
-## Why this works
+**What is NOT built yet** (gaps to call out for Cursor):
+- No payments / Stripe / freemium gating
+- No "share your review score" viral loop
+- No knowledge-graph visualization
+- No college-license / team accounts
+- No password reset / Google OAuth (only email+password)
+- No analytics, no SEO landing pages beyond `/`
+- No exports, no NPTEL / SPPU curriculum mapping UI
+- No research-paper artifacts (corpus, evaluation harness)
 
-- The dashboard never renders on the server for unauthenticated requests (component gate still runs), but `beforeLoad` no longer issues a spurious server-side redirect that overwrites the client.
-- On the client, `useAuth` already calls `getSession()` once and then listens to `onAuthStateChange`, so the redirect only fires after Supabase has finished restoring the session — eliminating the flash-then-bounce.
-- The root-level `onAuthStateChange` ensures the just-signed-in user immediately sees their own data instead of any stale loader result.
+## Document structure I'll produce
+
+`CodeWise_Status_Handoff_to_Cursor.docx` (US Letter, Fraunces-equivalent serif headings, clean tables — same vibe as the original):
+
+1. **Cover / Metadata** — project, date (16 May 2026), handoff target (Cursor AI), short note that the original 9-day plan has been partially executed on Lovable and the stack diverged.
+2. **What changed vs original plan** — short table: original → actual (Next.js→TanStack Start, FastAPI→createServerFn, Prisma→Supabase, DeepSeek→Lovable AI Gateway/Gemini, Railway→Cloudflare Workers).
+3. **Current Tech Stack** — full table by layer (frontend, routing, styling, server logic, database, auth, AI, editor, hosting) with versions from `package.json`.
+4. **Repository layout** — actual tree (`src/routes/`, `src/lib/codewise.functions.ts`, `src/integrations/supabase/*`, etc.) instead of the original speculative tree.
+5. **Database schema (as deployed)** — table-by-table summary of the 6 tables actually in Supabase, with key columns and the BKT mastery semantics.
+6. **Server functions (as deployed)** — one row per `createServerFn` with method, auth, inputs, behavior.
+7. **What's built ✅ / What's left ⏳** — checklist mapped against the original 9-day plan so Cursor sees exactly where to resume.
+8. **Recommended next steps for Cursor** — concrete ordered list: (a) Google OAuth + password reset, (b) Stripe freemium gating, (c) knowledge-graph viz on dashboard, (d) share-score viral loop, (e) admin/college dashboard, (f) research corpus + eval harness.
+9. **Environment & secrets** — what's already configured in Lovable Cloud (`LOVABLE_API_KEY`, `SUPABASE_*`) and what Cursor needs to add locally (`.env` mirror) when running outside Lovable.
+10. **Sections preserved from original** — SEO/keywords table, revenue model, research paper plan, post-launch roadmap (lightly trimmed, since these are still valid).
+
+Generated via `docx-js` per the docx skill, validated, page-by-page QA'd as PNGs, then written to `/mnt/documents/CodeWise_Status_Handoff_to_Cursor.docx` and surfaced via `<presentation-artifact>`.
 
 ## Out of scope
 
-- No design, font, copy, or styling changes.
-- No changes to server functions or the dashboard query itself.
-- No changes to `_authenticated` children (`dashboard.tsx`, `review.tsx`, `practice.tsx`).
+- No changes to source code, routes, schema, or design tokens.
+- No regeneration of charts/images from the original doc — descriptive tables only (faster, cleaner for handoff).
+- No PDF export unless you ask.
