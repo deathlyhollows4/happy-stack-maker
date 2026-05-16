@@ -276,6 +276,7 @@ export const generatePractice = createServerFn({ method: "POST" })
       .object({
         topicSlug: z.string().nullable().optional(),
         language: z.enum(LANGS).default("python"),
+        environment: envInput,
       })
       .parse(input),
   )
@@ -283,6 +284,21 @@ export const generatePractice = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) return { ok: false as const, error: "AI not configured." };
+
+    // Entitlement check
+    const { plan } = await getUserPlan(userId, data.environment);
+    const limit = PLAN_QUOTAS[plan].roadmapsPerDay;
+    const allowed = await consumeQuota(userId, "roadmap", limit, dayKey());
+    if (!allowed) {
+      return {
+        ok: false as const,
+        error:
+          plan === "pro"
+            ? `You've used all ${limit} roadmap generations today. Resets at UTC midnight.`
+            : `Free plan limit reached (${limit} roadmap / day). Upgrade to Pro for 15/day.`,
+        upgradeRequired: plan === "free",
+      };
+    }
 
     let topicSlug = data.topicSlug;
     if (!topicSlug) {
