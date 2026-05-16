@@ -1,0 +1,116 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getPaddleClient, type PaddleEnv } from "@/lib/paddle.server";
+
+const envInput = z.enum(["sandbox", "live"]) as z.ZodType<PaddleEnv>;
+
+let _admin: SupabaseClient | null = null;
+function admin(): SupabaseClient {
+  if (!_admin) {
+    _admin = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+  }
+  return _admin;
+}
+
+const GRACE_DAYS = 7;
+
+/**
+ * Cancels the user's active subscription in Paddle (effective at next billing
+ * period end) AND immediately sets current_period_end = now + 7 days so the
+ * app's access window matches the user's "1 more week" promise from the
+ * moment they click Cancel.
+ */
+export const cancelSubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ environment: envInput }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const env = data.environment;
+
+    const { data: sub } = await admin()
+      .from("subscriptions")
+      .select("paddle_subscription_id, status, current_period_end")
+      .eq("user_id", userId)
+      .eq("environment", env)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!sub) {
+      return { ok: false as const, error: "No active subscription found." };
+    }
+    if (sub.status === "canceled") {
+      return { ok: false as const, error: "Subscription is already canceled." };
+    }
+
+    try {
+      const paddle = getPaddleClient(env);
+      await paddle.subscriptions.cancel(sub.paddle_subscription_id as string, {
+        effectiveFrom: "next_billing_period",
+      });
+    } catch (e: any) {
+      console.error("Paddle cancel failed:", e);
+      return {
+        ok: false as const,
+        error: "Could not cancel subscription with the payment provider. Try again.",
+      };
+    }
+
+    const graceEnd = new Date(Date.now() + GRACE_DAYS * 24 * 60 * 60 * 1000);
+    await admin()
+      .from("subscriptions")
+      .update({
+        status: "canceled",
+        cancel_at_period_end: true,
+        current_period_end: graceEnd.toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("paddle_subscription_id", sub.paddle_subscription_id as string)
+      .eq("environment", env);
+
+    return { ok: true as const, accessUntil: graceEnd.toISOString() };
+  });
+
+/** Returns a Paddle customer-portal URL for updating payment methods / invoices. */
+export const getCustomerPortalUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ environment: envInput }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const env = data.environment;
+
+    const { data: sub } = await admin()
+      .from("subscriptions")
+      .select("paddle_subscription_id, paddle_customer_id")
+      .eq("user_id", userId)
+      .eq("environment", env)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!sub) return { ok: false as const, error: "No subscription found." };
+
+    try {
+      const paddle = getPaddleClient(env);
+      const session = await paddle.customerPortalSessions.create(
+        sub.paddle_customer_id as string,
+        [sub.paddle_subscription_id as string],
+      );
+      return {
+        ok: true as const,
+        overviewUrl: session.urls.general.overview,
+      };
+    } catch (e) {
+      console.error("portal session failed:", e);
+      return { ok: false as const, error: "Could not open billing portal." };
+    }
+  });

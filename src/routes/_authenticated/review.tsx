@@ -8,6 +8,7 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { reviewCode } from "@/lib/codewise.functions";
+import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
 import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
@@ -56,7 +57,7 @@ function Review() {
   const submit = async () => {
     setBusy(true);
     try {
-      const r = await fn({ data: { code, language: lang } });
+      const r = await fn({ data: { code, language: lang, environment: getPaddleEnvironment() } });
       setResult(r);
       if (!r.ok) toast.error(r.error);
       else toast.success("Review complete");

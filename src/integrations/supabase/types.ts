@@ -248,11 +248,48 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_counters: {
+        Row: {
+          count: number
+          kind: string
+          period_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          kind: string
+          period_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          kind?: string
+          period_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      consume_quota: {
+        Args: {
+          p_kind: string
+          p_limit: number
+          p_period_key: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      get_usage: {
+        Args: { p_kind: string; p_period_key: string; p_user_id: string }
+        Returns: number
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean

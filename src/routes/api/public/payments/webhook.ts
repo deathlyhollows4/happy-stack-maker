@@ -13,9 +13,8 @@ function getSupabase(): SupabaseClient {
   return _supabase;
 }
 
-// Business rule: on cancel, give a flat 7-day grace period regardless of
-// the original billing period end.
-const GRACE_PERIOD_DAYS = 7;
+// Cancel grace is applied at click time by the cancelSubscription server fn
+// (runs from when the user clicks Cancel, not from Paddle's finalization).
 
 async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
   const { id, customerId, items, status, currentBillingPeriod, customData } = data;
@@ -71,14 +70,13 @@ async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
 }
 
 async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
-  // Override period end with our 7-day grace period from cancellation time.
-  const graceEnd = new Date(Date.now() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
-
+  // Mark canceled but DO NOT touch current_period_end. The user's 7-day grace
+  // window is set at click time by the cancelSubscription server fn so that
+  // grace runs from when the user cancels, not from when Paddle finalizes it.
   await getSupabase()
     .from("subscriptions")
     .update({
       status: "canceled",
-      current_period_end: graceEnd.toISOString(),
       cancel_at_period_end: true,
       updated_at: new Date().toISOString(),
     })

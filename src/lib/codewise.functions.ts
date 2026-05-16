@@ -1,6 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  getUserPlan,
+  consumeQuota,
+  readUsage,
+  PLAN_QUOTAS,
+  monthKey,
+  dayKey,
+} from "@/lib/entitlements.server";
+import type { PaddleEnv } from "@/lib/paddle.server";
+
+const envInput = z
+  .enum(["sandbox", "live"])
+  .default("sandbox") as z.ZodType<PaddleEnv>;
 
 const LANGS = ["python", "javascript", "java", "cpp"] as const;
 
@@ -73,6 +86,7 @@ export const reviewCode = createServerFn({ method: "POST" })
       .object({
         code: z.string().min(1).max(20_000),
         language: z.enum(LANGS),
+        environment: envInput,
       })
       .parse(input),
   )
@@ -81,6 +95,21 @@ export const reviewCode = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return { ok: false as const, error: "AI is not configured. Please add LOVABLE_API_KEY." };
+    }
+
+    // Entitlement check
+    const { plan } = await getUserPlan(userId, data.environment);
+    const limit = PLAN_QUOTAS[plan].reviewsPerMonth;
+    const allowed = await consumeQuota(userId, "review", limit, monthKey());
+    if (!allowed) {
+      return {
+        ok: false as const,
+        error:
+          plan === "pro"
+            ? `You've used all ${limit} reviews this month. Quota resets on the 1st.`
+            : `Free plan limit reached (${limit} reviews / month). Upgrade to Pro for 1500/month.`,
+        upgradeRequired: plan === "free",
+      };
     }
 
     const userPrompt = `Language: ${data.language}\n\nStudent code:\n\`\`\`${data.language}\n${data.code}\n\`\`\`\n\nReview it.`;
@@ -247,6 +276,7 @@ export const generatePractice = createServerFn({ method: "POST" })
       .object({
         topicSlug: z.string().nullable().optional(),
         language: z.enum(LANGS).default("python"),
+        environment: envInput,
       })
       .parse(input),
   )
@@ -254,6 +284,21 @@ export const generatePractice = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) return { ok: false as const, error: "AI not configured." };
+
+    // Entitlement check
+    const { plan } = await getUserPlan(userId, data.environment);
+    const limit = PLAN_QUOTAS[plan].roadmapsPerDay;
+    const allowed = await consumeQuota(userId, "roadmap", limit, dayKey());
+    if (!allowed) {
+      return {
+        ok: false as const,
+        error:
+          plan === "pro"
+            ? `You've used all ${limit} roadmap generations today. Resets at UTC midnight.`
+            : `Free plan limit reached (${limit} roadmap / day). Upgrade to Pro for 15/day.`,
+        upgradeRequired: plan === "free",
+      };
+    }
 
     let topicSlug = data.topicSlug;
     if (!topicSlug) {
@@ -339,4 +384,28 @@ export const listPractice = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(20);
     return { problems: data ?? [] };
+  });
+
+export const getEntitlements = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ environment: envInput }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { plan, status, pastDue } = await getUserPlan(userId, data.environment);
+    const quotas = PLAN_QUOTAS[plan];
+    const [reviewsUsed, roadmapsUsed] = await Promise.all([
+      readUsage(userId, "review", monthKey()),
+      readUsage(userId, "roadmap", dayKey()),
+    ]);
+    return {
+      plan,
+      status,
+      pastDue,
+      reviewsUsed,
+      reviewsLimit: quotas.reviewsPerMonth,
+      roadmapsUsed,
+      roadmapsLimit: quotas.roadmapsPerDay,
+    };
   });
