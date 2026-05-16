@@ -385,3 +385,27 @@ export const listPractice = createServerFn({ method: "GET" })
       .limit(20);
     return { problems: data ?? [] };
   });
+
+export const getEntitlements = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ environment: envInput }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { plan, status, pastDue } = await getUserPlan(userId, data.environment);
+    const quotas = PLAN_QUOTAS[plan];
+    const [reviewsUsed, roadmapsUsed] = await Promise.all([
+      readUsage(userId, "review", monthKey()),
+      readUsage(userId, "roadmap", dayKey()),
+    ]);
+    return {
+      plan,
+      status,
+      pastDue,
+      reviewsUsed,
+      reviewsLimit: quotas.reviewsPerMonth,
+      roadmapsUsed,
+      roadmapsLimit: quotas.roadmapsPerDay,
+    };
+  });
