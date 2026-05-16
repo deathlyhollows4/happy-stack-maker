@@ -28,12 +28,12 @@ function AuthLayout() {
   ] as const;
 
   return (
-    <div className="min-h-screen flex">
-      <aside className="w-60 border-r border-border bg-sidebar flex flex-col">
-        <div className="h-16 px-5 flex items-center border-b border-border">
-          <Link to="/" className="font-bold tracking-tight flex items-center gap-2">
-            <span className="size-6 rounded bg-primary flex items-center justify-center text-primary-foreground text-xs font-mono">{"</>"}</span>
-            CodeWise
+    <div className="min-h-screen flex bg-background">
+      <aside className="w-60 border-r border-border/60 bg-sidebar flex flex-col">
+        <div className="h-16 px-5 flex items-center border-b border-border/60">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="font-display text-2xl">CodeWise</span>
+            <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">beta</span>
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
@@ -41,15 +41,15 @@ function AuthLayout() {
             const active = path.startsWith(it.to);
             return (
               <Link key={it.to} to={it.to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition ${active ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}>
+                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition ${active ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"}`}>
                 <it.icon className="size-4" /> {it.label}
               </Link>
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border/60">
           <div className="px-3 py-2 text-xs text-muted-foreground font-mono truncate">{user.email}</div>
-          <button onClick={signOut} className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition">
+          <button onClick={signOut} className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition">
             <LogOut className="size-4" /> Sign out
           </button>
         </div>

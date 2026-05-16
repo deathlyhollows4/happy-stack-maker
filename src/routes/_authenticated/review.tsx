@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/review")({
-  head: () => ({ meta: [{ title: "Code Review — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Code Review. CodeWise" }] }),
   component: Review,
 });
 
@@ -54,10 +54,11 @@ function Review() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Code Review</h1>
-          <p className="text-muted-foreground mt-1">Paste your code. Get concept-aware feedback.</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Workspace</p>
+          <h1 className="mt-2 font-display text-5xl tracking-tight">Code Review</h1>
+          <p className="text-muted-foreground mt-2">Paste your code. Get concept-aware feedback.</p>
         </div>
         <div className="flex items-center gap-2">
           <select
@@ -67,7 +68,7 @@ function Review() {
           >
             {(Object.keys(LANG_LABELS) as Lang[]).map((l) => <option key={l} value={l}>{LANG_LABELS[l]}</option>)}
           </select>
-          <button onClick={submit} disabled={busy} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition disabled:opacity-50">
+          <button onClick={submit} disabled={busy} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50">
             <Sparkles className="size-4" /> {busy ? "Reviewing…" : "Review my code"}
           </button>
         </div>
@@ -92,19 +93,19 @@ function Review() {
           {result?.ok && (
             <div className="space-y-5">
               <div>
-                <h3 className="font-semibold mb-2">Summary</h3>
+                <h3 className="font-display text-2xl mb-2">Summary</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{result.summary}</p>
               </div>
               {result.concepts.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">Concepts touched</h4>
+                  <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Concepts touched</h4>
                   <div className="flex flex-wrap gap-2">
-                    {result.concepts.map((c) => <span key={c} className="px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-mono">{c}</span>)}
+                    {result.concepts.map((c) => <span key={c} className="px-2 py-1 rounded-sm bg-accent/15 text-accent text-[11px] font-mono">{c}</span>)}
                   </div>
                 </div>
               )}
               <div>
-                <h4 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-2">Issues ({result.issues.length})</h4>
+                <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Issues ({result.issues.length})</h4>
                 {result.issues.length === 0 ? (
                   <p className="text-sm text-success flex items-center gap-2"><CheckCircle2 className="size-4" /> No issues found. Nice work.</p>
                 ) : (
@@ -126,7 +127,7 @@ function Review() {
 
 function IssueCard({ issue }: { issue: any }) {
   const Icon = issue.severity === "error" ? AlertCircle : issue.severity === "warning" ? AlertTriangle : Info;
-  const color = issue.severity === "error" ? "text-destructive" : issue.severity === "warning" ? "text-warning" : "text-primary";
+  const color = issue.severity === "error" ? "text-destructive" : issue.severity === "warning" ? "text-warning" : "text-accent";
   return (
     <li className="rounded-md border border-border p-4">
       <div className="flex items-start gap-3">
@@ -135,11 +136,11 @@ function IssueCard({ issue }: { issue: any }) {
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-medium">{issue.title}</span>
             {issue.line != null && <span className="text-xs font-mono text-muted-foreground">line {issue.line}</span>}
-            {issue.concept_slug && <span className="text-xs font-mono px-1.5 py-0.5 rounded bg-primary/10 text-primary">{issue.concept_slug}</span>}
+            {issue.concept_slug && <span className="text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-accent/15 text-accent">{issue.concept_slug}</span>}
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">{issue.explanation}</p>
           {issue.fix_hint && (
-            <p className="mt-2 text-sm border-l-2 border-primary/40 pl-3 text-foreground/90"><span className="font-mono text-xs uppercase text-primary mr-2">fix</span>{issue.fix_hint}</p>
+            <p className="mt-2 text-sm border-l-2 border-accent/50 pl-3 text-foreground/90"><span className="font-mono text-[10px] uppercase tracking-widest text-accent mr-2">fix</span>{issue.fix_hint}</p>
           )}
         </div>
       </div>
