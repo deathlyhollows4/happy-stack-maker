@@ -1,76 +1,54 @@
+# Redesign + Cleanup Plan
 
-# CodeWise — MVP Build Plan
+## 1. Adopt editorial dark theme (from "GitHub Importer Plus")
 
-The original doc specifies Next.js + FastAPI + DeepSeek. Since you said "use what's easier", I'll swap to the native Lovable stack — same product, faster build, no separate Python backend to host.
+Replace the current cyan/dark-tech aesthetic with a warm "tutor marking up a paper" look:
 
-## Stack adjustments
+- **Typography**: Instrument Serif (display), Inter (body), JetBrains Mono (code). Load via Google Fonts in `src/styles.css`.
+- **Palette** (OKLCH tokens in `src/styles.css`):
+  - Background: near-black with warm undertone
+  - Foreground: warm cream
+  - Primary: warm cream (used for buttons; dark text on it)
+  - Accent: burnt sienna (used for emphasis, mastery numbers)
+  - Card/sidebar/muted/border/ring all retuned to match
+- Update `@theme inline` to expose the new tokens plus `--color-ink`, `--color-cream`, `--font-display`.
+- Update `@layer base` so `h1/h2/h3/.font-display` use the serif and selection color matches primary.
 
-| Plan doc | What I'll use | Why |
-|---|---|---|
-| Next.js | TanStack Start (current template) | Already scaffolded |
-| FastAPI (Python) | TanStack server functions | One deploy, no extra hosting |
-| DeepSeek API | Lovable AI Gateway (Gemini) | Built-in, no API key setup, free during promo |
-| Supabase (external) | Lovable Cloud | One-click, managed |
-| Prisma | Supabase client + migrations | Native to Lovable Cloud |
-| CodeMirror 6 | CodeMirror 6 | Keep as-is |
+## 2. Rebuild landing page (`src/routes/index.tsx`)
 
-## Scope (MVP — buildable in one pass)
+Mirror the reference layout while keeping CodeWise content:
 
-1. **Landing page** — hero, problem/solution, feature grid, pricing teaser, CTA
-2. **Auth** — email/password via Lovable Cloud (signup, login, logout)
-3. **Code Review workspace** (`/review`)
-   - CodeMirror editor (Python/C++/Java/JS), language picker
-   - "Review my code" button → server function → Lovable AI
-   - Renders: issues list (line + severity + explanation + concept tag + fix hint), overall summary, detected misconceptions
-4. **Dashboard** (`/dashboard`)
-   - Recent submissions list
-   - Mastery bars per DSA topic (BKT-lite: updated mastery = prior + α·(correct − prior), per concept tagged by the reviewer)
-   - Streak / total reviews
-5. **Practice generator** (`/practice`)
-   - "Generate a problem for my weakest topic" → AI produces problem statement + starter code + hidden test hints
-   - Submit attempt → reviewed → mastery updates
+- Header: serif "CodeWise" wordmark + small mono "beta" chip, Sign in link, cream "Get started" button.
+- Hero: mono kicker ("For CS students preparing for placements"), oversized serif headline with italic accent word ("teaches"), muted body copy, primary CTA + secondary text link.
+- "A review, in seconds" section on `bg-card/40`: two-column mock showing a `two_sum.py` snippet and a Review card with mastery score in burnt-sienna serif, concept chips, suggested practice list.
+- 3-up feature grid (Pedagogical / Knowledge tracing / Multi-language) with small accent-tinted icon tiles.
+- Final centered CTA section with Sparkles icon.
+- Footer: single mono line "CodeWise. Built for CS students who'd rather understand than autocomplete." (no Lovable reference).
 
-## Data model (Lovable Cloud)
+## 3. Re-skin auth + app shell to match
 
-- `profiles` (id, display_name, created_at)
-- `topics` (slug, name, category) — seeded with ~20 DSA topics (arrays, hashing, recursion, trees, graphs, DP, etc.)
-- `submissions` (id, user_id, language, code, summary, created_at)
-- `review_issues` (id, submission_id, line, severity, concept_slug, explanation, fix_hint)
-- `progress` (user_id, topic_slug, mastery [0..1], attempts, last_reviewed) — PK (user_id, topic_slug)
-- `practice_problems` (id, user_id, topic_slug, prompt, starter_code, created_at)
+Light touch-up only, no logic changes:
 
-RLS: every table user-scoped via `auth.uid() = user_id`. `topics` readable by all.
+- `src/routes/login.tsx`, `src/routes/signup.tsx`: serif headings, cream primary buttons, muted helper text, card on warm-black.
+- `src/routes/_authenticated/route.tsx` sidebar: serif "CodeWise" wordmark, cream active-state for nav items, accent tint replaced with new burnt-sienna accent.
+- `src/routes/_authenticated/dashboard.tsx`, `review.tsx`, `practice.tsx`: swap chip / heading classes to use `font-display`, accent color, and the new muted/card tokens. No behavioral changes.
 
-## Server functions
+## 4. Remove all em dashes (`—`)
 
-- `reviewCode({ code, language })` → calls AI Gateway with pedagogical system prompt returning JSON `{summary, issues[], concepts[]}`. Persists submission + issues, updates `progress` for each concept.
-- `generatePractice({ topicSlug? })` → picks weakest topic if none given, calls AI for problem.
-- `getDashboard()` → returns recent submissions + mastery rows.
+Replace every `—` in user-visible strings, titles, comments, and code with one of:
+- a period + capitalized next clause, or
+- a comma, or
+- "to" / "and" where it reads as a range.
 
-## Design direction
+Files to sweep: `src/routes/index.tsx`, `src/routes/login.tsx`, `src/routes/signup.tsx`, `src/routes/_authenticated/dashboard.tsx`, `src/routes/_authenticated/practice.tsx`, `src/routes/_authenticated/review.tsx`, `src/styles.css` (comment), `src/lib/codewise.functions.ts` (prompt text + practice prompt), `src/server.ts` (comment). The dashboard fallback `"—"` becomes `"-"`.
 
-Dark editorial / "developer tool" aesthetic — deep navy background, mono accents, single saturated accent (electric cyan), JetBrains Mono for code, Inter for UI. Card-based dashboard, generous whitespace on landing.
+## 5. Remove Lovable references
 
-## Routes
+- `src/routes/index.tsx`: delete the "Built on Lovable" footer line.
+- `src/routes/__root.tsx`: replace default meta (`title`, `description`, `author`, `og:title`, `og:description`, `twitter:site`) with CodeWise-branded values.
+- Leave internal-only references untouched: `LOVABLE_API_KEY`, `ai.gateway.lovable.dev` (required for the AI gateway), and the "Connect Supabase in Lovable Cloud" diagnostic strings inside auto-generated `integrations/supabase/*` files (those are managed files and not user-visible at runtime under normal conditions).
 
-```
-/                 landing
-/login /signup
-/_authenticated/  (layout — redirects guests)
-  dashboard
-  review
-  practice
-```
+## Out of scope
 
-## Out of scope (for this pass)
-
-- Stripe/payments, college license flow
-- Email notifications, leaderboards
-- Real BKT (using simplified mastery update; can swap to full Bayesian later)
-- SEO blog content, sitemap automation (basic per-route meta only)
-
-## Risk
-
-Lovable AI returning malformed JSON — handled with strict schema + retry-once + graceful fallback message.
-
-Ready to build on approval.
+- No changes to server functions, DB schema, auth flow, or routing structure.
+- No new dependencies.

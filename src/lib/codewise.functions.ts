@@ -29,7 +29,7 @@ const VALID_TOPIC_SLUGS = new Set([
 const SYSTEM_PROMPT = `You are CodeWise, an AI code reviewer for computer-science students.
 Your job is NOT to write production-quality code. Your job is to diagnose the
 underlying CS concept the student does not yet fully understand, and explain it
-in a teaching tone — concise, encouraging, and concrete.
+in a teaching tone: concise, encouraging, and concrete.
 
 For every issue you raise:
 - explain WHY it's an issue in terms of the underlying CS concept
@@ -37,7 +37,7 @@ For every issue you raise:
   arrays, strings, hashing, linked-lists, stacks, queues, recursion,
   two-pointers, sliding-window, binary-search, sorting, trees, bst,
   heaps, graphs, dp, greedy, backtracking, bit-manipulation, complexity
-- give a concrete fix_hint (no full rewrites — guide them)
+- give a concrete fix_hint (no full rewrites, guide them)
 - severity: "error" = breaks correctness, "warning" = correctness/efficiency risk, "info" = style/clarity
 
 If the code is good, return ZERO issues with severity error/warning, but you MAY
@@ -243,7 +243,7 @@ export const generatePractice = createServerFn({ method: "POST" })
           },
           {
             role: "user",
-            content: `Topic: ${topic?.name ?? topicSlug} — ${topic?.description ?? ""}\nLanguage: ${data.language}\nGenerate ONE practice problem aimed at strengthening this concept.`,
+            content: `Topic: ${topic?.name ?? topicSlug}. ${topic?.description ?? ""}\nLanguage: ${data.language}\nGenerate ONE practice problem aimed at strengthening this concept.`,
           },
         ],
         response_format: { type: "json_object" },
