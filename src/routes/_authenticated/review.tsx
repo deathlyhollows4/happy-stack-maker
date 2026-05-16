@@ -57,7 +57,7 @@ function Review() {
   const submit = async () => {
     setBusy(true);
     try {
-      const r = await fn({ data: { code, language: lang } });
+      const r = await fn({ data: { code, language: lang, environment: getPaddleEnvironment() } });
       setResult(r);
       if (!r.ok) toast.error(r.error);
       else toast.success("Review complete");
