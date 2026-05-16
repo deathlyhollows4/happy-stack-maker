@@ -23,6 +23,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedReviewSubmissionIdRouteImport } from './routes/_authenticated/review.$submissionId'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const TermsRoute = TermsRouteImport.update({
@@ -94,6 +95,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReviewSubmissionIdRoute =
+  AuthenticatedReviewSubmissionIdRouteImport.update({
+    id: '/$submissionId',
+    path: '/$submissionId',
+    getParentRoute: () => AuthenticatedReviewRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -113,8 +120,9 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/practice': typeof AuthenticatedPracticeRoute
-  '/review': typeof AuthenticatedReviewRoute
+  '/review': typeof AuthenticatedReviewRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/review/$submissionId': typeof AuthenticatedReviewSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -129,8 +137,9 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/practice': typeof AuthenticatedPracticeRoute
-  '/review': typeof AuthenticatedReviewRoute
+  '/review': typeof AuthenticatedReviewRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/review/$submissionId': typeof AuthenticatedReviewSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -147,8 +156,9 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRoute
-  '/_authenticated/review': typeof AuthenticatedReviewRoute
+  '/_authenticated/review': typeof AuthenticatedReviewRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
+  '/_authenticated/review/$submissionId': typeof AuthenticatedReviewSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
+    | '/review/$submissionId'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
+    | '/review/$submissionId'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated/practice'
     | '/_authenticated/review'
     | '/auth/callback'
+    | '/_authenticated/review/$submissionId'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/review/$submissionId': {
+      id: '/_authenticated/review/$submissionId'
+      path: '/$submissionId'
+      fullPath: '/review/$submissionId'
+      preLoaderRoute: typeof AuthenticatedReviewSubmissionIdRouteImport
+      parentRoute: typeof AuthenticatedReviewRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -328,16 +348,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedReviewRouteChildren {
+  AuthenticatedReviewSubmissionIdRoute: typeof AuthenticatedReviewSubmissionIdRoute
+}
+
+const AuthenticatedReviewRouteChildren: AuthenticatedReviewRouteChildren = {
+  AuthenticatedReviewSubmissionIdRoute: AuthenticatedReviewSubmissionIdRoute,
+}
+
+const AuthenticatedReviewRouteWithChildren =
+  AuthenticatedReviewRoute._addFileChildren(AuthenticatedReviewRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
-  AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedReviewRoute: typeof AuthenticatedReviewRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
-  AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedReviewRoute: AuthenticatedReviewRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -360,3 +391,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

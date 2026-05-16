@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDashboard } from "@/lib/codewise.functions";
+import { KnowledgeGraph } from "@/components/knowledge-graph";
 import { ArrowUpRight, Code2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -45,6 +46,14 @@ function Dashboard() {
                 : "-"
             }
           />
+
+          <section className="lg:col-span-3 rounded-lg border border-border bg-card p-6">
+            <h2 className="font-display text-2xl mb-1">Knowledge graph</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Prerequisites and your mastery across 20 CS topics. Hover to inspect.
+            </p>
+            <KnowledgeGraph topics={data.topics} progress={data.progress} />
+          </section>
 
           <section className="lg:col-span-2 rounded-lg border border-border bg-card p-6">
             <h2 className="font-display text-2xl mb-4">Topic mastery</h2>
@@ -99,6 +108,13 @@ function Dashboard() {
                     <p className="text-muted-foreground line-clamp-2">
                       {s.summary ?? "No summary"}
                     </p>
+                    <Link
+                      to="/review/$submissionId"
+                      params={{ submissionId: s.id }}
+                      className="text-xs text-accent hover:underline mt-1 inline-block"
+                    >
+                      View details →
+                    </Link>
                   </li>
                 ))}
               </ul>

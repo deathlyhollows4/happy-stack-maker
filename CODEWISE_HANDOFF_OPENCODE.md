@@ -23,10 +23,19 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 |-------|--------|-----------|--------------|
 | 1 — Auth & Access | ✅ **DONE** | 1.1, 1.2, 1.3 | — |
 | 2 — Monetization | ✅ **DONE** | 2.1, 2.2, 2.3, 2.4 | — |
-| 3 — UI Completion | 🔴 **NEXT** | — | **3.1**: submission detail page |
-| 4 — Growth & SEO | ⏳ pending | — | — |
+| 3 — UI Completion | ✅ **DONE** | 3.1, 3.2, 3.3 | — |
+| 4 — Growth & SEO | 🔴 **NEXT** | — | 4.1: share-a-review public route |
 | 5 — Research | ⏳ pending | — | — |
 | 6 — B2B & Admin | ⏳ pending | — | — |
+
+**Current session (17 May 2026, session 4):**
+- Installed `d3-force` + `@types/d3-force` for force-directed layout
+- Created `src/components/knowledge-graph.tsx` — interactive SVG force graph of 20 CS topics with prerequisite edges. Nodes colored by user mastery (starting → growing → mastered), hover tooltips showing mastery % and attempts, smooth simulation with requestAnimationFrame throttling, responsive via ResizeObserver, 4-color legend. Prerequisite chains defined for 20 edges (arrays→two-pointers, recursion→dp, etc.)
+- Integrated `<KnowledgeGraph />` into dashboard between stat cards and topic mastery section
+
+**Previous session (17 May 2026, session 3):**
+- Created `src/routes/_authenticated/review.$submissionId.tsx` — submission detail page with split layout: CodeMirror (read-only) on left, summary + concepts + issues on right. Reuses existing `getSubmission` server fn. Handles loading, error, and not-found states.
+- Added "View details →" links from dashboard recent submissions list to the new detail page.
 
 **Last session (17 May 2026, session 2):**
 - Pulled Lovable's full Paddle payments sprint: pricing page ($20/mo, $112/yr), Paddle checkout overlay, webhook handler, subscriptions table, usage_counters table, SECURITY DEFINER SQL functions, entitlement engine, free tier gating (5 reviews/mo, 1 roadmap/day), legal pages (/terms, /refunds, /privacy)
@@ -658,8 +667,8 @@ Phase 5 (Research)   <── independent, can start anytime
 | Sess. | Task                                                                                                                                                                    | Files Touched                                                                         | opencode Category |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------- |
 | 3.1   | Create `/_authenticated/review.$submissionId.tsx` — split layout: code on left, issues list on right. Reuse existing `getSubmission` server fn                          | `src/routes/_authenticated/review.$submissionId.tsx` (new)                            | Code              |
-| 3.2   | Add clickable "View" button to each recent submission row on dashboard                                                                                                  | `src/routes/_authenticated/dashboard.tsx`                                             | Code              |
-| 3.3   | Build `<KnowledgeGraph />` component: d3-force layout, nodes = 20 topics colored by user mastery, edges = prerequisite chains (arrays→two-pointers, recursion→dp, etc.) | `src/components/knowledge-graph.tsx` (new), `src/routes/_authenticated/dashboard.tsx` | Code              |
+| 3.2   | Add clickable "View" button to each recent submission row on dashboard                                                                                                  | `src/routes/_authenticated/dashboard.tsx`                                             | ✅ Done            |
+| 3.3   | Build `<KnowledgeGraph />` component: d3-force layout, nodes = 20 topics colored by user mastery, edges = prerequisite chains (arrays→two-pointers, recursion→dp, etc.) | `src/components/knowledge-graph.tsx` (new), `src/routes/_authenticated/dashboard.tsx` | ✅ Done            |
 
 **No manual user action required for Phase 3.**
 
