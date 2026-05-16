@@ -10,7 +10,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { getSubmission } from "@/lib/codewise.functions";
 import { ArrowLeft, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/review/$submissionId")({
+export const Route = createFileRoute("/_authenticated/submission/$submissionId")({
   head: () => ({ meta: [{ title: "Submission Detail. CodeWise" }] }),
   component: SubmissionDetail,
 });
@@ -34,7 +34,7 @@ function langExt(l: Lang) {
 }
 
 function SubmissionDetail() {
-  const { submissionId } = useParams({ from: "/_authenticated/review/$submissionId" });
+  const { submissionId } = useParams({ from: "/_authenticated/submission/$submissionId" });
   const fn = useServerFn(getSubmission);
   const { data, isLoading, error } = useQuery({
     queryKey: ["submission", submissionId],

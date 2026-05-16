@@ -23,7 +23,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedReviewSubmissionIdRouteImport } from './routes/_authenticated/review.$submissionId'
+import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const TermsRoute = TermsRouteImport.update({
@@ -95,11 +95,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedReviewSubmissionIdRoute =
-  AuthenticatedReviewSubmissionIdRouteImport.update({
-    id: '/$submissionId',
-    path: '/$submissionId',
-    getParentRoute: () => AuthenticatedReviewRoute,
+const AuthenticatedSubmissionSubmissionIdRoute =
+  AuthenticatedSubmissionSubmissionIdRouteImport.update({
+    id: '/submission/$submissionId',
+    path: '/submission/$submissionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
@@ -120,9 +120,9 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/practice': typeof AuthenticatedPracticeRoute
-  '/review': typeof AuthenticatedReviewRouteWithChildren
+  '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/review/$submissionId': typeof AuthenticatedReviewSubmissionIdRoute
+  '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -137,9 +137,9 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/practice': typeof AuthenticatedPracticeRoute
-  '/review': typeof AuthenticatedReviewRouteWithChildren
+  '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/review/$submissionId': typeof AuthenticatedReviewSubmissionIdRoute
+  '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -156,9 +156,9 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRoute
-  '/_authenticated/review': typeof AuthenticatedReviewRouteWithChildren
+  '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
-  '/_authenticated/review/$submissionId': typeof AuthenticatedReviewSubmissionIdRoute
+  '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -177,7 +177,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
-    | '/review/$submissionId'
+    | '/submission/$submissionId'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -194,7 +194,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
-    | '/review/$submissionId'
+    | '/submission/$submissionId'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -212,7 +212,7 @@ export interface FileRouteTypes {
     | '/_authenticated/practice'
     | '/_authenticated/review'
     | '/auth/callback'
-    | '/_authenticated/review/$submissionId'
+    | '/_authenticated/submission/$submissionId'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -331,12 +331,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/review/$submissionId': {
-      id: '/_authenticated/review/$submissionId'
-      path: '/$submissionId'
-      fullPath: '/review/$submissionId'
-      preLoaderRoute: typeof AuthenticatedReviewSubmissionIdRouteImport
-      parentRoute: typeof AuthenticatedReviewRoute
+    '/_authenticated/submission/$submissionId': {
+      id: '/_authenticated/submission/$submissionId'
+      path: '/submission/$submissionId'
+      fullPath: '/submission/$submissionId'
+      preLoaderRoute: typeof AuthenticatedSubmissionSubmissionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -348,27 +348,19 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedReviewRouteChildren {
-  AuthenticatedReviewSubmissionIdRoute: typeof AuthenticatedReviewSubmissionIdRoute
-}
-
-const AuthenticatedReviewRouteChildren: AuthenticatedReviewRouteChildren = {
-  AuthenticatedReviewSubmissionIdRoute: AuthenticatedReviewSubmissionIdRoute,
-}
-
-const AuthenticatedReviewRouteWithChildren =
-  AuthenticatedReviewRoute._addFileChildren(AuthenticatedReviewRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
-  AuthenticatedReviewRoute: typeof AuthenticatedReviewRouteWithChildren
+  AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedSubmissionSubmissionIdRoute: typeof AuthenticatedSubmissionSubmissionIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
-  AuthenticatedReviewRoute: AuthenticatedReviewRouteWithChildren,
+  AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedSubmissionSubmissionIdRoute:
+    AuthenticatedSubmissionSubmissionIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

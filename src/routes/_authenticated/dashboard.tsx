@@ -109,7 +109,7 @@ function Dashboard() {
                       {s.summary ?? "No summary"}
                     </p>
                     <Link
-                      to="/review/$submissionId"
+                      to="/submission/$submissionId"
                       params={{ submissionId: s.id }}
                       className="text-xs text-accent hover:underline mt-1 inline-block"
                     >
