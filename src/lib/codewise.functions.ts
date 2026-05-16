@@ -1,6 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  getUserPlan,
+  consumeQuota,
+  readUsage,
+  PLAN_QUOTAS,
+  monthKey,
+  dayKey,
+} from "@/lib/entitlements.server";
+import type { PaddleEnv } from "@/lib/paddle.server";
+
+const envInput = z
+  .enum(["sandbox", "live"])
+  .default("sandbox") as z.ZodType<PaddleEnv>;
 
 const LANGS = ["python", "javascript", "java", "cpp"] as const;
 
