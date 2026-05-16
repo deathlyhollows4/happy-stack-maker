@@ -86,10 +86,33 @@ export const reviewCode = createServerFn({ method: "POST" })
       .object({
         code: z.string().min(1).max(20_000),
         language: z.enum(LANGS),
+        environment: envInput,
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
+      return { ok: false as const, error: "AI is not configured. Please add LOVABLE_API_KEY." };
+    }
+
+    // Entitlement check
+    const { plan } = await getUserPlan(userId, data.environment);
+    const limit = PLAN_QUOTAS[plan].reviewsPerMonth;
+    const allowed = await consumeQuota(userId, "review", limit, monthKey());
+    if (!allowed) {
+      return {
+        ok: false as const,
+        error:
+          plan === "pro"
+            ? `You've used all ${limit} reviews this month. Quota resets on the 1st.`
+            : `Free plan limit reached (${limit} reviews / month). Upgrade to Pro for 1500/month.`,
+        upgradeRequired: plan === "free",
+      };
+    }
+
+    const userPrompt = `Language: ${data.language}\n\nStudent code:\n\`\`\`${data.language}\n${data.code}\n\`\`\`\n\nReview it.`;
     const { supabase, userId } = context;
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
