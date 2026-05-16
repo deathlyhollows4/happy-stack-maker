@@ -85,6 +85,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const progressMap = useMemo(() => {
     const m = new Map<string, ProgressRow>();
@@ -158,6 +159,17 @@ export function KnowledgeGraph({ topics, progress }: Props) {
     };
   }, [nodes, links]);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
   const getSvgPoint = useCallback(
     (clientX: number, clientY: number) => {
       const svg = svgRef.current;
@@ -176,6 +188,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   const handleWheel = useCallback(
     (e: React.WheelEvent<SVGSVGElement>) => {
       e.preventDefault();
+      e.stopPropagation();
       const { x: mx, y: my } = getSvgPoint(e.clientX, e.clientY);
       const dy = -e.deltaY;
       const factor = dy > 0 ? 1 + ZOOM_STEP : 1 / (1 + ZOOM_STEP);
@@ -233,7 +246,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   const hasProgress = progress.length > 0;
 
   return (
-    <div className="relative overflow-hidden rounded-lg bg-[oklch(0.16_0.012_60)]" style={{ aspectRatio: `${VB_W}/${VB_H}` }}>
+    <div ref={containerRef} className="relative overflow-hidden rounded-lg bg-[oklch(0.16_0.012_60)]" style={{ aspectRatio: `${VB_W}/${VB_H}` }}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${VB_W} ${VB_H}`}
