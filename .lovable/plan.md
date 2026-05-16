@@ -1,14 +1,56 @@
-## Enable Google OAuth (managed)
+# Fix Google OAuth — switch to Lovable-managed broker
 
-Your code already calls `supabase.auth.signInWithOAuth({ provider: "google", redirectTo: .../auth/callback })` on the login and signup pages, plus a `/auth/callback` route to complete the session. The only missing piece is enabling the Google provider on the backend — no Google Cloud Console / client_id / client_secret setup needed, Lovable Cloud uses managed credentials by default.
+## Root cause
 
-### Step
-1. Call `supabase--configure_social_auth` with `providers: ["google"]` to turn on the Google provider on your Lovable Cloud auth instance (keeps email/password enabled).
+The login/signup pages call `supabase.auth.signInWithOAuth({ provider: "google", ... })` directly. That hits Supabase's `/authorize` endpoint, which has **no Google client_id/secret configured** on this project — hence `400 Unsupported provider: missing OAuth secret` in the auth logs.
 
-### Not doing
-- No code changes. Existing login/signup/callback already work once the provider flips on.
-- Not disabling email auth (you still want email+password).
-- Not switching to the `lovable.auth.signInWithOAuth` broker — your current direct Supabase call works with managed Google and your committed `/auth/callback` route handles it. Migrating to the broker would change the redirect contract and require re-committing login/signup/callback; out of scope for "do the manual stuff".
-- No Google Cloud Console steps — managed credentials cover it. If you later want your own branded consent screen, that's a separate task.
+Lovable Cloud's managed Google credentials are **only** wired up through the broker package we already installed: `@lovable.dev/cloud-auth-js`, exposed at `src/integrations/lovable/index.ts` as `lovable.auth.signInWithOAuth(...)`. That call goes through Lovable's OAuth proxy (`/~oauth/...`) using managed client credentials, then sets the Supabase session for us.
 
-After this runs, Google sign-in on `/login` and `/signup` will work end-to-end.
+So the fix is a code migration, not a secret/config change. No Google Cloud Console setup, no BYOK.
+
+## Changes
+
+### 1. `src/lib/auth-helpers.ts`
+Replace both helpers to use the broker:
+
+```ts
+import { lovable } from "@/integrations/lovable";
+
+export function signInWithGoogle() {
+  return lovable.auth.signInWithOAuth("google", {
+    redirect_uri: window.location.origin,
+  });
+}
+
+export function signInWithGoogleSignUp() {
+  return lovable.auth.signInWithOAuth("google", {
+    redirect_uri: window.location.origin,
+    extraParams: { prompt: "select_account" },
+  });
+}
+```
+
+### 2. `src/routes/login.tsx` and `src/routes/signup.tsx`
+Handlers already call the helpers, but the broker returns `{ redirected, error, tokens }` (no Supabase-style `{ error }` only). Update the handlers to:
+
+- if `result.error` → toast + clear loading
+- if `result.redirected` → just return (browser is navigating to Google)
+- otherwise the session is already set by the broker → `nav({ to: "/dashboard" })` and toast success
+
+### 3. `src/routes/auth/callback.tsx`
+Keep the file as-is for safety (broker handles redirects via `/~oauth/callback` and lands the user back at `redirect_uri = window.location.origin`, so the route isn't strictly needed anymore, but it's harmless as a fallback). No changes required.
+
+### 4. Files we do **not** touch
+- `src/integrations/lovable/index.ts` — auto-generated, never edit.
+- `src/integrations/supabase/client.ts` — auto-generated.
+- No `supabase--configure_social_auth` re-run needed; the provider is already enabled, the broker just bypasses the missing-secret path.
+
+## Verification
+1. `/login` → click Google → should redirect through `oauth.lovable.app`, land back on `/`, session set, `onAuthStateChange` fires, user navigates to `/dashboard`.
+2. `/signup` → same flow with `prompt=select_account`.
+3. Auth logs should no longer show `missing OAuth secret`.
+
+## Not doing
+- Not asking the user for Google client_id/secret (managed credentials are the whole point).
+- Not changing email/password flow.
+- Not adding new routes or DB migrations.

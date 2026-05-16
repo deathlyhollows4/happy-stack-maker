@@ -1,22 +1,14 @@
-import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
 export function signInWithGoogle() {
-  return supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
+  return lovable.auth.signInWithOAuth("google", {
+    redirect_uri: window.location.origin,
   });
 }
 
 export function signInWithGoogleSignUp() {
-  return supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-      queryParams: {
-        prompt: "select_account",
-      },
-    },
+  return lovable.auth.signInWithOAuth("google", {
+    redirect_uri: window.location.origin,
+    extraParams: { prompt: "select_account" },
   });
 }
