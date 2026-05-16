@@ -323,7 +323,10 @@ export const generatePractice = createServerFn({ method: "POST" })
       })
       .select("*")
       .single();
-    if (error || !row) return { ok: false as const, error: error?.message ?? "DB error" };
+    if (error || !row) {
+      console.error("generatePractice insert failed:", error);
+      return { ok: false as const, error: "Something went wrong. Please try again." };
+    }
     return { ok: true as const, problem: row };
   });
 
