@@ -18,11 +18,15 @@ function LoginPage() {
 
   const onGoogleSignIn = async () => {
     setGoogleLoading(true);
-    const { error } = await signInWithGoogle();
-    if (error) {
+    const result = await signInWithGoogle();
+    if (result.error) {
       setGoogleLoading(false);
-      toast.error(error.message);
+      toast.error(result.error.message ?? "Google sign-in failed.");
+      return;
     }
+    if (result.redirected) return;
+    toast.success("Welcome back.");
+    nav({ to: "/dashboard" });
   };
 
   const onSubmit = async (e: React.FormEvent) => {
