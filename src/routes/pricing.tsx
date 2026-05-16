@@ -65,7 +65,7 @@ function PricingPage() {
               Pricing
             </Link>
             {user ? (
-              <Link to="/app" className="text-muted-foreground hover:text-foreground">
+              <Link to="/dashboard" className="text-muted-foreground hover:text-foreground">
                 Dashboard
               </Link>
             ) : (
