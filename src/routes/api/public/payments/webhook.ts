@@ -13,10 +13,8 @@ function getSupabase(): SupabaseClient {
   return _supabase;
 }
 
-// Business rule: on cancel, give a flat 7-day grace period regardless of
-// the original billing period end.
-// Grace period applied at cancel-click time, not in webhook.
-const _GRACE_PERIOD_DAYS_UNUSED = 7;
+// Cancel grace is applied at click time by the cancelSubscription server fn
+// (runs from when the user clicks Cancel, not from Paddle's finalization).
 
 async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
   const { id, customerId, items, status, currentBillingPeriod, customData } = data;
