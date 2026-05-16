@@ -21,7 +21,7 @@ function Practice() {
   const onGen = async () => {
     setBusy(true);
     try {
-      const r = await gen({ data: { language: "python" } });
+      const r = await gen({ data: { language: "python", environment: getPaddleEnvironment() } });
       if (!r.ok) toast.error(r.error);
       else {
         toast.success("New problem ready");
