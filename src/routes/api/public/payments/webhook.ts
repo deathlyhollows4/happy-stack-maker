@@ -71,14 +71,13 @@ async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
 }
 
 async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
-  // Override period end with our 7-day grace period from cancellation time.
-  const graceEnd = new Date(Date.now() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000);
-
+  // Mark canceled but DO NOT touch current_period_end. The user's 7-day grace
+  // window is set at click time by the cancelSubscription server fn so that
+  // grace runs from when the user cancels, not from when Paddle finalizes it.
   await getSupabase()
     .from("subscriptions")
     .update({
       status: "canceled",
-      current_period_end: graceEnd.toISOString(),
       cancel_at_period_end: true,
       updated_at: new Date().toISOString(),
     })
