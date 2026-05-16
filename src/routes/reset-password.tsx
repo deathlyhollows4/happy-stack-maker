@@ -23,8 +23,28 @@ function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) return toast.error(error.message);
+
     toast.success("Password updated. Signing you in…");
-    nav({ to: "/dashboard" });
+
+    // Wait for the new signed-in session after password reset.
+    // updateUser resolves before the auth state change fires, so if we
+    // navigate to /dashboard immediately the _authenticated layout's
+    // beforeLoad sees no session and redirects back to /login.
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        sub.subscription.unsubscribe();
+        nav({ to: "/dashboard" });
+      }
+    });
+
+    // Fallback: if onAuthStateChange doesn't fire within 5s, try getSession
+    setTimeout(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        sub.subscription.unsubscribe();
+        nav({ to: "/dashboard" });
+      }
+    }, 5000);
   };
 
   return (
