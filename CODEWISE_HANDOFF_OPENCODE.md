@@ -22,21 +22,30 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | Phase | Status | Completed | Next Session |
 |-------|--------|-----------|--------------|
 | 1 — Auth & Access | ✅ **DONE** | 1.1, 1.2, 1.3 | — |
-| 2 — Monetization | 🔴 **NEXT** | — | **2.1**: user_quotas migration + guard in reviewCode |
-| 3 — UI Completion | ⏳ pending | — | — |
+| 2 — Monetization | ✅ **DONE** | 2.1, 2.2, 2.3, 2.4 | — |
+| 3 — UI Completion | 🔴 **NEXT** | — | **3.1**: submission detail page |
 | 4 — Growth & SEO | ⏳ pending | — | — |
 | 5 — Research | ⏳ pending | — | — |
 | 6 — B2B & Admin | ⏳ pending | — | — |
 
-**Last session (17 May 2026):**
+**Last session (17 May 2026, session 2):**
+- Pulled Lovable's full Paddle payments sprint: pricing page ($20/mo, $112/yr), Paddle checkout overlay, webhook handler, subscriptions table, usage_counters table, SECURITY DEFINER SQL functions, entitlement engine, free tier gating (5 reviews/mo, 1 roadmap/day), legal pages (/terms, /refunds, /privacy)
+- Installed `@paddle/paddle-node-sdk` for local typecheck
+- Playwright verified: /pricing ✓, /terms ✓, /refunds ✓, /privacy ✓, free tier gating code-verified in `codewise.functions.ts`
+
+**Previous session (17 May 2026, session 1):**
 - Fixed reset-password redirect race: `updateUser` resolves before session settles → now waits for `onAuthStateChange SIGNED_IN`
 - Restored `src/integrations/lovable/index.ts` (accidentally deleted — breaks Google OAuth)
+- Fixed missing `<Toaster />` in `__root.tsx`
 - Pulled Lovable security fix: raw DB errors replaced with generic messages in `reviewCode`/`generatePractice`
-- Pulled Lovable import fix: `@/integrations/lovable/index` (explicit suffix for build compatibility)
 
 **Credentials for testing:** `vidhantomar17082004@gmail.com` / `YAh3TChafK@3.tJ`
+**Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
 
-**Manual actions pending (user):** Enable Google OAuth in Supabase Dashboard (Auth → Providers → Google) and create Google Cloud Console OAuth 2.0 client
+**Manual actions pending (user):**
+- Enable Google OAuth in Supabase Dashboard (Auth → Providers → Google) and create Google Cloud Console OAuth 2.0 client
+- Verify Paddle identity (Payments tab in Lovable) before accepting real payments
+- Run Supabase migrations (SQL files in `supabase/migrations/`)
 
 ---
 
@@ -53,6 +62,7 @@ The original document described a Next.js + Python FastAPI + Prisma + DeepSeek s
 | Hosting (frontend) | Lovable Pro               | Lovable (Cloudflare Workers via vite-plugin)         |
 | Hosting (backend)  | Railway / VPS for FastAPI | Same Worker — no separate backend                    |
 | Auth               | OAuth (Google, GitHub)    | Supabase Auth — email + password only (no OAuth yet) |
+| Payments           | Stripe / Razorpay         | Paddle (merchant of record, via Lovable Gateway)     |
 | Editor             | CodeMirror 6              | CodeMirror 6 (kept as planned)                       |
 | Knowledge tracing  | Full BKT model in Python  | BKT-lite update inside reviewCode server fn          |
 
@@ -92,28 +102,48 @@ src/
 ├── routes/
 │   ├── __root.tsx                 # Root layout, head meta, error boundary, AuthSync
 │   ├── index.tsx                  # Public landing page
-│   ├── login.tsx                  # Email + password login
-│   ├── signup.tsx                 # Email + password signup
+│   ├── login.tsx                  # Email + password login + Google OAuth
+│   ├── signup.tsx                 # Email + password signup + Google OAuth
+│   ├── forgot-password.tsx        # Reset password email form
+│   ├── reset-password.tsx         # Set new password after recovery link
+│   ├── pricing.tsx                # Paddle pricing page ($20/mo, $112/yr)
+│   ├── terms.tsx                  # Terms & Conditions (Paddle requirement)
+│   ├── refunds.tsx                # Refund Policy (Paddle requirement)
+│   ├── privacy.tsx                # Privacy Notice (Paddle requirement)
+│   ├── auth/
+│   │   └── callback.tsx           # OAuth post-redirect handler
+│   ├── api/public/
+│   │   └── payments/
+│   │       └── webhook.ts         # Paddle webhook receiver
 │   └── _authenticated/
 │       ├── route.tsx              # Pathless layout: sidebar + client-side auth gate
 │       ├── dashboard.tsx          # Stats, topic mastery, recent reviews
-│       ├── review.tsx             # Code editor -> reviewCode server fn
-│       └── practice.tsx           # generatePractice + listPractice
+│       ├── review.tsx             # Code editor -> reviewCode (quota-gated)
+│       └── practice.tsx           # generatePractice (quota-gated) + listPractice
 ├── lib/
-│   ├── codewise.functions.ts      # ALL server-side logic (createServerFn)
+│   ├── codewise.functions.ts      # Server fn: reviewCode, getDashboard, getSubmission, generatePractice, listPractice, getEntitlements
+│   ├── billing.functions.ts       # Server fn: cancelSubscription, getCustomerPortalUrl
+│   ├── entitlements.server.ts     # getUserPlan, consumeQuota, readUsage, PLAN_QUOTAS
+│   ├── paddle.server.ts           # Paddle SDK init, webhook verify, gateway fetch
+│   ├── paddle.ts                  # Client-side Paddle checkout helpers
+│   ├── payments.functions.ts      # Thin re-export for route access
 │   ├── error-capture.ts           # globalThis error capture for SSR
 │   ├── error-page.ts              # Dependency-free 500 fallback
 │   └── utils.ts                   # cn() shadcn helper
 ├── hooks/
 │   ├── use-auth.ts                # Session listener (onAuthStateChange + getSession)
+│   ├── use-subscription.ts        # Client hook: plan, status, pastDue, quotas
+│   ├── use-paddle-checkout.ts     # Paddle overlay checkout trigger
 │   └── use-mobile.tsx
-├── integrations/supabase/
-│   ├── client.ts                  # Browser client (publishable key) — DO NOT EDIT
-│   ├── client.server.ts           # Admin client (service role) — DO NOT EDIT, server-only
-│   ├── auth-middleware.ts         # requireSupabaseAuth (validates bearer)
-│   ├── auth-attacher.ts           # Browser -> attaches Bearer to serverFn calls
-│   └── types.ts                   # Generated DB types — DO NOT EDIT
-├── components/ui/                 # shadcn primitives (button, input, dialog, ...)
+├── components/
+│   ├── ui/                        # shadcn primitives (button, input, dialog, ...)
+│   └── PaymentTestModeBanner.tsx  # Paddle test mode indicator
+├── integrations/
+│   ├── supabase/                  # Auto-generated by Lovable — DO NOT EDIT
+│   └── lovable/
+│       └── index.ts               # Lovable Cloud Auth OAuth bridge — DO NOT EDIT
+├── supabase/
+│   └── migrations/                # SQL migrations (run manually on Supabase)
 ├── styles.css                     # Tailwind v4 tokens + font imports
 ├── start.ts                       # createStart() — registers errorMiddleware + attachSupabaseAuth
 ├── server.ts                      # Worker entry with lazy import + h3 normalization
@@ -198,6 +228,32 @@ Signal rule (in `src/lib/codewise.functions.ts` -> `reviewCode`):
 | language     | text        | python \| javascript \| java \| cpp                 |
 | created_at   | timestamptz |                                                     |
 
+### 4.7 subscriptions (Paddle)
+
+| Column                    | Type        | Notes                                                  |
+| ------------------------- | ----------- | ------------------------------------------------------ |
+| id                        | uuid (PK)   |                                                        |
+| user_id                   | uuid        | FK -> auth.users                                       |
+| paddle_subscription_id    | text        | Paddle subscription ID                                 |
+| paddle_customer_id        | text        | Paddle customer ID                                     |
+| status                    | text        | active \| trialing \| past_due \| canceled             |
+| current_period_end        | timestamptz | When the current billing period ends                   |
+| cancel_at_period_end      | boolean     | Paddle-side cancel flag                                |
+| environment               | text        | sandbox \| live                                        |
+| created_at / updated_at   | timestamptz |                                                        |
+
+### 4.8 usage_counters (quota tracking)
+
+| Column     | Type      | Notes                                                        |
+| ---------- | --------- | ------------------------------------------------------------ |
+| id         | uuid (PK) |                                                              |
+| user_id    | uuid      |                                                              |
+| kind       | text      | review \| roadmap                                            |
+| period_key | text      | YYYY-MM or YYYY-MM-DD                                        |
+| counter    | int       | Incremented atomically by `consume_quota` SECURITY DEFINER fn |
+
+**SQL functions (SECURITY DEFINER):** `consume_quota(p_user_id, p_kind, p_limit, p_period_key)` — atomic increment with cap check; `get_usage(p_user_id, p_kind, p_period_key)` — reads current counter. Both have `REVOKE EXECUTE ON FUNCTION FROM PUBLIC`; access granted only via service role.
+
 ---
 
 ## 5. Server functions (as deployed)
@@ -206,11 +262,19 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 
 | Server fn        | Method | What it does                                                                                                                                                                    |
 | ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| reviewCode       | POST   | Sends code to Lovable AI Gateway with the CodeWise pedagogical system prompt, parses Zod-validated JSON, inserts into submissions + review_issues, updates progress (BKT-lite). |
+| reviewCode       | POST   | Sends code to Lovable AI Gateway with the CodeWise pedagogical system prompt, parses Zod-validated JSON, inserts into submissions + review_issues, updates progress (BKT-lite). Now quota-gated via `consumeQuota`. Returns `upgradeRequired: true` when free cap hit. |
 | getDashboard     | GET    | Parallel reads: last 10 submissions, all progress rows for user, full topics table. Feeds dashboard.tsx.                                                                        |
 | getSubmission    | GET    | Single submission + its review_issues, for a future detail view.                                                                                                                |
-| generatePractice | POST   | Picks weakest topic if none given, asks Gemini for a problem (title + prompt + starter_code), inserts into practice_problems.                                                   |
+| generatePractice | POST   | Picks weakest topic if none given, asks Gemini for a problem (title + prompt + starter_code), inserts into practice_problems. Now quota-gated via `consumeQuota`.               |
 | listPractice     | GET    | Last 20 practice problems for the current user.                                                                                                                                 |
+| getEntitlements  | GET    | (in `codewise.functions.ts`) Returns plan, status, pastDue, quotas, and usage counters for the billing UI.                                                                      |
+
+**Billing functions** (`src/lib/billing.functions.ts`):
+
+| Server fn             | Method | What it does                                                                                           |
+| --------------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| cancelSubscription    | POST   | Cancels active sub in Paddle at next billing period; sets `current_period_end = now + 7d` for grace.   |
+| getCustomerPortalUrl  | POST   | Returns a Paddle customer portal session URL for updating payment method / viewing invoices.           |
 
 ---
 
@@ -228,12 +292,20 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 - Practice flow: generatePractice picks weakest topic, AI returns problem + starter code, stored & listed
 - RLS on submissions / review_issues / progress / practice_problems; profiles auto-created via trigger
 - Lovable AI Gateway integrated; LOVABLE_API_KEY managed as Lovable Cloud secret
+- Paddle payments: pricing page ($20/mo, $112/yr), overlay checkout, webhook handler, subscriptions tracking
+- Freemium gating: Free tier capped at 5 reviews/month + 1 roadmap/day; Pro at 1500/month + 15/day
+- Usage counters via SECURITY DEFINER SQL functions (`consume_quota`, `get_usage`) with public EXECUTE revoked
+- Legal pages: /terms, /refunds, /privacy (Paddle merchant-of-record requirement)
+- Cancellation grace period: 7 days from cancel click, enforced in `cancelSubscription` server fn
 
 ### 6.2 Not yet built (gaps for opencode to close)
 
 - Google OAuth + Apple sign-in (currently email/password only)
 - Password reset flow (/forgot-password + /reset-password pages)
-- Stripe (or Razorpay) payment + freemium gating (10 reviews/month limit not enforced)
+- ~~Stripe (or Razorpay) payment + freemium gating~~ → Done: Paddle via Lovable Gateway
+- Billing page UI at `/_authenticated/billing` (server fns exist: `cancelSubscription`, `getCustomerPortalUrl`, `getEntitlements`)
+- Past-due banner in authenticated layout (read `pastDue` from entitlements)
+- `?checkout=success` toast on landing page after Paddle checkout completes
 - Submission detail page (/\_authenticated/review/$submissionId) — server fn exists, UI does not
 - Knowledge graph visualization (prerequisite chains across the 20 topics)
 - Share-your-review-score viral loop (public OG image + /s/$id route)
@@ -419,12 +491,16 @@ SUPABASE_URL=...
 SUPABASE_PUBLISHABLE_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...   (server-only, never prefix with VITE_)
 LOVABLE_API_KEY=...              (server-only)
+PADDLE_SANDBOX_API_KEY=...       (server-only)
+PADDLE_LIVE_API_KEY=...           (server-only)
+PAYMENTS_SANDBOX_WEBHOOK_SECRET=... (server-only)
+PAYMENTS_LIVE_WEBHOOK_SECRET=...  (server-only)
 ```
 
-**Local development extra step:** After first clone or sync, install the Lovable Cloud Auth bridge (this package is injected by Lovable at deploy time but must be installed locally for `tsc` to pass):
+**Local development extra step:** After first clone or sync, install these packages (injected by Lovable at deploy time but must be installed locally for `tsc` to pass):
 
 ```bash
-npm install @lovable.dev/cloud-auth-js@1.1.2
+npm install @lovable.dev/cloud-auth-js@1.1.2 @paddle/paddle-node-sdk
 ```
 
 ---
@@ -445,6 +521,12 @@ npm install @lovable.dev/cloud-auth-js@1.1.2
 | **Push → publish cycle** | Push to GitHub → user republishes on Lovable → test against live URL. Never assume local dev matches production for Lovable-integrated features. |
 | **DO NOT EDIT Supabase integration files** | `client.ts`, `client.server.ts`, `auth-middleware.ts`, `auth-attacher.ts`, `types.ts` are auto-generated by Lovable Cloud. Changes will be overwritten or break production. |
 | **Supabase session-race pattern** | After any auth mutation (`signIn`, `signUp`, `updateUser`, `setSession`), the session may not be immediately available. Use `supabase.auth.onAuthStateChange` with a fallback `getSession()` timeout (5s) before navigating. See `src/routes/reset-password.tsx` for the reference implementation. |
+| **Paddle: never edit `paddle.server.ts` or `paddle.ts`** | These are Lovable-generated gateway wrappers. The Paddle SDK talks through `connector-gateway.lovable.dev/paddle`, not directly to Paddle's API. Changing the gateway URL or headers breaks checkout/webhooks. |
+| **Paddle: instaleer `@paddle/paddle-node-sdk` na sync** | Zelfde patroon als `@lovable.dev/cloud-auth-js` — nodig voor `tsc --noEmit` lokaal. `npm install @paddle/paddle-node-sdk` |
+| **Paddle: pricing = $20/mo, $112/yr** | Products in Paddle dashboard must match pricing page. If you change pricing, update BOTH Paddle dashboard AND `src/routes/pricing.tsx`. |
+| **Paddle: test card** | `4242 4242 4242 4242`, CVC `123`, any future expiry, any name/ZIP. Test mode banner visible on overlay. |
+| **Paddle: webhook is at `/api/public/payments/webhook`** | Must be configured in Paddle sandbox/live dashboard. Lovable auto-provisions this via the gateway. |
+| **SQL: `SECURITY DEFINER` functions have revoked public EXECUTE** | `consume_quota` and `get_usage` in Supabase. Do not grant public EXECUTE — the Lovable security agent flags this. Access is via service role only in `entitlements.server.ts`. |
 
 ---
 
