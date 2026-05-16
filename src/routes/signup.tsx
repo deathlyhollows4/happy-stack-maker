@@ -20,11 +20,15 @@ function SignupPage() {
 
   const onGoogleSignUp = async () => {
     setGoogleLoading(true);
-    const { error } = await signInWithGoogleSignUp();
-    if (error) {
+    const result = await signInWithGoogleSignUp();
+    if (result.error) {
       setGoogleLoading(false);
-      toast.error(error.message);
+      toast.error(result.error.message ?? "Google sign-up failed.");
+      return;
     }
+    if (result.redirected) return;
+    toast.success("Welcome to CodeWise.");
+    nav({ to: "/dashboard" });
   };
 
   const onSubmit = async (e: React.FormEvent) => {
