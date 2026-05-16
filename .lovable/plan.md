@@ -1,24 +1,30 @@
-## Switch to Anthropic-style professional typography
+## Problem
 
-Anthropic (claude.ai) uses **Copernicus** (a refined contemporary serif) for headings and **Styrene** (a clean grotesk) for body. Both are proprietary, so use the closest high-quality Google Fonts equivalents.
+After signing in, the dashboard renders for ~1–2 seconds then bounces back to `/login`. This is an SSR/hydration race, not a credential issue (auth logs show successful login).
 
-### Font choice
+Root cause: `src/routes/_authenticated/route.tsx` runs its session check in `beforeLoad` using `supabase.auth.getSession()`. That call also executes during server-side rendering and during the live-preview reload (the `__lovable_sha=...` reload visible in the session replay right before the bounce). On the server there is no `localStorage`, so `getSession()` returns `null` and `beforeLoad` throws `redirect({ to: "/login" })`. The browser briefly shows the client-rendered dashboard, then the SSR/reload result wins and the URL flips to `/login`.
 
-- **Display / headings**: `Fraunces` — modern contemporary serif with the same warm, slightly soft character as Copernicus. Use weights 400/500 with `opsz` set high for display.
-- **Body / UI**: `Inter` — already loaded; keep it. Tight neutral grotesk, very close to Styrene in proportion.
-- **Code**: keep `JetBrains Mono`.
+## Fix
 
-This drops `Instrument Serif` (which reads as decorative/editorial) in favor of something explicitly designed for product UI.
+Make the auth gate client-only and wait for the Supabase session to actually hydrate before deciding.
 
-### Changes (frontend only)
+### `src/routes/_authenticated/route.tsx`
+- In `beforeLoad`, short-circuit when running on the server (`if (typeof window === "undefined") return;`). The component-level gate handles the real check on the client.
+- In the `AuthLayout` component, replace the bare `if (!user) return null;` with a proper redirect once `loading` is false and `user` is still null — use `useEffect` + `nav({ to: "/login" })` so it only fires after the Supabase session has had a chance to restore from `localStorage`. While `loading` is true, keep showing the existing "Loading…" state.
 
-1. **`src/styles.css`**
-   - Replace the `Instrument Serif` Google Fonts `@import` with `Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600`.
-   - Update `--font-display` token from `"Instrument Serif"` to `"Fraunces"`.
-   - Add `font-optical-sizing: auto;` and slightly tighter `letter-spacing` (`-0.02em`) on `.font-display` / `h1,h2,h3` so headings feel engineered, not literary.
-   - Leave `--font-sans` (Inter) and `--font-mono` (JetBrains Mono) unchanged.
+### `src/routes/__root.tsx` (small hardening)
+- Inside `RootComponent`, add a single `useEffect` that subscribes to `supabase.auth.onAuthStateChange` and calls `router.invalidate()` + `queryClient.invalidateQueries()` on every event. This prevents the previous user's cached dashboard data from sticking around after sign-in/out and is the pattern recommended for TanStack + Supabase.
 
-2. **No component edits required** — every heading already uses the `font-display` / `font-serif` token, so swapping the token cascades through landing, auth, dashboard, review, and practice.
+No other files need to change. Login/signup flow, server functions, and the dashboard query stay as-is.
 
-### Out of scope
-No color, layout, copy, or behavior changes. Only the display typeface is swapped.
+## Why this works
+
+- The dashboard never renders on the server for unauthenticated requests (component gate still runs), but `beforeLoad` no longer issues a spurious server-side redirect that overwrites the client.
+- On the client, `useAuth` already calls `getSession()` once and then listens to `onAuthStateChange`, so the redirect only fires after Supabase has finished restoring the session — eliminating the flash-then-bounce.
+- The root-level `onAuthStateChange` ensures the just-signed-in user immediately sees their own data instead of any stale loader result.
+
+## Out of scope
+
+- No design, font, copy, or styling changes.
+- No changes to server functions or the dashboard query itself.
+- No changes to `_authenticated` children (`dashboard.tsx`, `review.tsx`, `practice.tsx`).
