@@ -47,10 +47,10 @@ function Dashboard() {
             }
           />
 
-          <section className="lg:col-span-3 rounded-lg border border-border bg-card p-6">
+          <section className="lg:col-span-3 rounded-lg border border-border bg-card p-6 overflow-hidden">
             <h2 className="font-display text-2xl mb-1">Knowledge graph</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Prerequisites and your mastery across 20 CS topics. Hover to inspect.
+              Prerequisites and your mastery across 20 CS topics. Hover to inspect. Drag to pan, scroll to zoom.
             </p>
             <KnowledgeGraph topics={data.topics} progress={data.progress} />
           </section>
