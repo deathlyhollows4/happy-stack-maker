@@ -1,54 +1,24 @@
-# Redesign + Cleanup Plan
+## Switch to Anthropic-style professional typography
 
-## 1. Adopt editorial dark theme (from "GitHub Importer Plus")
+Anthropic (claude.ai) uses **Copernicus** (a refined contemporary serif) for headings and **Styrene** (a clean grotesk) for body. Both are proprietary, so use the closest high-quality Google Fonts equivalents.
 
-Replace the current cyan/dark-tech aesthetic with a warm "tutor marking up a paper" look:
+### Font choice
 
-- **Typography**: Instrument Serif (display), Inter (body), JetBrains Mono (code). Load via Google Fonts in `src/styles.css`.
-- **Palette** (OKLCH tokens in `src/styles.css`):
-  - Background: near-black with warm undertone
-  - Foreground: warm cream
-  - Primary: warm cream (used for buttons; dark text on it)
-  - Accent: burnt sienna (used for emphasis, mastery numbers)
-  - Card/sidebar/muted/border/ring all retuned to match
-- Update `@theme inline` to expose the new tokens plus `--color-ink`, `--color-cream`, `--font-display`.
-- Update `@layer base` so `h1/h2/h3/.font-display` use the serif and selection color matches primary.
+- **Display / headings**: `Fraunces` — modern contemporary serif with the same warm, slightly soft character as Copernicus. Use weights 400/500 with `opsz` set high for display.
+- **Body / UI**: `Inter` — already loaded; keep it. Tight neutral grotesk, very close to Styrene in proportion.
+- **Code**: keep `JetBrains Mono`.
 
-## 2. Rebuild landing page (`src/routes/index.tsx`)
+This drops `Instrument Serif` (which reads as decorative/editorial) in favor of something explicitly designed for product UI.
 
-Mirror the reference layout while keeping CodeWise content:
+### Changes (frontend only)
 
-- Header: serif "CodeWise" wordmark + small mono "beta" chip, Sign in link, cream "Get started" button.
-- Hero: mono kicker ("For CS students preparing for placements"), oversized serif headline with italic accent word ("teaches"), muted body copy, primary CTA + secondary text link.
-- "A review, in seconds" section on `bg-card/40`: two-column mock showing a `two_sum.py` snippet and a Review card with mastery score in burnt-sienna serif, concept chips, suggested practice list.
-- 3-up feature grid (Pedagogical / Knowledge tracing / Multi-language) with small accent-tinted icon tiles.
-- Final centered CTA section with Sparkles icon.
-- Footer: single mono line "CodeWise. Built for CS students who'd rather understand than autocomplete." (no Lovable reference).
+1. **`src/styles.css`**
+   - Replace the `Instrument Serif` Google Fonts `@import` with `Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600`.
+   - Update `--font-display` token from `"Instrument Serif"` to `"Fraunces"`.
+   - Add `font-optical-sizing: auto;` and slightly tighter `letter-spacing` (`-0.02em`) on `.font-display` / `h1,h2,h3` so headings feel engineered, not literary.
+   - Leave `--font-sans` (Inter) and `--font-mono` (JetBrains Mono) unchanged.
 
-## 3. Re-skin auth + app shell to match
+2. **No component edits required** — every heading already uses the `font-display` / `font-serif` token, so swapping the token cascades through landing, auth, dashboard, review, and practice.
 
-Light touch-up only, no logic changes:
-
-- `src/routes/login.tsx`, `src/routes/signup.tsx`: serif headings, cream primary buttons, muted helper text, card on warm-black.
-- `src/routes/_authenticated/route.tsx` sidebar: serif "CodeWise" wordmark, cream active-state for nav items, accent tint replaced with new burnt-sienna accent.
-- `src/routes/_authenticated/dashboard.tsx`, `review.tsx`, `practice.tsx`: swap chip / heading classes to use `font-display`, accent color, and the new muted/card tokens. No behavioral changes.
-
-## 4. Remove all em dashes (`—`)
-
-Replace every `—` in user-visible strings, titles, comments, and code with one of:
-- a period + capitalized next clause, or
-- a comma, or
-- "to" / "and" where it reads as a range.
-
-Files to sweep: `src/routes/index.tsx`, `src/routes/login.tsx`, `src/routes/signup.tsx`, `src/routes/_authenticated/dashboard.tsx`, `src/routes/_authenticated/practice.tsx`, `src/routes/_authenticated/review.tsx`, `src/styles.css` (comment), `src/lib/codewise.functions.ts` (prompt text + practice prompt), `src/server.ts` (comment). The dashboard fallback `"—"` becomes `"-"`.
-
-## 5. Remove Lovable references
-
-- `src/routes/index.tsx`: delete the "Built on Lovable" footer line.
-- `src/routes/__root.tsx`: replace default meta (`title`, `description`, `author`, `og:title`, `og:description`, `twitter:site`) with CodeWise-branded values.
-- Leave internal-only references untouched: `LOVABLE_API_KEY`, `ai.gateway.lovable.dev` (required for the AI gateway), and the "Connect Supabase in Lovable Cloud" diagnostic strings inside auto-generated `integrations/supabase/*` files (those are managed files and not user-visible at runtime under normal conditions).
-
-## Out of scope
-
-- No changes to server functions, DB schema, auth flow, or routing structure.
-- No new dependencies.
+### Out of scope
+No color, layout, copy, or behavior changes. Only the display typeface is swapped.
