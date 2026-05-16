@@ -1,56 +1,43 @@
-# Fix Google OAuth — switch to Lovable-managed broker
+# Fix: Google auth not redirecting to dashboard
 
 ## Root cause
 
-The login/signup pages call `supabase.auth.signInWithOAuth({ provider: "google", ... })` directly. That hits Supabase's `/authorize` endpoint, which has **no Google client_id/secret configured** on this project — hence `400 Unsupported provider: missing OAuth secret` in the auth logs.
+Both helpers in `src/lib/auth-helpers.ts` pass `redirect_uri: window.location.origin`, so the broker lands the user back at `/` (the marketing index route). `src/routes/index.tsx` has no auth-aware redirect, so the user just sees the landing page even though the session is set.
 
-Lovable Cloud's managed Google credentials are **only** wired up through the broker package we already installed: `@lovable.dev/cloud-auth-js`, exposed at `src/integrations/lovable/index.ts` as `lovable.auth.signInWithOAuth(...)`. That call goes through Lovable's OAuth proxy (`/~oauth/...`) using managed client credentials, then sets the Supabase session for us.
+The `onGoogleSignIn` / `onGoogleSignUp` handlers DO call `nav({ to: "/dashboard" })`, but only in the non-redirect branch. In the real OAuth flow `result.redirected === true`, the browser navigates away to Google, and after returning the original `LoginPage` component is gone — so that `nav(...)` never runs. The post-return navigation has to happen on whatever page the broker lands on.
 
-So the fix is a code migration, not a secret/config change. No Google Cloud Console setup, no BYOK.
+We already have a proper post-OAuth page: `src/routes/auth/callback.tsx`. It waits for `getSession()` / `onAuthStateChange` and then `nav({ to: "/dashboard" })`. We just aren't pointing the broker at it.
 
-## Changes
+## Change
 
-### 1. `src/lib/auth-helpers.ts`
-Replace both helpers to use the broker:
+Edit `src/lib/auth-helpers.ts` only — point both helpers at the callback route:
 
 ```ts
-import { lovable } from "@/integrations/lovable";
+const redirect_uri = `${window.location.origin}/auth/callback`;
 
 export function signInWithGoogle() {
-  return lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
-  });
+  return lovable.auth.signInWithOAuth("google", { redirect_uri });
 }
 
 export function signInWithGoogleSignUp() {
   return lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
+    redirect_uri,
     extraParams: { prompt: "select_account" },
   });
 }
 ```
 
-### 2. `src/routes/login.tsx` and `src/routes/signup.tsx`
-Handlers already call the helpers, but the broker returns `{ redirected, error, tokens }` (no Supabase-style `{ error }` only). Update the handlers to:
+That's it. The existing `/auth/callback` component handles both first-time and returning users identically — it just reads the session and pushes to `/dashboard`. So "first-time users land on dashboard" is satisfied automatically; there is no separate onboarding gate in the current code.
 
-- if `result.error` → toast + clear loading
-- if `result.redirected` → just return (browser is navigating to Google)
-- otherwise the session is already set by the broker → `nav({ to: "/dashboard" })` and toast success
+## Not changing
 
-### 3. `src/routes/auth/callback.tsx`
-Keep the file as-is for safety (broker handles redirects via `/~oauth/callback` and lands the user back at `redirect_uri = window.location.origin`, so the route isn't strictly needed anymore, but it's harmless as a fallback). No changes required.
+- `src/routes/auth/callback.tsx` — already correct.
+- `src/routes/login.tsx` / `src/routes/signup.tsx` — the post-call `nav(...)` is dead code in the redirect path but harmless; leaving it avoids churn.
+- `src/routes/index.tsx` — no auth gate needed; the broker no longer lands here.
+- No Supabase config, no new routes, no DB work.
 
-### 4. Files we do **not** touch
-- `src/integrations/lovable/index.ts` — auto-generated, never edit.
-- `src/integrations/supabase/client.ts` — auto-generated.
-- No `supabase--configure_social_auth` re-run needed; the provider is already enabled, the broker just bypasses the missing-secret path.
+## Verify
 
-## Verification
-1. `/login` → click Google → should redirect through `oauth.lovable.app`, land back on `/`, session set, `onAuthStateChange` fires, user navigates to `/dashboard`.
-2. `/signup` → same flow with `prompt=select_account`.
-3. Auth logs should no longer show `missing OAuth secret`.
-
-## Not doing
-- Not asking the user for Google client_id/secret (managed credentials are the whole point).
-- Not changing email/password flow.
-- Not adding new routes or DB migrations.
+1. `/login` → Google → consent → returns to `/auth/callback` → spinner → `/dashboard`.
+2. `/signup` → Google (account picker due to `prompt=select_account`) → returns to `/auth/callback` → `/dashboard`.
+3. Auth logs: no `missing OAuth secret`; callback URL in the broker request now ends with `/auth/callback`.

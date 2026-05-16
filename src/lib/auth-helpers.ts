@@ -1,14 +1,16 @@
 import { lovable } from "@/integrations/lovable";
 
+const getRedirectUri = () => `${window.location.origin}/auth/callback`;
+
 export function signInWithGoogle() {
   return lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
+    redirect_uri: getRedirectUri(),
   });
 }
 
 export function signInWithGoogleSignUp() {
   return lovable.auth.signInWithOAuth("google", {
-    redirect_uri: window.location.origin,
+    redirect_uri: getRedirectUri(),
     extraParams: { prompt: "select_account" },
   });
 }
