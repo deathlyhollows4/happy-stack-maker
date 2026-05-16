@@ -127,7 +127,7 @@ function PricingPage() {
             <h2 className="font-display text-2xl">Pro Monthly</h2>
             <p className="mt-1 text-sm text-muted-foreground">Full access, billed monthly.</p>
             <div className="mt-6">
-              <span className="font-display text-5xl">$12</span>
+              <span className="font-display text-5xl">$20</span>
               <span className="ml-1 text-muted-foreground">/mo</span>
             </div>
             <ul className="mt-6 space-y-2 text-sm">
