@@ -135,7 +135,10 @@ export const reviewCode = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (subErr || !sub) return { ok: false as const, error: subErr?.message ?? "DB error" };
+    if (subErr || !sub) {
+      console.error("reviewCode insert submission failed:", subErr);
+      return { ok: false as const, error: "Something went wrong. Please try again." };
+    }
 
     // persist issues
     if (parsed.issues.length > 0) {
