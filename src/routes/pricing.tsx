@@ -127,7 +127,7 @@ function PricingPage() {
             <h2 className="font-display text-2xl">Pro Monthly</h2>
             <p className="mt-1 text-sm text-muted-foreground">Full access, billed monthly.</p>
             <div className="mt-6">
-              <span className="font-display text-5xl">$12</span>
+              <span className="font-display text-5xl">$20</span>
               <span className="ml-1 text-muted-foreground">/mo</span>
             </div>
             <ul className="mt-6 space-y-2 text-sm">
@@ -151,10 +151,10 @@ function PricingPage() {
           <div className="rounded-lg border border-border bg-card/40 p-6">
             <h2 className="font-display text-2xl">Pro Yearly</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Save $36 vs monthly.
+              Save $128 vs monthly.
             </p>
             <div className="mt-6">
-              <span className="font-display text-5xl">$108</span>
+              <span className="font-display text-5xl">$112</span>
               <span className="ml-1 text-muted-foreground">/yr</span>
             </div>
             <ul className="mt-6 space-y-2 text-sm">
