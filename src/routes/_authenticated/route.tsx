@@ -1,10 +1,16 @@
 import { createFileRoute, Link, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { LayoutDashboard, Code2, Sparkles, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
+    // Skip on the server: there is no localStorage so getSession() always returns
+    // null, which would issue a spurious redirect that overwrites the just-rendered
+    // dashboard on hydration/live-preview reload. The component-level gate below
+    // performs the real check on the client once Supabase has restored the session.
+    if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
     if (!data.session) throw redirect({ to: "/login" });
   },
@@ -16,8 +22,11 @@ function AuthLayout() {
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
-  if (!user) return null;
+  useEffect(() => {
+    if (!loading && !user) nav({ to: "/login" });
+  }, [loading, user, nav]);
+
+  if (loading || !user) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
 
   const signOut = async () => { await supabase.auth.signOut(); nav({ to: "/" }); };
 
