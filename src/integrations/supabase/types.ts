@@ -14,7 +14,192 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      practice_problems: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          prompt: string
+          starter_code: string | null
+          title: string
+          topic_slug: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language?: string
+          prompt: string
+          starter_code?: string | null
+          title: string
+          topic_slug?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          prompt?: string
+          starter_code?: string | null
+          title?: string
+          topic_slug?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_problems_topic_slug_fkey"
+            columns: ["topic_slug"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      progress: {
+        Row: {
+          attempts: number
+          last_reviewed: string
+          mastery: number
+          topic_slug: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          last_reviewed?: string
+          mastery?: number
+          topic_slug: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          last_reviewed?: string
+          mastery?: number
+          topic_slug?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progress_topic_slug_fkey"
+            columns: ["topic_slug"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      review_issues: {
+        Row: {
+          concept_slug: string | null
+          explanation: string
+          fix_hint: string | null
+          id: string
+          line: number | null
+          severity: string
+          submission_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          concept_slug?: string | null
+          explanation: string
+          fix_hint?: string | null
+          id?: string
+          line?: number | null
+          severity?: string
+          submission_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          concept_slug?: string | null
+          explanation?: string
+          fix_hint?: string | null
+          id?: string
+          line?: number | null
+          severity?: string
+          submission_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_issues_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      submissions: {
+        Row: {
+          code: string
+          concepts: string[]
+          created_at: string
+          id: string
+          language: string
+          summary: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          concepts?: string[]
+          created_at?: string
+          id?: string
+          language: string
+          summary?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          concepts?: string[]
+          created_at?: string
+          id?: string
+          language?: string
+          summary?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      topics: {
+        Row: {
+          category: string
+          description: string | null
+          name: string
+          slug: string
+        }
+        Insert: {
+          category: string
+          description?: string | null
+          name: string
+          slug: string
+        }
+        Update: {
+          category?: string
+          description?: string | null
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
