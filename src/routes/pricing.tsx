@@ -26,10 +26,8 @@ const FREE_FEATURES = [
 ];
 
 const PRO_FEATURES = [
-  "1500 code reviews",
-  "All premium content unlocked",
+  "1500 code reviews / month",
   "15 roadmap generations / day",
-  "Best AI learning resources",
   "Priority support",
 ];
 
