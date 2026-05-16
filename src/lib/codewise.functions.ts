@@ -21,9 +21,26 @@ const ReviewResponseSchema = z.object({
 });
 
 const VALID_TOPIC_SLUGS = new Set([
-  "arrays","strings","hashing","linked-lists","stacks","queues","recursion",
-  "two-pointers","sliding-window","binary-search","sorting","trees","bst",
-  "heaps","graphs","dp","greedy","backtracking","bit-manipulation","complexity",
+  "arrays",
+  "strings",
+  "hashing",
+  "linked-lists",
+  "stacks",
+  "queues",
+  "recursion",
+  "two-pointers",
+  "sliding-window",
+  "binary-search",
+  "sorting",
+  "trees",
+  "bst",
+  "heaps",
+  "graphs",
+  "dp",
+  "greedy",
+  "backtracking",
+  "bit-manipulation",
+  "complexity",
 ]);
 
 const SYSTEM_PROMPT = `You are CodeWise, an AI code reviewer for computer-science students.
@@ -52,10 +69,12 @@ Return ONLY JSON matching the requested schema. No markdown, no prose outside JS
 export const reviewCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      code: z.string().min(1).max(20_000),
-      language: z.enum(LANGS),
-    }).parse(input)
+    z
+      .object({
+        code: z.string().min(1).max(20_000),
+        language: z.enum(LANGS),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -84,8 +103,13 @@ export const reviewCode = createServerFn({ method: "POST" })
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
-      if (aiRes.status === 429) return { ok: false as const, error: "Rate limited. Try again in a minute." };
-      if (aiRes.status === 402) return { ok: false as const, error: "AI credits exhausted. Add credits in Lovable settings." };
+      if (aiRes.status === 429)
+        return { ok: false as const, error: "Rate limited. Try again in a minute." };
+      if (aiRes.status === 402)
+        return {
+          ok: false as const,
+          error: "AI credits exhausted. Add credits in Lovable settings.",
+        };
       return { ok: false as const, error: `AI error: ${text.slice(0, 200)}` };
     }
 
@@ -120,7 +144,8 @@ export const reviewCode = createServerFn({ method: "POST" })
         user_id: userId,
         line: i.line ?? null,
         severity: i.severity,
-        concept_slug: i.concept_slug && VALID_TOPIC_SLUGS.has(i.concept_slug) ? i.concept_slug : null,
+        concept_slug:
+          i.concept_slug && VALID_TOPIC_SLUGS.has(i.concept_slug) ? i.concept_slug : null,
         title: i.title,
         explanation: i.explanation,
         fix_hint: i.fix_hint ?? null,
@@ -182,8 +207,15 @@ export const getDashboard = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const [{ data: subs }, { data: progress }, { data: topics }] = await Promise.all([
-      supabase.from("submissions").select("id, language, summary, created_at").order("created_at", { ascending: false }).limit(10),
-      supabase.from("progress").select("topic_slug, mastery, attempts, last_reviewed").eq("user_id", userId),
+      supabase
+        .from("submissions")
+        .select("id, language, summary, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10),
+      supabase
+        .from("progress")
+        .select("topic_slug, mastery, attempts, last_reviewed")
+        .eq("user_id", userId),
       supabase.from("topics").select("slug, name, category"),
     ]);
     return {
@@ -208,10 +240,12 @@ export const getSubmission = createServerFn({ method: "GET" })
 export const generatePractice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      topicSlug: z.string().nullable().optional(),
-      language: z.enum(LANGS).default("python"),
-    }).parse(input)
+    z
+      .object({
+        topicSlug: z.string().nullable().optional(),
+        language: z.enum(LANGS).default("python"),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -229,7 +263,11 @@ export const generatePractice = createServerFn({ method: "POST" })
     }
     if (!VALID_TOPIC_SLUGS.has(topicSlug)) topicSlug = "arrays";
 
-    const { data: topic } = await supabase.from("topics").select("name, description").eq("slug", topicSlug).maybeSingle();
+    const { data: topic } = await supabase
+      .from("topics")
+      .select("name, description")
+      .eq("slug", topicSlug)
+      .maybeSingle();
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -259,11 +297,13 @@ export const generatePractice = createServerFn({ method: "POST" })
     const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
     let parsed;
     try {
-      parsed = z.object({
-        title: z.string().min(1).max(200),
-        prompt: z.string().min(1).max(5000),
-        starter_code: z.string().max(5000).optional().default(""),
-      }).parse(JSON.parse(content));
+      parsed = z
+        .object({
+          title: z.string().min(1).max(200),
+          prompt: z.string().min(1).max(5000),
+          starter_code: z.string().max(5000).optional().default(""),
+        })
+        .parse(JSON.parse(content));
     } catch {
       return { ok: false as const, error: "Malformed problem JSON." };
     }

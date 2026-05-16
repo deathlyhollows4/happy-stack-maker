@@ -81,7 +81,7 @@
   --muted: oklch(0.24 0.01 60);
   --muted-foreground: oklch(0.68 0.018 70);
 
-  --accent: oklch(0.7 0.16 35);   /* burnt sienna accent */
+  --accent: oklch(0.7 0.16 35); /* burnt sienna accent */
   --accent-foreground: oklch(0.98 0.01 75);
 
   --destructive: oklch(0.62 0.22 25);
@@ -111,23 +111,35 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
+  * {
+    border-color: var(--color-border);
+  }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, .font-display {
+  h1,
+  h2,
+  h3,
+  .font-display {
     font-family: var(--font-display);
     font-optical-sizing: auto;
     font-variation-settings: "opsz" 96;
     letter-spacing: -0.025em;
   }
 
-  code, pre, .font-mono { font-family: var(--font-mono); }
+  code,
+  pre,
+  .font-mono {
+    font-family: var(--font-mono);
+  }
 
-  ::selection { background-color: oklch(0.88 0.075 75 / 0.3); }
+  ::selection {
+    background-color: oklch(0.88 0.075 75 / 0.3);
+  }
 }

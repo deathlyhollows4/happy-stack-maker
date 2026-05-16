@@ -22,26 +22,41 @@ function Practice() {
     try {
       const r = await gen({ data: { language: "python" } });
       if (!r.ok) toast.error(r.error);
-      else { toast.success("New problem ready"); refetch(); }
-    } finally { setBusy(false); }
+      else {
+        toast.success("New problem ready");
+        refetch();
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Targeted reps</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Targeted reps
+          </p>
           <h1 className="mt-2 font-display text-5xl tracking-tight">Practice</h1>
-          <p className="text-muted-foreground mt-2">Auto-generated problems targeting your weakest topic.</p>
+          <p className="text-muted-foreground mt-2">
+            Auto-generated problems targeting your weakest topic.
+          </p>
         </div>
-        <button onClick={onGen} disabled={busy} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50">
+        <button
+          onClick={onGen}
+          disabled={busy}
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
+        >
           <Sparkles className="size-4" /> {busy ? "Generating…" : "Generate a problem"}
         </button>
       </div>
 
       {isLoading && <p className="text-muted-foreground">Loading…</p>}
       {data && data.problems.length === 0 && (
-        <p className="text-sm text-muted-foreground">No problems yet. Click "Generate a problem" to get one.</p>
+        <p className="text-sm text-muted-foreground">
+          No problems yet. Click "Generate a problem" to get one.
+        </p>
       )}
 
       <div className="space-y-4">
@@ -49,13 +64,23 @@ function Practice() {
           <article key={p.id} className="rounded-lg border border-border bg-card p-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-display text-2xl">{p.title}</h2>
-              {p.topic_slug && <span className="text-[11px] font-mono px-2 py-1 rounded-sm bg-accent/15 text-accent">{p.topic_slug}</span>}
+              {p.topic_slug && (
+                <span className="text-[11px] font-mono px-2 py-1 rounded-sm bg-accent/15 text-accent">
+                  {p.topic_slug}
+                </span>
+              )}
             </div>
-            <pre className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed font-sans">{p.prompt}</pre>
+            <pre className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed font-sans">
+              {p.prompt}
+            </pre>
             {p.starter_code && (
               <div className="mt-4">
-                <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Starter ({p.language})</p>
-                <pre className="rounded-md bg-background border border-border p-3 text-xs overflow-auto font-mono">{p.starter_code}</pre>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+                  Starter ({p.language})
+                </p>
+                <pre className="rounded-md bg-background border border-border p-3 text-xs overflow-auto font-mono">
+                  {p.starter_code}
+                </pre>
               </div>
             )}
           </article>

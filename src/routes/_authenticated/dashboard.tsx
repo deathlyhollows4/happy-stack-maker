@@ -17,11 +17,16 @@ function Dashboard() {
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-10">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Your workspace</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Your workspace
+          </p>
           <h1 className="mt-2 font-display text-5xl tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-2">Your CS mastery, at a glance.</p>
         </div>
-        <Link to="/review" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition">
+        <Link
+          to="/review"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+        >
           <Code2 className="size-4" /> New review
         </Link>
       </div>
@@ -34,13 +39,19 @@ function Dashboard() {
           <Stat label="Topics touched" value={data.progress.length} />
           <Stat
             label="Avg mastery"
-            value={data.progress.length ? `${Math.round((data.progress.reduce((a, p) => a + p.mastery, 0) / data.progress.length) * 100)}%` : "-"}
+            value={
+              data.progress.length
+                ? `${Math.round((data.progress.reduce((a, p) => a + p.mastery, 0) / data.progress.length) * 100)}%`
+                : "-"
+            }
           />
 
           <section className="lg:col-span-2 rounded-lg border border-border bg-card p-6">
             <h2 className="font-display text-2xl mb-4">Topic mastery</h2>
             {data.progress.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Submit your first review to start tracking mastery.</p>
+              <p className="text-sm text-muted-foreground">
+                Submit your first review to start tracking mastery.
+              </p>
             ) : (
               <ul className="space-y-3">
                 {data.progress
@@ -55,7 +66,10 @@ function Dashboard() {
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                        <div className="h-full bg-accent transition-all" style={{ width: `${p.mastery * 100}%` }} />
+                        <div
+                          className="h-full bg-accent transition-all"
+                          style={{ width: `${p.mastery * 100}%` }}
+                        />
                       </div>
                     </li>
                   ))}
@@ -70,12 +84,21 @@ function Dashboard() {
             ) : (
               <ul className="space-y-3">
                 {data.submissions.map((s) => (
-                  <li key={s.id} className="text-sm border-b border-border last:border-0 pb-3 last:pb-0">
+                  <li
+                    key={s.id}
+                    className="text-sm border-b border-border last:border-0 pb-3 last:pb-0"
+                  >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px] uppercase tracking-widest text-accent">{s.language}</span>
-                      <span className="text-xs text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</span>
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-accent">
+                        {s.language}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(s.created_at).toLocaleDateString()}
+                      </span>
                     </div>
-                    <p className="text-muted-foreground line-clamp-2">{s.summary ?? "No summary"}</p>
+                    <p className="text-muted-foreground line-clamp-2">
+                      {s.summary ?? "No summary"}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -85,9 +108,14 @@ function Dashboard() {
           <section className="lg:col-span-3 rounded-lg border border-border bg-card p-6 flex items-center justify-between">
             <div>
               <h2 className="font-display text-2xl mb-1">Need a target?</h2>
-              <p className="text-sm text-muted-foreground">Generate a practice problem for your weakest topic.</p>
+              <p className="text-sm text-muted-foreground">
+                Generate a practice problem for your weakest topic.
+              </p>
             </div>
-            <Link to="/practice" className="inline-flex items-center gap-2 text-sm text-accent hover:underline">
+            <Link
+              to="/practice"
+              className="inline-flex items-center gap-2 text-sm text-accent hover:underline"
+            >
               Go to Practice <ArrowUpRight className="size-4" />
             </Link>
           </section>
