@@ -149,12 +149,17 @@ function PricingPage() {
           {/* Pro yearly */}
           <div className="rounded-lg border border-border bg-card/40 p-6">
             <h2 className="font-display text-2xl">Pro Yearly</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Save $128 vs monthly.
-            </p>
             <div className="mt-6">
-              <span className="font-display text-5xl">$112</span>
+              <span className="font-display text-5xl">$199</span>
               <span className="ml-1 text-muted-foreground">/yr</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-sm line-through text-muted-foreground/60">
+                $240
+              </span>
+              <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
+                Save 17%
+              </span>
             </div>
             <ul className="mt-6 space-y-2 text-sm">
               {PRO_FEATURES.map((f) => (
