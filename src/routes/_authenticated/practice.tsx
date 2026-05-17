@@ -60,6 +60,9 @@ function Practice() {
         await refetch();
         setActiveId((r as any).problem?.id ?? null);
       }
+    } catch (e: any) {
+      console.error("generatePractice failed:", e);
+      toast.error(e?.message || "Could not generate a problem. Try again.");
     } finally {
       setBusy(false);
     }

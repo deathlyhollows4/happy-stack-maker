@@ -1,18 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-let _admin: SupabaseClient | null = null;
-function admin(): SupabaseClient {
-  if (!_admin) {
-    _admin = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _admin;
-}
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const updateDisplayName = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -52,7 +41,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const sb = admin();
+    const sb = supabaseAdmin;
 
     // App-level data: order matters for FK-less tables.
     const tables = [
@@ -67,7 +56,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
     ] as const;
 
     for (const t of tables) {
-      const { error } = await sb.from(t).delete().eq("user_id", userId);
+      const { error } = await (sb as any).from(t).delete().eq("user_id", userId);
       // profiles uses id, not user_id
       if (error && t === "profiles") {
         await sb.from("profiles").delete().eq("id", userId);

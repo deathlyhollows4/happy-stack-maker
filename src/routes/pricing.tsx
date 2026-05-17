@@ -111,7 +111,7 @@ function PricingPage() {
               ))}
             </ul>
             <Link
-              to={user ? "/app" : "/signup"}
+              to={user ? "/dashboard" : "/signup"}
               className="mt-8 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-accent/10"
             >
               {user ? "Go to dashboard" : "Get started"}
