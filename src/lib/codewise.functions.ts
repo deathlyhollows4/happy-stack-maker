@@ -141,6 +141,7 @@ export const reviewCode = createServerFn({ method: "POST" })
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
         ],
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -183,6 +184,7 @@ export const reviewCode = createServerFn({ method: "POST" })
                 { role: "system", content: SYSTEM_PROMPT },
                 { role: "user", content: userPrompt },
               ],
+              response_format: { type: "json_object" },
             }),
           });
           if (!retryRes.ok) {
@@ -416,6 +418,7 @@ export const generatePractice = createServerFn({ method: "POST" })
             content: `Topic: ${topic?.name ?? topicSlug}. ${topic?.description ?? ""}\nLanguage: ${data.language}\nGenerate ONE practice problem aimed at strengthening this concept.`,
           },
         ],
+        response_format: { type: "json_object" },
       }),
     });
 
@@ -459,6 +462,7 @@ export const generatePractice = createServerFn({ method: "POST" })
                   content: `Topic: ${topic?.name ?? topicSlug}. ${topic?.description ?? ""}\nLanguage: ${data.language}\nGenerate ONE practice problem aimed at strengthening this concept.`,
                 },
               ],
+              response_format: { type: "json_object" },
             }),
           });
           if (!retryRes.ok) {
