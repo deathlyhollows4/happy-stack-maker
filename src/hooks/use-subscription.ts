@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,6 +21,7 @@ export function useSubscription() {
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const env = getPaddleEnvironment();
 
@@ -50,7 +51,7 @@ export function useSubscription() {
     fetchSub();
 
     const channel = supabase
-      .channel(`subscriptions:${user.id}`)
+      .channel(`subscriptions:${user.id}:${Date.now()}`)
       .on(
         "postgres_changes",
         {
@@ -61,11 +62,20 @@ export function useSubscription() {
         },
         () => fetchSub(),
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED") {
+          channelRef.current = null;
+        }
+      });
+
+    channelRef.current = channel;
 
     return () => {
       active = false;
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [user, env]);
 
