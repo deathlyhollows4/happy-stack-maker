@@ -48,6 +48,8 @@ function ExportPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["exportUserData"],
     queryFn: () => fn(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   if (isLoading) {

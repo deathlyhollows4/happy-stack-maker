@@ -13,6 +13,7 @@ import { runCode } from "@/lib/code-exec.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
 import { Sparkles, ArrowLeft, Play, Send } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/practice")({
   head: () => ({ meta: [{ title: "Practice. CodeWise" }] }),
@@ -33,7 +34,12 @@ function langExt(l: Lang) {
 function Practice() {
   const gen = useServerFn(generatePractice);
   const list = useServerFn(listPractice);
-  const { data, refetch, isLoading } = useQuery({ queryKey: ["practice"], queryFn: () => list() });
+  const { data, refetch, isLoading } = useQuery({
+    queryKey: ["practice"],
+    queryFn: () => list(),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
   const [busy, setBusy] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -86,7 +92,16 @@ function Practice() {
         </button>
       </div>
 
-      {isLoading && <p className="text-muted-foreground">Loading…</p>}
+      {isLoading && (
+        <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-16" />
+            ))}
+          </div>
+          <Skeleton className="h-96" />
+        </div>
+      )}
       {data && data.problems.length === 0 && (
         <p className="text-sm text-muted-foreground">
           No problems yet. Click "Generate a problem" to get one.

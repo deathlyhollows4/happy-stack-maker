@@ -27,7 +27,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 4 — Growth & SEO | ✅ **DONE** | 4.1, 4.2, 4.3 | — |
 | 5 — Research | ✅ **DONE** | 5.1, 5.2, 5.3 | — |
 | 6 — B2B & Admin | ✅ **DONE** | 6.1, 6.2, 6.3, 6.4 | — |
-| 7 — UX Improvements | 🔄 **IN PROGRESS** | 7.1, 7.2 | 7.3 |
+| 7 — UX Improvements | 🔄 **IN PROGRESS** | 7.1, 7.2, 7.3 | — |
 
 ### Session Log
 
@@ -50,6 +50,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 15 | Curriculum mapping: curriculum_mappings table migration (SPPU + NPTEL seed data), getCurriculumMappings/upsertCurriculumMapping server fns, /admin/curriculum inline-edit UI | `codewise.functions.ts`, `admin.curriculum.tsx` (new), `supabase/migrations/*_curriculum_mappings.sql` (new) |
 | 16 | Blog "Explore": static blog posts lib, /explore list page (SEO meta, card grid), /explore/$slug detail page (article layout, CTA), added Explore link to homepage footer | `blog-posts.ts` (new), `explore.tsx` (new), `explore.$slug.tsx` (new), `index.tsx` |
 | 17 | Nav redesign: replaced left sidebar with sticky top nav bar (centered links + user dropdown), mobile hamburger sheet, removed compact SiteFooter, added Explore to global footer | `route.tsx`, `site-footer.tsx` |
+| 18 | Perf: React Query caching (staleTime/gcTime) on all 11 queries, lazy-loaded knowledge-graph (d3), Skeleton loading on dashboard + practice + submission detail | `dashboard.tsx`, `practice.tsx`, `settings.tsx`, `learn.$slug.tsx`, `submission.$submissionId.tsx`, `s.$submissionId.tsx`, `admin.dashboard.tsx`, `admin.seats.tsx`, `admin.export.tsx`, `admin.curriculum.tsx`, `settings.export.tsx` |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -324,11 +325,11 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 - Cancellation grace period: 7 days from cancel click, enforced in `cancelSubscription` server fn
 - Blog "Explore": /explore list page with 5 posts (static data), /explore/$slug detail page, SEO meta + OG tags, linked from homepage footer
 - Navigation redesign: top sticky nav bar (centered links), mobile hamburger sheet, user dropdown, global site footer
+- Performance: React Query caching (staleTime/gcTime tuned per query), knowledge-graph lazy-loaded (d3 code-split), Skeleton loading states on key pages
 
 ### 6.2 Not yet built (remaining polish items)
 
 - Google OAuth + Apple sign-in (currently email/password only — requires Google Cloud Console setup)
-- Performance optimisation: React Query caching, lazy-load heavy components, skeleton loading states
 - `?checkout=success` toast on landing page after Paddle checkout completes
 - Analytics (Plausible or PostHog) — currently nothing wired
 - User study scaffolding for the ICNDIA paper (consent flow, anonymized telemetry)

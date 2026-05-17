@@ -56,6 +56,8 @@ function SharePage() {
     queryKey: ["publicSubmission", submissionId],
     queryFn: () => fn({ data: { id: submissionId } }),
     enabled: !!submissionId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const submission = data?.submission ?? null;

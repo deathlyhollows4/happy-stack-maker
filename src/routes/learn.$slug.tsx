@@ -55,6 +55,8 @@ function LearnPage() {
     queryKey: ["topicBySlug", slug],
     queryFn: () => fn({ data: { slug } }),
     enabled: !!slug,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
   });
 
   const topic = data?.topic ?? null;

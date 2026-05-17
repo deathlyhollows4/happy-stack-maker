@@ -14,6 +14,8 @@ function AdminDashboard() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["adminDashboard"],
     queryFn: () => fn(),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   if (isLoading) {

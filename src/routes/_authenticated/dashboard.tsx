@@ -1,9 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { Suspense, lazy } from "react";
 import { getDashboard } from "@/lib/codewise.functions";
-import { KnowledgeGraph } from "@/components/knowledge-graph";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUpRight, Code2 } from "lucide-react";
+
+const KnowledgeGraph = lazy(() =>
+  import("@/components/knowledge-graph").then((m) => ({ default: m.KnowledgeGraph })),
+);
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard. CodeWise" }] }),
@@ -12,7 +17,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const fn = useServerFn(getDashboard);
-  const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: () => fn() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => fn(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -32,7 +42,17 @@ function Dashboard() {
         </Link>
       </div>
 
-      {isLoading && <p className="text-muted-foreground">Loading…</p>}
+      {isLoading && (
+        <div className="grid lg:grid-cols-3 gap-6">
+          <Skeleton className="h-28 rounded-lg" />
+          <Skeleton className="h-28 rounded-lg" />
+          <Skeleton className="h-28 rounded-lg" />
+          <Skeleton className="lg:col-span-3 h-[440px] rounded-lg" />
+          <Skeleton className="lg:col-span-2 h-64 rounded-lg" />
+          <Skeleton className="h-64 rounded-lg" />
+          <Skeleton className="lg:col-span-3 h-20 rounded-lg" />
+        </div>
+      )}
 
       {data && (
         <div className="grid lg:grid-cols-3 gap-6">
@@ -52,7 +72,9 @@ function Dashboard() {
             <p className="text-sm text-muted-foreground mb-4">
               Prerequisites and your mastery across 20 CS topics. Hover to inspect. Drag to pan, scroll to zoom.
             </p>
-            <KnowledgeGraph topics={data.topics} progress={data.progress} />
+            <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
+              <KnowledgeGraph topics={data.topics} progress={data.progress} />
+            </Suspense>
           </section>
 
           <section className="lg:col-span-2 rounded-lg border border-border bg-card p-6">

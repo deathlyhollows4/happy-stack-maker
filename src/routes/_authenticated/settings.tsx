@@ -22,6 +22,8 @@ function SettingsPage() {
   const { data: profileData, refetch } = useQuery({
     queryKey: ["profile-settings"],
     queryFn: () => getProfileFn(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const [name, setName] = useState("");

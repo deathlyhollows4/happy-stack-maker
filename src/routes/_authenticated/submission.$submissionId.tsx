@@ -10,6 +10,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { getSubmission } from "@/lib/codewise.functions";
 import { toast } from "sonner";
 import { ArrowLeft, Share2, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/submission/$submissionId")({
   head: ({ params }) => ({
@@ -49,6 +50,8 @@ function SubmissionDetail() {
     queryKey: ["submission", submissionId],
     queryFn: () => fn({ data: { id: submissionId } }),
     enabled: !!submissionId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const submission = data?.submission ?? null;
@@ -94,8 +97,8 @@ function SubmissionDetail() {
 
       {isLoading && (
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="rounded-lg border border-border bg-card min-h-[60vh] animate-pulse" />
-          <div className="rounded-lg border border-border bg-card p-6 min-h-[60vh] animate-pulse" />
+          <Skeleton className="rounded-lg min-h-[60vh]" />
+          <Skeleton className="rounded-lg min-h-[60vh]" />
         </div>
       )}
 

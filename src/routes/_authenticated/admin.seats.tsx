@@ -18,6 +18,8 @@ function SeatManagement() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["adminSeats"],
     queryFn: () => seatsFn(),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   if (isLoading) {

@@ -49,6 +49,8 @@ function AdminExport() {
     queryKey: ["adminExport"],
     queryFn: () => fn(),
     enabled: true,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   if (isLoading) {

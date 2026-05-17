@@ -19,11 +19,15 @@ function CurriculumMapping() {
   const { data: mappingsData, isLoading: mappingsLoading } = useQuery({
     queryKey: ["curriculumMappings"],
     queryFn: () => mappingsFn(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: () => dashboardFn(),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
