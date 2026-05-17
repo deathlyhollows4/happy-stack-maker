@@ -253,7 +253,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   const hasProgress = progress.length > 0;
 
   return (
-    <div ref={containerRef} className="relative overflow-hidden rounded-lg bg-[oklch(0.16_0.012_60)]" style={{ aspectRatio: `${VB_W}/${VB_H}` }}>
+    <div ref={containerRef} className="relative w-full overflow-hidden rounded-lg bg-[oklch(0.16_0.012_60)]" style={{ aspectRatio: `${VB_W}/${VB_H}` }}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${VB_W} ${VB_H}`}
