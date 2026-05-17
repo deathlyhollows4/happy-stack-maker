@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
+import { z, type ZodType } from "zod";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -17,6 +17,18 @@ const envInput = z
   .enum(["sandbox", "live"])
   .default("sandbox") as z.ZodType<PaddleEnv>;
 
+function extractJson(raw: string): string {
+  const trimmed = raw.trim();
+  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fence?.[1]) return fence[1].trim();
+  const firstBrace = trimmed.indexOf("{");
+  const lastBrace = trimmed.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    return trimmed.slice(firstBrace, lastBrace + 1);
+  }
+  return trimmed;
+}
+
 const LANGS = ["python", "javascript", "java", "cpp"] as const;
 
 const ReviewIssueSchema = z.object({
@@ -31,9 +43,9 @@ const ReviewIssueSchema = z.object({
 
 const ReviewResponseSchema = z.object({
   summary: z.string().min(1).max(2000),
-  concepts: z.array(z.string()).max(20),
-  issues: z.array(ReviewIssueSchema).max(25),
-});
+  concepts: z.array(z.string()).max(20).default([]),
+  issues: z.array(ReviewIssueSchema).max(25).default([]),
+}).passthrough();
 
 const VALID_TOPIC_SLUGS = new Set([
   "arrays",
@@ -155,7 +167,7 @@ export const reviewCode = createServerFn({ method: "POST" })
     while (attempt < maxAttempts) {
       attempt++;
       try {
-        parsed = ReviewResponseSchema.parse(JSON.parse(content));
+        parsed = ReviewResponseSchema.parse(JSON.parse(extractJson(content)));
         break;
       } catch (parseErr) {
         console.error("reviewCode parse attempt", attempt, "failed:", parseErr, "content preview:", content.slice(0, 200));
@@ -430,7 +442,7 @@ export const generatePractice = createServerFn({ method: "POST" })
             prompt: z.string().min(1).max(5000),
             starter_code: z.string().max(5000).optional().default(""),
           })
-          .parse(JSON.parse(content));
+          .parse(JSON.parse(extractJson(content)));
         break;
       } catch (parseErr) {
         console.error("generatePractice parse attempt", attempt, "failed:", parseErr, "content preview:", content.slice(0, 200));
