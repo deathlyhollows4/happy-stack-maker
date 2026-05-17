@@ -1,16 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-let _supabase: SupabaseClient | null = null;
-function getSupabase(): SupabaseClient {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _supabase;
-}
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const CARD_W = 1200;
 const CARD_H = 630;
@@ -121,7 +110,7 @@ export const Route = createFileRoute("/api/public/og/$submissionId")({
       GET: async ({ params }) => {
         const { submissionId } = params;
         try {
-          const supabase = getSupabase();
+          const supabase = supabaseAdmin;
           const { data: sub, error } = await supabase
             .from("submissions")
             .select("*")

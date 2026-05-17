@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z, type ZodType } from "zod";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   getUserPlan,
   consumeQuota,
@@ -334,21 +334,10 @@ export const getSubmission = createServerFn({ method: "GET" })
     return { submission: sub, issues: issues ?? [] };
   });
 
-let _serviceClient: SupabaseClient | null = null;
-function serviceClient(): SupabaseClient {
-  if (!_serviceClient) {
-    _serviceClient = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _serviceClient;
-}
-
 export const getPublicSubmission = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
-    const supabase = serviceClient();
+    const supabase = supabaseAdmin;
     const [{ data: sub }, { data: issues }] = await Promise.all([
       supabase.from("submissions").select("*").eq("id", data.id).maybeSingle(),
       supabase.from("review_issues").select("*").eq("submission_id", data.id),
@@ -359,7 +348,7 @@ export const getPublicSubmission = createServerFn({ method: "GET" })
 export const getTopicBySlug = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ slug: z.string().min(1).max(50) }).parse(input))
   .handler(async ({ data }) => {
-    const supabase = serviceClient();
+    const supabase = supabaseAdmin;
     const [{ data: topic }, { data: related }] = await Promise.all([
       supabase.from("topics").select("slug, name, category, description").eq("slug", data.slug).maybeSingle(),
       supabase.from("topics").select("slug, name, category, description"),
@@ -595,7 +584,7 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const admin = serviceClient();
+    const admin = supabaseAdmin;
 
     const { data: isAdmin } = await admin.rpc("has_role", {
       p_user_id: userId,
@@ -676,7 +665,7 @@ export const getAdminSeats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const admin = serviceClient();
+    const admin = supabaseAdmin;
 
     const { data: isAdmin } = await admin.rpc("has_role", {
       p_user_id: userId,
@@ -711,7 +700,7 @@ export const grantAdminRole = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ targetUserId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const admin = serviceClient();
+    const admin = supabaseAdmin;
 
     const { data: isAdmin } = await admin.rpc("has_role", {
       p_user_id: userId,
@@ -735,7 +724,7 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ targetUserId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const admin = serviceClient();
+    const admin = supabaseAdmin;
 
     const { data: isAdmin } = await admin.rpc("has_role", {
       p_user_id: userId,
@@ -759,7 +748,7 @@ export const exportAllUserData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const admin = serviceClient();
+    const admin = supabaseAdmin;
 
     const { data: isAdmin } = await admin.rpc("has_role", {
       p_user_id: userId,
@@ -788,7 +777,7 @@ export const exportAllUserData = createServerFn({ method: "GET" })
 
 export const getCurriculumMappings = createServerFn({ method: "GET" })
   .handler(async () => {
-    const admin = serviceClient();
+    const admin = supabaseAdmin;
     const { data } = await admin
       .from("curriculum_mappings")
       .select("topic_slug, sppu_course, sppu_module, nptel_course, nptel_module, year_semester")
@@ -812,7 +801,7 @@ export const upsertCurriculumMapping = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const admin = serviceClient();
+    const admin = supabaseAdmin;
 
     const { data: isAdmin } = await admin.rpc("has_role", {
       p_user_id: userId,

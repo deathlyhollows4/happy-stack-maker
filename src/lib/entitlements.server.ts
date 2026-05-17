@@ -1,17 +1,6 @@
 // Server-only entitlement helpers. Determines a user's plan + consumes quota.
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { PaddleEnv } from "@/lib/paddle.server";
-
-let _admin: SupabaseClient | null = null;
-function admin(): SupabaseClient {
-  if (!_admin) {
-    _admin = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _admin;
-}
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type Plan = "free" | "pro";
 
@@ -33,7 +22,7 @@ export async function getUserPlan(
   userId: string,
   env: PaddleEnv,
 ): Promise<{ plan: Plan; status: string | null; pastDue: boolean }> {
-  const { data } = await admin()
+  const { data } = await supabaseAdmin
     .from("subscriptions")
     .select("status, current_period_end")
     .eq("user_id", userId)
@@ -75,7 +64,7 @@ export async function consumeQuota(
   limit: number,
   periodKey: string,
 ): Promise<boolean> {
-  const { data, error } = await admin().rpc("consume_quota", {
+  const { data, error } = await supabaseAdmin.rpc("consume_quota", {
     p_user_id: userId,
     p_kind: kind,
     p_limit: limit,
@@ -93,7 +82,7 @@ export async function readUsage(
   kind: QuotaKind,
   periodKey: string,
 ): Promise<number> {
-  const { data } = await admin().rpc("get_usage", {
+  const { data } = await supabaseAdmin.rpc("get_usage", {
     p_user_id: userId,
     p_kind: kind,
     p_period_key: periodKey,

@@ -8,6 +8,7 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { reviewCode } from "@/lib/codewise.functions";
+import { runCode } from "@/lib/code-exec.functions";
 import { Markdown } from "@/components/markdown";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ import {
   ArrowLeft,
   Upload,
   RefreshCw,
+  Play,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/review")({
@@ -57,7 +59,10 @@ function Review() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Awaited<ReturnType<typeof reviewCode>> | null>(null);
   const [exception, setException] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [runOutput, setRunOutput] = useState<{ stdout: string; stderr: string; exit: number } | null>(null);
   const fn = useServerFn(reviewCode);
+  const runFn = useServerFn(runCode);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onLang = (l: Lang) => {
@@ -114,6 +119,25 @@ function Review() {
     }
   };
 
+  const onRun = async () => {
+    setRunning(true);
+    setRunOutput(null);
+    try {
+      const r = await runFn({ data: { code, language: lang, stdin: "", environment: getPaddleEnvironment() } });
+      if (!r.ok) {
+        toast.error(r.error);
+        return;
+      }
+      setRunOutput({
+        stdout: r.stdout || r.compileStderr || "",
+        stderr: r.stderr || "",
+        exit: r.exitCode ?? 0,
+      });
+    } finally {
+      setRunning(false);
+    }
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <Link
@@ -163,6 +187,13 @@ function Review() {
           >
             <Sparkles className="size-4" /> {busy ? "Reviewing…" : "Review my code"}
           </button>
+          <button
+            onClick={onRun}
+            disabled={running}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent/10 disabled:opacity-50"
+          >
+            <Play className="size-4" /> {running ? "Running…" : "Run"}
+          </button>
         </div>
       </div>
 
@@ -180,6 +211,21 @@ function Review() {
             basicSetup={{ lineNumbers: true, foldGutter: true }}
           />
         </div>
+
+        {runOutput && (
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Output</p>
+            {runOutput.stdout && (
+              <pre className="text-sm text-foreground/90 whitespace-pre-wrap font-mono">{runOutput.stdout}</pre>
+            )}
+            {runOutput.stderr && (
+              <pre className="text-sm text-destructive whitespace-pre-wrap font-mono mt-1">{runOutput.stderr}</pre>
+            )}
+            {!runOutput.stdout && !runOutput.stderr && (
+              <p className="text-sm text-muted-foreground">Program exited with code {runOutput.exit}.</p>
+            )}
+          </div>
+        )}
 
         <div className="rounded-lg border border-border bg-card p-6 min-h-[60vh] overflow-auto">
           {!result && !busy && !exception && (

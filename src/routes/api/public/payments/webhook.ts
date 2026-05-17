@@ -1,17 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { verifyWebhook, EventName, type PaddleEnv } from "@/lib/paddle.server";
-
-let _supabase: SupabaseClient | null = null;
-function getSupabase(): SupabaseClient {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _supabase;
-}
 
 // Cancel grace is applied at click time by the cancelSubscription server fn
 // (runs from when the user clicks Cancel, not from Paddle's finalization).
@@ -36,7 +25,7 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
     return;
   }
 
-  await getSupabase().from("subscriptions").upsert(
+  await supabaseAdmin.from("subscriptions").upsert(
     {
       user_id: userId,
       paddle_subscription_id: id,
@@ -56,7 +45,7 @@ async function handleSubscriptionCreated(data: any, env: PaddleEnv) {
 async function handleSubscriptionUpdated(data: any, env: PaddleEnv) {
   const { id, status, currentBillingPeriod, scheduledChange } = data;
 
-  await getSupabase()
+  await supabaseAdmin
     .from("subscriptions")
     .update({
       status: status,
@@ -73,7 +62,7 @@ async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
   // Mark canceled but DO NOT touch current_period_end. The user's 7-day grace
   // window is set at click time by the cancelSubscription server fn so that
   // grace runs from when the user cancels, not from when Paddle finalizes it.
-  await getSupabase()
+  await supabaseAdmin
     .from("subscriptions")
     .update({
       status: "canceled",

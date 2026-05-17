@@ -1,21 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getPaddleClient, type PaddleEnv } from "@/lib/paddle.server";
 
 const envInput = z.enum(["sandbox", "live"]) as z.ZodType<PaddleEnv>;
-
-let _admin: SupabaseClient | null = null;
-function admin(): SupabaseClient {
-  if (!_admin) {
-    _admin = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    );
-  }
-  return _admin;
-}
 
 const GRACE_DAYS = 7;
 
@@ -34,7 +23,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
     const { userId } = context;
     const env = data.environment;
 
-    const { data: sub } = await admin()
+    const { data: sub } = await supabaseAdmin
       .from("subscriptions")
       .select("paddle_subscription_id, status, current_period_end")
       .eq("user_id", userId)
@@ -64,7 +53,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
     }
 
     const graceEnd = new Date(Date.now() + GRACE_DAYS * 24 * 60 * 60 * 1000);
-    await admin()
+    await supabaseAdmin
       .from("subscriptions")
       .update({
         status: "canceled",
@@ -88,7 +77,7 @@ export const getCustomerPortalUrl = createServerFn({ method: "POST" })
     const { userId } = context;
     const env = data.environment;
 
-    const { data: sub } = await admin()
+    const { data: sub } = await supabaseAdmin
       .from("subscriptions")
       .select("paddle_subscription_id, paddle_customer_id")
       .eq("user_id", userId)
@@ -125,7 +114,7 @@ export const updateProYearlyPrice = createServerFn({ method: "POST" })
     const { userId } = context;
     const env = data.environment;
 
-    const { data: isAdmin } = await admin().rpc("has_role", {
+    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
       p_user_id: userId,
       p_role: "admin",
     });
