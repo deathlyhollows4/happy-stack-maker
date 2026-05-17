@@ -92,7 +92,23 @@ with is_correct_pattern: true.
 The "concepts" array lists all topic slugs touched by this code (correct or not),
 used for mastery tracking. Pick 1-5 slugs from the list above.
 
-Return ONLY JSON matching the requested schema. No markdown, no prose outside JSON.`;
+Return ONLY JSON matching this exact schema. No markdown, no prose outside JSON.
+
+Required JSON format:
+{
+  "summary": "one paragraph review summary",
+  "concepts": ["arrays", "hashing"],
+  "issues": [
+    {
+      "line": 3,
+      "severity": "warning",
+      "concept_slug": "complexity",
+      "title": "Brief issue title",
+      "explanation": "Why this is an issue explained in CS concept terms",
+      "fix_hint": "How to fix (guide them, no full rewrite)"
+    }
+  ]
+}`;
 
 export const reviewCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -136,7 +152,7 @@ export const reviewCode = createServerFn({ method: "POST" })
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5-mini",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
@@ -179,7 +195,7 @@ export const reviewCode = createServerFn({ method: "POST" })
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "openai/gpt-5-mini",
               messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 { role: "user", content: userPrompt },
@@ -407,7 +423,7 @@ export const generatePractice = createServerFn({ method: "POST" })
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5-mini",
         messages: [
           {
             role: "system",
@@ -451,7 +467,7 @@ export const generatePractice = createServerFn({ method: "POST" })
             method: "POST",
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "openai/gpt-5-mini",
               messages: [
                 {
                   role: "system",
