@@ -22,7 +22,8 @@ export const Route = createFileRoute("/pricing")({
 const FREE_FEATURES = [
   "50 code reviews / month",
   "Mastery tracking across DSA topics",
-  "50 practice problems / day",
+  "25 practice problems / day",
+  "100 code runs / day",
 ];
 
 const PRO_FEATURES = [
