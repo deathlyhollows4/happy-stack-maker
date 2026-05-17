@@ -134,6 +134,7 @@ export const reviewCode = createServerFn({ method: "POST" })
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
+      console.error("AI gateway error:", aiRes.status, text);
       if (aiRes.status === 429)
         return { ok: false as const, error: "Rate limited. Try again in a minute." };
       if (aiRes.status === 402)
@@ -141,7 +142,7 @@ export const reviewCode = createServerFn({ method: "POST" })
           ok: false as const,
           error: "AI credits exhausted. Add credits in Lovable settings.",
         };
-      return { ok: false as const, error: `AI error: ${text.slice(0, 200)}` };
+      return { ok: false as const, error: "AI service temporarily unavailable. Try again." };
     }
 
     const aiJson = await aiRes.json();
