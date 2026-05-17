@@ -1,0 +1,25 @@
+- generic [active] [ref=e1]:
+  - region "Notifications alt+T"
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "CodeWise beta" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: CodeWise
+          - generic [ref=e7]: beta
+        - link "Try CodeWise" [ref=e8] [cursor=pointer]:
+          - /url: /signup
+          - img [ref=e9]
+          - text: Try CodeWise
+    - main [ref=e12]:
+      - generic [ref=e13]:
+        - paragraph [ref=e14]: Shared review
+        - heading "Code Review" [level=1] [ref=e15]
+        - paragraph [ref=e16]: Loading…
+  - complementary "Edit with Lovable" [ref=e20]:
+    - link "Edit with Lovable" [ref=e21] [cursor=pointer]:
+      - /url: https://lovable.dev/projects/ee9d5e68-46ce-4728-b988-de4157f0a64c?utm_source=lovable-badge
+      - generic [ref=e22]: Edit with
+      - img [ref=e23]
+    - button "Dismiss" [ref=e28] [cursor=pointer]:
+      - img [ref=e29]

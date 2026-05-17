@@ -36,11 +36,16 @@ export const Route = createFileRoute("/learn/$slug")({
   component: LearnPage,
 });
 
-function capitalize(slug: string): string {
+function topicDisplayName(slug: string): string {
+  if (slug.length <= 3 && slug === slug.toLowerCase()) return slug.toUpperCase();
   return slug
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+function capitalize(slug: string): string {
+  return topicDisplayName(slug);
 }
 
 function LearnPage() {

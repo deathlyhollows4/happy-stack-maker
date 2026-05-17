@@ -1,0 +1,108 @@
+- generic [active] [ref=e1]:
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - link "← CodeWise" [ref=e4] [cursor=pointer]:
+      - /url: /
+    - heading "Privacy Notice" [level=1] [ref=e5]
+    - paragraph [ref=e6]: "Last updated: May 2026"
+    - generic [ref=e7]:
+      - generic [ref=e8]:
+        - heading "1. Who we are" [level=2] [ref=e9]
+        - paragraph [ref=e10]:
+          - text: CodeWise is operated by
+          - strong [ref=e11]: Vidhan Tomar
+          - text: ("CodeWise", "we", "us"). For the purposes of data protection law, we act as the
+          - strong [ref=e12]: data controller
+          - text: of the personal data we collect when you use the service.
+      - generic [ref=e13]:
+        - heading "2. What data we collect" [level=2] [ref=e14]
+        - list [ref=e15]:
+          - listitem [ref=e16]:
+            - strong [ref=e17]: Account data
+            - text: ": name (display name), email address, hashed password / OAuth identifier."
+          - listitem [ref=e18]:
+            - strong [ref=e19]: User content
+            - text: ": code you submit, prompts, generated reviews, practice problems, mastery scores."
+          - listitem [ref=e20]:
+            - strong [ref=e21]: Usage data
+            - text: ": pages visited, features used, timestamps, approximate location and device info."
+          - listitem [ref=e22]:
+            - strong [ref=e23]: Support data
+            - text: ": messages you send us."
+          - listitem [ref=e24]:
+            - strong [ref=e25]: Cookies and identifiers
+            - text: ": essential cookies for sign-in; we may use analytics cookies (see below)."
+        - paragraph [ref=e26]:
+          - text: Payment information (card numbers etc.) is collected and processed directly by
+          - strong [ref=e27]: Paddle
+          - text: as Merchant of Record. We do not see or store your card data.
+      - generic [ref=e28]:
+        - heading "3. Why we use your data (and our legal basis)" [level=2] [ref=e29]
+        - list [ref=e30]:
+          - listitem [ref=e31]:
+            - strong [ref=e32]: To provide the service
+            - text: — create your account, run reviews, track mastery (contract performance).
+          - listitem [ref=e33]:
+            - strong [ref=e34]: To bill you and manage subscriptions
+            - text: — via Paddle (contract).
+          - listitem [ref=e35]:
+            - strong [ref=e36]: To keep the service secure
+            - text: — prevent fraud and abuse (legitimate interests).
+          - listitem [ref=e37]:
+            - strong [ref=e38]: To improve the product
+            - text: — analytics, aggregated usage (legitimate interests).
+          - listitem [ref=e39]:
+            - strong [ref=e40]: To support you
+            - text: — respond to questions (legitimate interests / contract).
+          - listitem [ref=e41]:
+            - strong [ref=e42]: To send important notices
+            - text: — billing or service messages (legal obligation / legitimate interests).
+          - listitem [ref=e43]:
+            - strong [ref=e44]: Marketing
+            - text: — only with your consent, and you can opt out at any time.
+      - generic [ref=e45]:
+        - heading "4. Who we share data with" [level=2] [ref=e46]
+        - list [ref=e47]:
+          - listitem [ref=e48]:
+            - strong [ref=e49]: Service providers / subprocessors
+            - text: ": hosting, database, AI inference, analytics, and support tooling, under contract."
+          - listitem [ref=e50]:
+            - strong [ref=e51]: Paddle
+            - text: ", our Merchant of Record, for sale of the product, subscription management, payments, tax compliance, and invoicing."
+          - listitem [ref=e52]:
+            - strong [ref=e53]: Professional advisers
+            - text: (legal, accounting) where necessary.
+          - listitem [ref=e54]:
+            - strong [ref=e55]: Authorities
+            - text: where required by law.
+        - paragraph [ref=e56]: We do not sell your personal data.
+      - generic [ref=e57]:
+        - heading "5. International transfers" [level=2] [ref=e58]
+        - paragraph [ref=e59]: Some of our service providers are located outside your country. Where data is transferred internationally we rely on appropriate safeguards such as Standard Contractual Clauses or adequacy decisions.
+      - generic [ref=e60]:
+        - heading "6. How long we keep data" [level=2] [ref=e61]
+        - paragraph [ref=e62]: We keep your account and content for as long as your account is active and for a reasonable period after, to handle disputes, comply with legal obligations, and run backups. After that, data is deleted or anonymised.
+      - generic [ref=e63]:
+        - heading "7. Your rights" [level=2] [ref=e64]
+        - paragraph [ref=e65]: Depending on where you live, you may have rights to access, rectify, erase, restrict, port, or object to processing of your personal data, and to withdraw consent. EU/UK users have the right to complain to a supervisory authority. We will respond to verified requests within one month.
+      - generic [ref=e66]:
+        - heading "8. Security" [level=2] [ref=e67]
+        - paragraph [ref=e68]: We use appropriate technical and organisational measures — encryption in transit, access controls, audit logging — to protect your data. No system is perfectly secure; please use a strong password and notify us of any suspected compromise.
+      - generic [ref=e69]:
+        - heading "9. Cookies" [level=2] [ref=e70]
+        - paragraph [ref=e71]:
+          - text: We use
+          - strong [ref=e72]: essential
+          - text: cookies for sign-in and security. We may use
+          - strong [ref=e73]: analytics
+          - text: cookies to understand how the product is used; you can manage cookie preferences through your browser settings.
+      - generic [ref=e74]:
+        - heading "10. Contact" [level=2] [ref=e75]
+        - paragraph [ref=e76]: For privacy questions, contact us via the in-app support channel.
+  - complementary "Edit with Lovable" [ref=e77]:
+    - link "Edit with Lovable" [ref=e78] [cursor=pointer]:
+      - /url: https://lovable.dev/projects/ee9d5e68-46ce-4728-b988-de4157f0a64c?utm_source=lovable-badge
+      - generic [ref=e79]: Edit with
+      - img [ref=e80]
+    - button "Dismiss" [ref=e85] [cursor=pointer]:
+      - img [ref=e86]
