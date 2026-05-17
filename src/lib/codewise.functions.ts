@@ -133,6 +133,7 @@ export const reviewCode = createServerFn({ method: "POST" })
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
+        "Lovable-API-Key": apiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -147,7 +148,7 @@ export const reviewCode = createServerFn({ method: "POST" })
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
-      console.error("AI gateway error:", aiRes.status, text);
+      console.error("AI gateway error:", aiRes.status, text.slice(0, 500));
       if (aiRes.status === 429)
         return { ok: false as const, error: "Rate limited. Try again in a minute." };
       if (aiRes.status === 402)
@@ -155,7 +156,7 @@ export const reviewCode = createServerFn({ method: "POST" })
           ok: false as const,
           error: "AI credits exhausted. Add credits in Lovable settings.",
         };
-      return { ok: false as const, error: "AI service temporarily unavailable. Try again." };
+      return { ok: false as const, error: `AI service error (${aiRes.status}). Try again.` };
     }
 
     const aiJson = await aiRes.json();
@@ -176,6 +177,7 @@ export const reviewCode = createServerFn({ method: "POST" })
             method: "POST",
             headers: {
               Authorization: `Bearer ${apiKey}`,
+              "Lovable-API-Key": apiKey,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -405,7 +407,7 @@ export const generatePractice = createServerFn({ method: "POST" })
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            headers: { Authorization: `Bearer ${apiKey}`, "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-flash",
         messages: [
@@ -449,7 +451,7 @@ export const generatePractice = createServerFn({ method: "POST" })
         if (attempt < maxAttempts) {
           const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
-            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${apiKey}`, "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: "google/gemini-3-flash",
               messages: [
