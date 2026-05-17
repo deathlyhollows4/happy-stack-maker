@@ -114,3 +114,60 @@ export const getCustomerPortalUrl = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Could not open billing portal." };
     }
   });
+
+/** Admin: update pro_yearly Paddle price to $199/yr */
+export const updateProYearlyPrice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ environment: envInput }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const env = data.environment;
+
+    const { data: isAdmin } = await admin().rpc("has_role", {
+      p_user_id: userId,
+      p_role: "admin",
+    });
+    if (!isAdmin) {
+      return { ok: false as const, error: "Admin access required." };
+    }
+
+    try {
+      const paddle = getPaddleClient(env);
+
+      // Find the pro_yearly price
+      let targetPriceId: string | null = null;
+      const products = await paddle.products.list();
+      for await (const product of products) {
+        const prices = await paddle.prices.list({ productId: product.id });
+        for await (const price of prices) {
+          const custom = (price as any).customData;
+          if (custom?.external_id === "pro_yearly") {
+            targetPriceId = price.id;
+            break;
+          }
+        }
+        if (targetPriceId) break;
+      }
+
+      if (!targetPriceId) {
+        return {
+          ok: false as const,
+          error: 'Could not find Paddle price with external_id "pro_yearly".',
+        };
+      }
+
+      await paddle.prices.update(targetPriceId, {
+        unitPrice: { amount: "19900", currencyCode: "USD" },
+      });
+
+      return { ok: true as const, message: "Pro Yearly updated to $199/yr." };
+    } catch (e: any) {
+      console.error("updateProYearlyPrice failed:", e);
+      return {
+        ok: false as const,
+        error: "Failed to update Paddle price. Check server logs.",
+      };
+    }
+  });

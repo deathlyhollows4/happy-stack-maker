@@ -31,6 +31,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
 import { Route as AuthenticatedSettingsExportRouteImport } from './routes/_authenticated/settings.export'
+import { Route as AuthenticatedAdminUpdatePriceRouteImport } from './routes/_authenticated/admin.update-price'
 import { Route as AuthenticatedAdminSeatsRouteImport } from './routes/_authenticated/admin.seats'
 import { Route as AuthenticatedAdminExportRouteImport } from './routes/_authenticated/admin.export'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
@@ -149,6 +150,12 @@ const AuthenticatedSettingsExportRoute =
     path: '/export',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedAdminUpdatePriceRoute =
+  AuthenticatedAdminUpdatePriceRouteImport.update({
+    id: '/admin/update-price',
+    path: '/admin/update-price',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSeatsRoute = AuthenticatedAdminSeatsRouteImport.update({
   id: '/admin/seats',
   path: '/admin/seats',
@@ -208,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/export': typeof AuthenticatedAdminExportRoute
   '/admin/seats': typeof AuthenticatedAdminSeatsRoute
+  '/admin/update-price': typeof AuthenticatedAdminUpdatePriceRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -237,6 +245,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/export': typeof AuthenticatedAdminExportRoute
   '/admin/seats': typeof AuthenticatedAdminSeatsRoute
+  '/admin/update-price': typeof AuthenticatedAdminUpdatePriceRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -268,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/export': typeof AuthenticatedAdminExportRoute
   '/_authenticated/admin/seats': typeof AuthenticatedAdminSeatsRoute
+  '/_authenticated/admin/update-price': typeof AuthenticatedAdminUpdatePriceRoute
   '/_authenticated/settings/export': typeof AuthenticatedSettingsExportRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/export'
     | '/admin/seats'
+    | '/admin/update-price'
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/export'
     | '/admin/seats'
+    | '/admin/update-price'
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -358,6 +370,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/export'
     | '/_authenticated/admin/seats'
+    | '/_authenticated/admin/update-price'
     | '/_authenticated/settings/export'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -539,6 +552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsExportRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/admin/update-price': {
+      id: '/_authenticated/admin/update-price'
+      path: '/admin/update-price'
+      fullPath: '/admin/update-price'
+      preLoaderRoute: typeof AuthenticatedAdminUpdatePriceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/seats': {
       id: '/_authenticated/admin/seats'
       path: '/admin/seats'
@@ -607,6 +627,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminExportRoute: typeof AuthenticatedAdminExportRoute
   AuthenticatedAdminSeatsRoute: typeof AuthenticatedAdminSeatsRoute
+  AuthenticatedAdminUpdatePriceRoute: typeof AuthenticatedAdminUpdatePriceRoute
   AuthenticatedSubmissionSubmissionIdRoute: typeof AuthenticatedSubmissionSubmissionIdRoute
 }
 
@@ -620,6 +641,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminExportRoute: AuthenticatedAdminExportRoute,
   AuthenticatedAdminSeatsRoute: AuthenticatedAdminSeatsRoute,
+  AuthenticatedAdminUpdatePriceRoute: AuthenticatedAdminUpdatePriceRoute,
   AuthenticatedSubmissionSubmissionIdRoute:
     AuthenticatedSubmissionSubmissionIdRoute,
 }
