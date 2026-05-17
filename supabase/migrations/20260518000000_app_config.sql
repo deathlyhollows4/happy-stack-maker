@@ -1,32 +1,10 @@
 -- Admin-manageable configuration key-value store
+-- Read/write via supabaseAdmin in server functions (RLS bypass), gated by isAdmin() check.
 create table public.app_config (
   key text primary key,
   value text not null,
   updated_at timestamptz not null default now()
 );
-
-alter table public.app_config enable row level security;
-
-create policy "Admins can read config"
-  on public.app_config for select
-  using (exists (
-    select 1 from public.user_roles ur
-    where ur.user_id = auth.uid() and ur.role = 'admin'
-  ));
-
-create policy "Admins can upsert config"
-  on public.app_config for insert
-  with check (exists (
-    select 1 from public.user_roles ur
-    where ur.user_id = auth.uid() and ur.role = 'admin'
-  ));
-
-create policy "Admins can update config"
-  on public.app_config for update
-  using (exists (
-    select 1 from public.user_roles ur
-    where ur.user_id = auth.uid() and ur.role = 'admin'
-  ));
 
 -- Seed default values matching current pricing/entitlements
 insert into public.app_config (key, value) values
