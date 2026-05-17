@@ -18,12 +18,15 @@ export type Plan = "free" | "pro";
 export type Quotas = {
   reviewsPerMonth: number;
   roadmapsPerDay: number;
+  codeRunsPerDay: number;
 };
 
 export const PLAN_QUOTAS: Record<Plan, Quotas> = {
-  free: { reviewsPerMonth: 5, roadmapsPerDay: 1 },
-  pro: { reviewsPerMonth: 1500, roadmapsPerDay: 15 },
+  free: { reviewsPerMonth: 5, roadmapsPerDay: 1, codeRunsPerDay: 30 },
+  pro: { reviewsPerMonth: 1500, roadmapsPerDay: 15, codeRunsPerDay: 100 },
 };
+
+export type QuotaKind = "review" | "roadmap" | "code_run";
 
 /** Determines plan from the subscriptions table, env-scoped. */
 export async function getUserPlan(
@@ -68,7 +71,7 @@ export function dayKey(d = new Date()): string {
 /** Returns true if quota was successfully consumed, false if user is at the cap. */
 export async function consumeQuota(
   userId: string,
-  kind: "review" | "roadmap",
+  kind: QuotaKind,
   limit: number,
   periodKey: string,
 ): Promise<boolean> {
@@ -87,7 +90,7 @@ export async function consumeQuota(
 
 export async function readUsage(
   userId: string,
-  kind: "review" | "roadmap",
+  kind: QuotaKind,
   periodKey: string,
 ): Promise<number> {
   const { data } = await admin().rpc("get_usage", {
