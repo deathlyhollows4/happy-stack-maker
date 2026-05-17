@@ -293,6 +293,21 @@ export const getPublicSubmission = createServerFn({ method: "GET" })
     return { submission: sub, issues: issues ?? [] };
   });
 
+export const getTopicBySlug = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ slug: z.string().min(1).max(50) }).parse(input))
+  .handler(async ({ data }) => {
+    const supabase = serviceClient();
+    const [{ data: topic }, { data: related }] = await Promise.all([
+      supabase.from("topics").select("slug, name, category, description").eq("slug", data.slug).maybeSingle(),
+      supabase.from("topics").select("slug, name, category, description"),
+    ]);
+    const sameCategory = (related ?? []).filter(
+      (t) => t.category === topic?.category && t.slug !== topic?.slug,
+    );
+    const allSlugs = (related ?? []).map((t) => t.slug);
+    return { topic, related: sameCategory, allSlugs };
+  });
+
 export const generatePractice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>

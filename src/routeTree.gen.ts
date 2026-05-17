@@ -20,6 +20,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SSubmissionIdRouteImport } from './routes/s.$submissionId'
+import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
@@ -82,6 +83,11 @@ const SSubmissionIdRoute = SSubmissionIdRouteImport.update({
   path: '/s/$submissionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LearnSlugRoute = LearnSlugRouteImport.update({
+  id: '/learn/$slug',
+  path: '/learn/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/practice': typeof AuthenticatedPracticeRoute
   '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/practice': typeof AuthenticatedPracticeRoute
   '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_authenticated/practice': typeof AuthenticatedPracticeRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
+    | '/learn/$slug'
     | '/s/$submissionId'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
+    | '/learn/$slug'
     | '/s/$submissionId'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_authenticated/practice'
     | '/_authenticated/review'
     | '/auth/callback'
+    | '/learn/$slug'
     | '/s/$submissionId'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -252,6 +264,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  LearnSlugRoute: typeof LearnSlugRoute
   SSubmissionIdRoute: typeof SSubmissionIdRoute
   ApiPublicOgSubmissionIdRoute: typeof ApiPublicOgSubmissionIdRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SSubmissionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/learn/$slug': {
+      id: '/learn/$slug'
+      path: '/learn/$slug'
+      fullPath: '/learn/$slug'
+      preLoaderRoute: typeof LearnSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -418,6 +438,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  LearnSlugRoute: LearnSlugRoute,
   SSubmissionIdRoute: SSubmissionIdRoute,
   ApiPublicOgSubmissionIdRoute: ApiPublicOgSubmissionIdRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
