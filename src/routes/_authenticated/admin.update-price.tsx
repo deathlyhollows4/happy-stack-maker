@@ -1,13 +1,24 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { updateProYearlyPrice } from "@/lib/billing.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
+import { supabase } from "@/integrations/supabase/client";
 import { Shield, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/update-price")({
   head: () => ({ meta: [{ title: "Update Paddle Price | CodeWise" }] }),
+  beforeLoad: async () => {
+    if (typeof window === "undefined") return;
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) throw redirect({ to: "/login" });
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      p_user_id: data.session.user.id,
+      p_role: "admin",
+    });
+    if (!isAdmin) throw redirect({ to: "/dashboard" });
+  },
   component: UpdatePricePage,
 });
 

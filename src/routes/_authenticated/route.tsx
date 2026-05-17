@@ -24,6 +24,7 @@ import {
   ChevronDown,
   User,
   Settings as SettingsIcon,
+  Shield,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -44,7 +45,7 @@ const NAV_ITEMS = [
 ] as const;
 
 function AuthLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({
@@ -133,6 +134,19 @@ function AuthLayout() {
                 {it.label}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                to="/admin/dashboard"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  isActive("/admin/dashboard")
+                    ? "bg-accent/15 text-accent"
+                    : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+                }`}
+              >
+                <Shield className="size-4" />
+                Admin
+              </Link>
+            )}
           </nav>
 
           {/* Right side: user menu + mobile hamburger */}
@@ -201,6 +215,19 @@ function AuthLayout() {
                   {it.label}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link
+                  to="/admin/dashboard"
+                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                    isActive("/admin/dashboard")
+                      ? "bg-accent/15 text-accent"
+                      : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+                  }`}
+                >
+                  <Shield className="size-4" />
+                  Admin
+                </Link>
+              )}
               <div className="pt-3 mt-3 border-t border-border">
                 <p className="px-3 text-xs font-mono text-muted-foreground truncate mb-2">
                   {user.email}

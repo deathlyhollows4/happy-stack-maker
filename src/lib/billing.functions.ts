@@ -8,6 +8,14 @@ const envInput = z.enum(["sandbox", "live"]) as z.ZodType<PaddleEnv>;
 
 const GRACE_DAYS = 7;
 
+async function isAdmin(userId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin.rpc("has_role", {
+    p_user_id: userId,
+    p_role: "admin",
+  });
+  return !!data;
+}
+
 /**
  * Cancels the user's active subscription in Paddle (effective at next billing
  * period end) AND immediately sets current_period_end = now + 7 days so the
@@ -114,11 +122,7 @@ export const updateProYearlyPrice = createServerFn({ method: "POST" })
     const { userId } = context;
     const env = data.environment;
 
-    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
-      p_user_id: userId,
-      p_role: "admin",
-    });
-    if (!isAdmin) {
+    if (!(await isAdmin(userId))) {
       return { ok: false as const, error: "Admin access required." };
     }
 

@@ -10,10 +10,35 @@ export type Quotas = {
   codeRunsPerDay: number;
 };
 
-export const PLAN_QUOTAS: Record<Plan, Quotas> = {
-  free: { reviewsPerMonth: 9999, problemsPerDay: 9999, codeRunsPerDay: 9999 },
-  pro: { reviewsPerMonth: 1500, problemsPerDay: 15, codeRunsPerDay: 100 },
-};
+let _quotaCache: Record<Plan, Quotas> | null = null;
+
+export async function getPlanQuotas(): Promise<Record<Plan, Quotas>> {
+  if (_quotaCache) return _quotaCache;
+
+  const { data } = await supabaseAdmin.from("app_config").select("key, value");
+  const map = new Map<string, string>();
+  for (const row of data ?? []) {
+    map.set(row.key, row.value as string);
+  }
+
+  _quotaCache = {
+    free: {
+      reviewsPerMonth: parseInt(map.get("plan_quota_free_reviews") ?? "50"),
+      problemsPerDay: parseInt(map.get("plan_quota_free_problems") ?? "25"),
+      codeRunsPerDay: parseInt(map.get("plan_quota_free_code_runs") ?? "100"),
+    },
+    pro: {
+      reviewsPerMonth: parseInt(map.get("plan_quota_pro_reviews") ?? "1500"),
+      problemsPerDay: parseInt(map.get("plan_quota_pro_problems") ?? "15"),
+      codeRunsPerDay: parseInt(map.get("plan_quota_pro_code_runs") ?? "100"),
+    },
+  };
+  return _quotaCache;
+}
+
+export function refreshPlanQuotas(): void {
+  _quotaCache = null;
+}
 
 export type QuotaKind = "review" | "roadmap" | "code_run";
 

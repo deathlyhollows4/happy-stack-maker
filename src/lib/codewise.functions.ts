@@ -7,9 +7,10 @@ import {
   getUserPlan,
   consumeQuota,
   readUsage,
-  PLAN_QUOTAS,
+  getPlanQuotas,
   monthKey,
   dayKey,
+  refreshPlanQuotas,
 } from "@/lib/entitlements.server";
 import type { PaddleEnv } from "@/lib/paddle.server";
 
@@ -27,6 +28,14 @@ function extractJson(raw: string): string {
     return trimmed.slice(firstBrace, lastBrace + 1);
   }
   return trimmed;
+}
+
+async function isAdmin(userId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin.rpc("has_role", {
+    p_user_id: userId,
+    p_role: "admin",
+  });
+  return !!data;
 }
 
 const LANGS = ["python", "javascript", "java", "cpp"] as const;
@@ -130,7 +139,7 @@ export const reviewCode = createServerFn({ method: "POST" })
 
     // Entitlement check
     const { plan } = await getUserPlan(userId, data.environment);
-    const limit = PLAN_QUOTAS[plan].reviewsPerMonth;
+    const limit = (await getPlanQuotas())[plan].reviewsPerMonth;
     const allowed = await consumeQuota(userId, "review", limit, monthKey());
     if (!allowed) {
       return {
@@ -378,7 +387,7 @@ export const generatePractice = createServerFn({ method: "POST" })
 
     // Entitlement check
     const { plan } = await getUserPlan(userId, data.environment);
-    const limit = PLAN_QUOTAS[plan].problemsPerDay;
+    const limit = (await getPlanQuotas())[plan].problemsPerDay;
     const allowed = await consumeQuota(userId, "roadmap", limit, dayKey());
     if (!allowed) {
       return {
@@ -521,7 +530,7 @@ export const getEntitlements = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { plan, status, pastDue } = await getUserPlan(userId, data.environment);
-    const quotas = PLAN_QUOTAS[plan];
+    const quotas = (await getPlanQuotas())[plan];
     const [reviewsUsed, roadmapsUsed] = await Promise.all([
       readUsage(userId, "review", monthKey()),
       readUsage(userId, "roadmap", dayKey()),
@@ -586,11 +595,7 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const admin = supabaseAdmin;
 
-    const { data: isAdmin } = await admin.rpc("has_role", {
-      p_user_id: userId,
-      p_role: "admin",
-    });
-    if (!isAdmin) {
+    if (!(await isAdmin(userId))) {
       return { ok: false as const, error: "Forbidden", users: [], totals: {} };
     }
 
@@ -665,17 +670,12 @@ export const getAdminSeats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const admin = supabaseAdmin;
 
-    const { data: isAdmin } = await admin.rpc("has_role", {
-      p_user_id: userId,
-      p_role: "admin",
-    });
-    if (!isAdmin) return { ok: false as const, error: "Forbidden", users: [] };
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", users: [] };
 
     const [profilesRes, rolesRes] = await Promise.all([
-      admin.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
-      admin.from("user_roles").select("user_id, role"),
+      supabaseAdmin.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+      supabaseAdmin.from("user_roles").select("user_id, role"),
     ]);
 
     const rolesByUser = new Map<string, string[]>();
@@ -700,15 +700,10 @@ export const grantAdminRole = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ targetUserId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const admin = supabaseAdmin;
 
-    const { data: isAdmin } = await admin.rpc("has_role", {
-      p_user_id: userId,
-      p_role: "admin",
-    });
-    if (!isAdmin) return { ok: false as const, error: "Forbidden" };
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
 
-    const { error } = await admin.from("user_roles").upsert(
+    const { error } = await supabaseAdmin.from("user_roles").upsert(
       { user_id: data.targetUserId, role: "admin" },
       { onConflict: "user_id,role" },
     );
@@ -724,15 +719,10 @@ export const revokeAdminRole = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ targetUserId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const admin = supabaseAdmin;
 
-    const { data: isAdmin } = await admin.rpc("has_role", {
-      p_user_id: userId,
-      p_role: "admin",
-    });
-    if (!isAdmin) return { ok: false as const, error: "Forbidden" };
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
 
-    const { error } = await admin
+    const { error } = await supabaseAdmin
       .from("user_roles")
       .delete()
       .eq("user_id", data.targetUserId)
@@ -748,19 +738,14 @@ export const exportAllUserData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const admin = supabaseAdmin;
 
-    const { data: isAdmin } = await admin.rpc("has_role", {
-      p_user_id: userId,
-      p_role: "admin",
-    });
-    if (!isAdmin) return { ok: false as const, error: "Forbidden", data: null };
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", data: null };
 
     const [submissionsRes, issuesRes, progressRes, practiceRes] = await Promise.all([
-      admin.from("submissions").select("id, user_id, language, code, summary, concepts, created_at").order("created_at", { ascending: false }),
-      admin.from("review_issues").select("id, submission_id, user_id, line, severity, concept_slug, title, explanation, fix_hint"),
-      admin.from("progress").select("user_id, topic_slug, mastery, attempts, last_reviewed"),
-      admin.from("practice_problems").select("id, user_id, topic_slug, title, prompt, starter_code, language, created_at"),
+      supabaseAdmin.from("submissions").select("id, user_id, language, code, summary, concepts, created_at").order("created_at", { ascending: false }),
+      supabaseAdmin.from("review_issues").select("id, submission_id, user_id, line, severity, concept_slug, title, explanation, fix_hint"),
+      supabaseAdmin.from("progress").select("user_id, topic_slug, mastery, attempts, last_reviewed"),
+      supabaseAdmin.from("practice_problems").select("id, user_id, topic_slug, title, prompt, starter_code, language, created_at"),
     ]);
 
     return {
@@ -801,15 +786,10 @@ export const upsertCurriculumMapping = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const admin = supabaseAdmin;
 
-    const { data: isAdmin } = await admin.rpc("has_role", {
-      p_user_id: userId,
-      p_role: "admin",
-    });
-    if (!isAdmin) return { ok: false as const, error: "Forbidden" };
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
 
-    const { error } = await admin.from("curriculum_mappings").upsert(
+    const { error } = await supabaseAdmin.from("curriculum_mappings").upsert(
       {
         topic_slug: data.topic_slug,
         sppu_course: data.sppu_course ?? null,
@@ -824,6 +804,172 @@ export const upsertCurriculumMapping = createServerFn({ method: "POST" })
     if (error) {
       console.error("upsertCurriculumMapping failed:", error);
       return { ok: false as const, error: "Failed to save mapping." };
+    }
+    return { ok: true as const };
+  });
+
+// --- App Config ---
+
+export type AppConfig = Record<string, string>;
+
+export const getAppConfig = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", config: {} };
+    const { data } = await supabaseAdmin.from("app_config").select("key, value");
+    const config: AppConfig = {};
+    for (const row of data ?? []) {
+      config[row.key] = row.value as string;
+    }
+    return { ok: true as const, config };
+  });
+
+export const setAppConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ entries: z.array(z.object({ key: z.string().min(1), value: z.string() })) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
+    for (const entry of data.entries) {
+      await supabaseAdmin.from("app_config").upsert(
+        { key: entry.key, value: entry.value, updated_at: new Date().toISOString() },
+        { onConflict: "key" },
+      );
+    }
+    refreshPlanQuotas();
+    return { ok: true as const };
+  });
+
+// --- Blog Posts ---
+
+export type BlogPostRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  body: string;
+  tags: string[];
+  author: string;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export const getAllBlogPosts = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data } = await supabaseAdmin
+      .from("blog_posts")
+      .select("*")
+      .eq("published", true)
+      .order("created_at", { ascending: false });
+    return data as BlogPostRow[] ?? [];
+  });
+
+export const getBlogPostBySlug = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => z.object({ slug: z.string() }).parse(input))
+  .handler(async ({ data }) => {
+    const { data: post } = await supabaseAdmin
+      .from("blog_posts")
+      .select("*")
+      .eq("slug", data.slug)
+      .eq("published", true)
+      .maybeSingle();
+    return post as BlogPostRow | null;
+  });
+
+export const listAllBlogPostsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", posts: [] as BlogPostRow[] };
+    const { data } = await supabaseAdmin
+      .from("blog_posts")
+      .select("*")
+      .order("created_at", { ascending: false });
+    return { ok: true as const, posts: (data ?? []) as BlogPostRow[] };
+  });
+
+export const createBlogPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      slug: z.string().min(1).max(200),
+      title: z.string().min(1).max(500),
+      excerpt: z.string().default(""),
+      body: z.string().default("[]"),
+      tags: z.array(z.string()).default([]),
+      author: z.string().default("CodeWise"),
+      published: z.boolean().default(false),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
+    const { error } = await supabaseAdmin.from("blog_posts").insert({
+      slug: data.slug,
+      title: data.title,
+      excerpt: data.excerpt,
+      body: data.body,
+      tags: data.tags,
+      author: data.author,
+      published: data.published,
+    });
+    if (error) {
+      console.error("createBlogPost failed:", error);
+      return { ok: false as const, error: error.message };
+    }
+    return { ok: true as const };
+  });
+
+export const updateBlogPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      slug: z.string().min(1).max(200),
+      title: z.string().min(1).max(500),
+      excerpt: z.string().default(""),
+      body: z.string().default("[]"),
+      tags: z.array(z.string()).default([]),
+      author: z.string().default("CodeWise"),
+      published: z.boolean().default(false),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
+    const { error } = await supabaseAdmin.from("blog_posts").update({
+      slug: data.slug,
+      title: data.title,
+      excerpt: data.excerpt,
+      body: data.body,
+      tags: data.tags,
+      author: data.author,
+      published: data.published,
+      updated_at: new Date().toISOString(),
+    }).eq("id", data.id);
+    if (error) {
+      console.error("updateBlogPost failed:", error);
+      return { ok: false as const, error: error.message };
+    }
+    return { ok: true as const };
+  });
+
+export const deleteBlogPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
+    const { error } = await supabaseAdmin.from("blog_posts").delete().eq("id", data.id);
+    if (error) {
+      console.error("deleteBlogPost failed:", error);
+      return { ok: false as const, error: error.message };
     }
     return { ok: true as const };
   });

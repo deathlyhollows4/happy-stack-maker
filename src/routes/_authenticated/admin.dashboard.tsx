@@ -2,10 +2,21 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminDashboard } from "@/lib/codewise.functions";
-import { Shield, Users, Star, Activity, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Shield, Users, Star, Activity, Loader2, Settings, FileText, UserCog, GraduationCap, Download, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   head: () => ({ meta: [{ title: "Admin Dashboard | CodeWise" }] }),
+  beforeLoad: async () => {
+    if (typeof window === "undefined") return;
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) throw redirect({ to: "/login" });
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      p_user_id: data.session.user.id,
+      p_role: "admin",
+    });
+    if (!isAdmin) throw redirect({ to: "/dashboard" });
+  },
   component: AdminDashboard,
 });
 
@@ -71,6 +82,21 @@ function AdminDashboard() {
         <StatCard icon={<Star className="size-4" />} label="Pro users" value={totals.pro_users} />
         <StatCard icon={<Activity className="size-4" />} label="Reviews (this month)" value={totals.reviews_this_month} />
         <StatCard icon={<Users className="size-4" />} label="Free users" value={totals.free_users} />
+      </div>
+
+      {/* Admin quick links */}
+      <div className="mb-10">
+        <h3 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-4">
+          Admin tools
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <QuickLink to="/admin/settings" icon={<Settings className="size-4" />} label="Site Settings" desc="Plan quotas, pricing display" />
+          <QuickLink to="/admin/blog" icon={<FileText className="size-4" />} label="Blog Posts" desc="Create & manage explore articles" />
+          <QuickLink to="/admin/seats" icon={<UserCog className="size-4" />} label="Seats" desc="Grant & revoke admin roles" />
+          <QuickLink to="/admin/curriculum" icon={<GraduationCap className="size-4" />} label="Curriculum" desc="SPPU/NPTEL topic mapping" />
+          <QuickLink to="/admin/export" icon={<Download className="size-4" />} label="Export Data" desc="Download all user data" />
+          <QuickLink to="/admin/update-price" icon={<RefreshCw className="size-4" />} label="Update Price" desc="Sync Paddle yearly price" />
+        </div>
       </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
@@ -174,5 +200,30 @@ function StatCard({
       </div>
       <p className="mt-1 font-display text-3xl">{value}</p>
     </div>
+  );
+}
+
+function QuickLink({
+  to,
+  icon,
+  label,
+  desc,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  desc: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex items-start gap-3 rounded-lg border border-border bg-card p-4 hover:bg-accent/5 hover:border-accent/30 transition-colors"
+    >
+      <span className="mt-0.5 text-accent">{icon}</span>
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">{desc}</p>
+      </div>
+    </Link>
   );
 }

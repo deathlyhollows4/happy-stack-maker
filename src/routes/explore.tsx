@@ -1,6 +1,28 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { Clock, Tag, ArrowRight } from "lucide-react";
-import { getAllPosts, type BlogPost } from "@/lib/blog-posts";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Clock, Tag, ArrowRight, Loader2 } from "lucide-react";
+import { getAllBlogPosts, type BlogPostRow } from "@/lib/codewise.functions";
+import type { BlogPost } from "@/lib/blog-posts";
+
+function toBlogPost(row: BlogPostRow): BlogPost {
+  let body: string[];
+  try {
+    body = JSON.parse(row.body);
+  } catch {
+    body = [row.body];
+  }
+  return {
+    slug: row.slug,
+    title: row.title,
+    date: row.created_at,
+    author: row.author,
+    excerpt: row.excerpt,
+    body,
+    tags: row.tags ?? [],
+    readTime: Math.max(1, Math.ceil(body.join(" ").split(" ").length / 200)),
+  };
+}
 
 export const Route = createFileRoute("/explore")({
   head: () => ({
@@ -25,7 +47,13 @@ export const Route = createFileRoute("/explore")({
 function ExploreLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const isList = path === "/explore";
-  const posts = getAllPosts();
+  const fn = useServerFn(getAllBlogPosts);
+  const { data: rows } = useQuery({
+    queryKey: ["blogPosts"],
+    queryFn: () => fn(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const posts = (rows ?? []).map(toBlogPost);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   getUserPlan,
   consumeQuota,
-  PLAN_QUOTAS,
+  getPlanQuotas,
   dayKey,
 } from "@/lib/entitlements.server";
 import type { PaddleEnv } from "@/lib/paddle.server";
@@ -38,7 +38,7 @@ export const runCode = createServerFn({ method: "POST" })
     const { userId } = context;
 
     const { plan } = await getUserPlan(userId, data.environment);
-    const limit = PLAN_QUOTAS[plan].codeRunsPerDay;
+    const limit = (await getPlanQuotas())[plan].codeRunsPerDay;
     const allowed = await consumeQuota(userId, "code_run", limit, dayKey());
     if (!allowed) {
       return {

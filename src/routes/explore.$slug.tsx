@@ -1,41 +1,65 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Clock, Tag } from "lucide-react";
-import { getPostBySlug } from "@/lib/blog-posts";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, ArrowRight, Clock, Tag, Loader2 } from "lucide-react";
+import { getBlogPostBySlug, type BlogPostRow } from "@/lib/codewise.functions";
+import type { BlogPost } from "@/lib/blog-posts";
+
+function toBlogPost(row: BlogPostRow): BlogPost {
+  let body: string[];
+  try {
+    body = JSON.parse(row.body);
+  } catch {
+    body = [row.body];
+  }
+  return {
+    slug: row.slug,
+    title: row.title,
+    date: row.created_at,
+    author: row.author,
+    excerpt: row.excerpt,
+    body,
+    tags: row.tags ?? [],
+    readTime: Math.max(1, Math.ceil(body.join(" ").split(" ").length / 200)),
+  };
+}
 
 export const Route = createFileRoute("/explore/$slug")({
-  head: ({ params }) => {
-    const post = getPostBySlug(params.slug);
-    if (!post) {
-      return {
-        meta: [
-          { title: "Post not found | CodeWise Explore" },
-          {
-            name: "description",
-            content: "The blog post you're looking for doesn't exist.",
-          },
-        ],
-      };
-    }
-    return {
-      meta: [
-        { title: `${post.title} | CodeWise Explore` },
-        { name: "description", content: post.excerpt },
-        { property: "og:title", content: `${post.title} | CodeWise Explore` },
-        { property: "og:description", content: post.excerpt },
-        { property: "og:type", content: "article" },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [
+      { title: "Post | CodeWise Explore" },
+      {
+        name: "description",
+        content: "Read this post on CodeWise Explore.",
+      },
+      { property: "og:type", content: "article" },
+    ],
+  }),
   component: ExplorePostPage,
 });
 
 function ExplorePostPage() {
   const { slug } = useParams({ from: "/explore/$slug" });
-  const post = getPostBySlug(slug);
+  const fn = useServerFn(getBlogPostBySlug);
+  const { data: row, isLoading } = useQuery({
+    queryKey: ["blogPost", slug],
+    queryFn: () => fn({ data: { slug } }),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  if (!post) {
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-24 flex items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!row) {
     return <NotFound slug={slug} />;
   }
+
+  const post = toBlogPost(row);
 
   return (
     <article>
