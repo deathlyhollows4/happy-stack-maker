@@ -1,0 +1,3 @@
+# Place your labelled CS1/CS2 buggy-code CSV here.
+# Expected columns: code, language, expected_concepts
+# See labelled-errors.csv for the format.

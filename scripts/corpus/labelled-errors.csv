@@ -1,0 +1,23 @@
+code,language,expected_concepts
+"def two_sum(nums, target):
+    for i in range(len(nums)):
+        for j in range(i+1, len(nums)):
+            if nums[i] + nums[j] == target:
+                return [i, j]
+    return []",python,"arrays,hashing,complexity"
+"function fibonacci(n) {
+  if (n === 0) return 0;
+  if (n === 1) return 1;
+  return fibonacci(n-1) + fibonacci(n-2);
+}",javascript,"recursion,dp,complexity"
+"public void bubbleSort(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+        for (int j = 0; j < arr.length - i - 1; j++) {
+            if (arr[j] > arr[j+1]) {
+                int temp = arr[j];
+                arr[j] = arr[j+1];
+                arr[j+1] = temp;
+            }
+        }
+    }
+}",java,"arrays,sorting,complexity"
