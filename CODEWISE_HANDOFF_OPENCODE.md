@@ -28,22 +28,19 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 5 — Research | ⏳ pending | — | — |
 | 6 — B2B & Admin | ⏳ pending | — | — |
 
-**Current session (17 May 2026, session 5):**
-- **Knowledge graph overflow fix:** Changed SVG from fixed pixel dimensions to `viewBox="0 0 800 550"` with `preserveAspectRatio`, container uses `overflow-hidden rounded-lg` + `aspectRatio` to clip to card bounds
-- **Pan & Zoom:** `onMouseDown/Move/Up` for click-drag pan, `onWheel` for zoom (clamped 0.3–3.0, centered on cursor). Cursor switches to `grab`/`grabbing`
-- **Floating control bar:** 3 semi-transparent buttons (`ZoomIn`, `ZoomOut`, `Maximize2`) in top-right corner — `backdrop-blur-sm bg-card/70`
-- **Neon glow highlighting:** Two SVG filters (`neon-glow`, `edge-glow`) with dual `feGaussianBlur`. Hovered edges glow in `oklch(0.82 0.18 40)`. Connected nodes/edges stay bright; unrelated dim to 0.2/0.08 opacity
-- **Legend:** Moved to bottom-left overlay, shows only when user has progress data
+**Current session (17 May 2026, session 6 — deployment fixes):**
+- **Scroll isolation:** Added `e.stopPropagation()` + native `{ passive: false }` wheel listener on container — page no longer scrolls when wheeling on the graph
+- **Boundary clamping:** Nodes constrained to `[70, VB_W-70] × [70, VB_H-70]` on every d3 simulation tick, preventing overflow outside the card
+- **Sizing fix:** Added missing `w-full` to the graph container div — `aspectRatio` CSS needs explicit width on parent to compute height correctly
+- Playwright-verified in deployed preview: graph at 1038×714px, 20 nodes + 20 edges, contained within card, 0 console errors
+
+**Previous session (17 May 2026, session 5):**
+- **Knowledge graph redesign:** viewBox-based SVG, pan & zoom (drag + wheel), floating control bar (ZoomIn/ZoomOut/Maximize2 with `backdrop-blur-sm`), neon glow SVG filters on hover, smart dimming of unrelated nodes/edges, legend moved to bottom-left overlay
 - **Route fix:** `review.$submissionId.tsx` was a child of `review.tsx` (no `<Outlet />`) → renamed to `submission.$submissionId.tsx` at `/_authenticated/submission/$submissionId`
 
 **Previous session (17 May 2026, session 4):**
 - Installed `d3-force` + `@types/d3-force` for force-directed layout
 - Created initial `src/components/knowledge-graph.tsx` — force-directed SVG graph of 20 CS topics with prerequisite edges. Nodes colored by user mastery, hover tooltips, ResizeObserver responsiveness, 4-color legend
-- Integrated `<KnowledgeGraph />` into dashboard between stat cards and topic mastery section
-
-**Previous session (17 May 2026, session 3):**
-- Installed `d3-force` + `@types/d3-force` for force-directed layout
-- Created `src/components/knowledge-graph.tsx` — interactive SVG force graph of 20 CS topics with prerequisite edges. Nodes colored by user mastery (starting → growing → mastered), hover tooltips showing mastery % and attempts, smooth simulation with requestAnimationFrame throttling, responsive via ResizeObserver, 4-color legend. Prerequisite chains defined for 20 edges (arrays→two-pointers, recursion→dp, etc.)
 - Integrated `<KnowledgeGraph />` into dashboard between stat cards and topic mastery section
 
 **Previous session (17 May 2026, session 3):**
