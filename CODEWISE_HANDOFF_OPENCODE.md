@@ -8,7 +8,7 @@
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
 | Document date         | 17 May 2026                                                            |
-| Status                | All 6 phases complete — 15 sessions — auth, payments, UI, SEO, research, B2B/admin |
+| Status                | Phase 7 in progress — 16 sessions — UX improvements (Explore blog done, nav + billing + perf next) |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -27,6 +27,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 4 — Growth & SEO | ✅ **DONE** | 4.1, 4.2, 4.3 | — |
 | 5 — Research | ✅ **DONE** | 5.1, 5.2, 5.3 | — |
 | 6 — B2B & Admin | ✅ **DONE** | 6.1, 6.2, 6.3, 6.4 | — |
+| 7 — UX Improvements | 🔄 **IN PROGRESS** | 7.1 | 7.2 |
 
 ### Session Log
 
@@ -47,6 +48,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 13 | Admin dashboard: getAdminDashboard server fn with has_role guard (service client), /admin/dashboard route with users table, stats cards, plan/subscription/usage columns | `codewise.functions.ts`, `admin.dashboard.tsx` (new) |
 | 14 | Seat management + admin export: getAdminSeats, grantAdminRole, revokeAdminRole, exportAllUserData server fns; /admin/seats role management UI, /admin/export full platform CSV/JSON download | `codewise.functions.ts`, `admin.seats.tsx` (new), `admin.export.tsx` (new) |
 | 15 | Curriculum mapping: curriculum_mappings table migration (SPPU + NPTEL seed data), getCurriculumMappings/upsertCurriculumMapping server fns, /admin/curriculum inline-edit UI | `codewise.functions.ts`, `admin.curriculum.tsx` (new), `supabase/migrations/*_curriculum_mappings.sql` (new) |
+| 16 | Blog "Explore": static blog posts lib, /explore list page (SEO meta, card grid), /explore/$slug detail page (article layout, CTA), added Explore link to homepage footer | `blog-posts.ts` (new), `explore.tsx` (new), `explore.$slug.tsx` (new), `index.tsx` |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -319,11 +321,13 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 - Usage counters via SECURITY DEFINER SQL functions (`consume_quota`, `get_usage`) with public EXECUTE revoked
 - Legal pages: /terms, /refunds, /privacy (Paddle merchant-of-record requirement)
 - Cancellation grace period: 7 days from cancel click, enforced in `cancelSubscription` server fn
+- Blog "Explore": /explore list page with 5 posts (static data), /explore/$slug detail page, SEO meta + OG tags, linked from homepage footer
 
 ### 6.2 Not yet built (remaining polish items)
 
 - Google OAuth + Apple sign-in (currently email/password only — requires Google Cloud Console setup)
 - Billing page UI at `/_authenticated/billing` (server fns exist: `cancelSubscription`, `getCustomerPortalUrl`, `getEntitlements`)
+- Navigation redesign: replace left sidebar with top nav bar (Phase 7.2)
 - Past-due banner in authenticated layout (read `pastDue` from entitlements)
 - `?checkout=success` toast on landing page after Paddle checkout completes
 - Analytics (Plausible or PostHog) — currently nothing wired

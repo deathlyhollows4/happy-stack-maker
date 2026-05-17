@@ -186,6 +186,7 @@ function LandingPage() {
           CodeWise · Built for CS students who'd rather understand than autocomplete.
         </p>
         <div className="flex justify-center gap-4 font-mono text-[11px] text-muted-foreground">
+          <Link to="/explore" className="hover:text-foreground">Explore</Link>
           <Link to="/pricing" className="hover:text-foreground">Pricing</Link>
           <Link to="/terms" className="hover:text-foreground">Terms</Link>
           <Link to="/refunds" className="hover:text-foreground">Refunds</Link>
