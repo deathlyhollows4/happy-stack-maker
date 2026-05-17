@@ -217,7 +217,8 @@ export const reviewCode = createServerFn({ method: "POST" })
         explanation: i.explanation,
         fix_hint: i.fix_hint ?? null,
       }));
-      await supabase.from("review_issues").insert(rows);
+      const { error: issuesErr } = await supabase.from("review_issues").insert(rows);
+      if (issuesErr) console.error("review_issues insert failed:", issuesErr);
     }
 
     // update mastery (BKT-lite): per touched concept, compute correctness signal
