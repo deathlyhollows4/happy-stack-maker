@@ -8,7 +8,8 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { getSubmission } from "@/lib/codewise.functions";
-import { ArrowLeft, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, Share2, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/submission/$submissionId")({
   head: () => ({ meta: [{ title: "Submission Detail. CodeWise" }] }),
@@ -60,12 +61,27 @@ function SubmissionDetail() {
               : "Viewing your code and review results."}
           </p>
         </div>
-        <Link
-          to="/dashboard"
-          className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-card transition"
-        >
-          <ArrowLeft className="size-4" /> Back to Dashboard
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              const url = `${window.location.origin}/s/${submissionId}`;
+              navigator.clipboard.writeText(url).then(
+                () => toast.success("Share link copied!"),
+                () => toast.error("Failed to copy link"),
+              );
+            }}
+            className="inline-flex items-center gap-2 rounded-md bg-accent/15 text-accent px-4 py-2 text-sm font-medium hover:bg-accent/25 transition"
+          >
+            <Share2 className="size-4" /> Share Results
+          </button>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-card transition"
+          >
+            <ArrowLeft className="size-4" /> Back to Dashboard
+          </Link>
+        </div>
       </div>
 
       {isLoading && (

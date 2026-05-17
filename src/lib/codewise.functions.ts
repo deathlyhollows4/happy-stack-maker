@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   getUserPlan,
@@ -262,6 +264,28 @@ export const getSubmission = createServerFn({ method: "GET" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    const [{ data: sub }, { data: issues }] = await Promise.all([
+      supabase.from("submissions").select("*").eq("id", data.id).maybeSingle(),
+      supabase.from("review_issues").select("*").eq("submission_id", data.id),
+    ]);
+    return { submission: sub, issues: issues ?? [] };
+  });
+
+let _serviceClient: SupabaseClient | null = null;
+function serviceClient(): SupabaseClient {
+  if (!_serviceClient) {
+    _serviceClient = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+  }
+  return _serviceClient;
+}
+
+export const getPublicSubmission = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const supabase = serviceClient();
     const [{ data: sub }, { data: issues }] = await Promise.all([
       supabase.from("submissions").select("*").eq("id", data.id).maybeSingle(),
       supabase.from("review_issues").select("*").eq("submission_id", data.id),

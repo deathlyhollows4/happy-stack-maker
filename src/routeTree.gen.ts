@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SSubmissionIdRouteImport } from './routes/s.$submissionId'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
@@ -75,6 +76,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SSubmissionIdRoute = SSubmissionIdRouteImport.update({
+  id: '/s/$submissionId',
+  path: '/s/$submissionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/practice': typeof AuthenticatedPracticeRoute
   '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/s/$submissionId': typeof SSubmissionIdRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/practice': typeof AuthenticatedPracticeRoute
   '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/s/$submissionId': typeof SSubmissionIdRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_authenticated/practice': typeof AuthenticatedPracticeRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/s/$submissionId': typeof SSubmissionIdRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
+    | '/s/$submissionId'
     | '/submission/$submissionId'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/review'
     | '/auth/callback'
+    | '/s/$submissionId'
     | '/submission/$submissionId'
     | '/api/public/payments/webhook'
   id:
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_authenticated/practice'
     | '/_authenticated/review'
     | '/auth/callback'
+    | '/s/$submissionId'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
@@ -228,6 +240,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  SSubmissionIdRoute: typeof SSubmissionIdRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -301,6 +314,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$submissionId': {
+      id: '/s/$submissionId'
+      path: '/s/$submissionId'
+      fullPath: '/s/$submissionId'
+      preLoaderRoute: typeof SSubmissionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -378,6 +398,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  SSubmissionIdRoute: SSubmissionIdRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
