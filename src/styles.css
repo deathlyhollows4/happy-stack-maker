@@ -110,6 +110,52 @@
   --sidebar-ring: oklch(0.88 0.075 75);
 }
 
+/* Light theme — opt in by adding `.light` to <html>. */
+:root.light {
+  --background: oklch(0.985 0.005 80);
+  --foreground: oklch(0.2 0.012 60);
+
+  --card: oklch(0.97 0.008 80);
+  --card-foreground: oklch(0.2 0.012 60);
+
+  --popover: oklch(0.99 0.005 80);
+  --popover-foreground: oklch(0.2 0.012 60);
+
+  --primary: oklch(0.45 0.09 60);
+  --primary-foreground: oklch(0.98 0.01 80);
+
+  --secondary: oklch(0.93 0.01 75);
+  --secondary-foreground: oklch(0.2 0.012 60);
+
+  --muted: oklch(0.94 0.008 75);
+  --muted-foreground: oklch(0.45 0.018 70);
+
+  --accent: oklch(0.55 0.16 35);
+  --accent-foreground: oklch(0.98 0.01 80);
+
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 80);
+
+  --success: oklch(0.55 0.13 150);
+  --success-foreground: oklch(0.98 0.01 80);
+
+  --warning: oklch(0.65 0.14 80);
+  --warning-foreground: oklch(0.18 0.012 60);
+
+  --border: oklch(0.88 0.008 75);
+  --input: oklch(0.95 0.008 75);
+  --ring: oklch(0.45 0.09 60);
+
+  --sidebar: oklch(0.96 0.01 80);
+  --sidebar-foreground: oklch(0.2 0.012 60);
+  --sidebar-primary: oklch(0.45 0.09 60);
+  --sidebar-primary-foreground: oklch(0.98 0.01 80);
+  --sidebar-accent: oklch(0.93 0.01 75);
+  --sidebar-accent-foreground: oklch(0.2 0.012 60);
+  --sidebar-border: oklch(0.88 0.008 75);
+  --sidebar-ring: oklch(0.45 0.09 60);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);

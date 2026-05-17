@@ -540,10 +540,10 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       const s = subByUser.get(p.id);
       const endMs = s?.end ? new Date(s.end).getTime() : null;
       const inPeriod = endMs === null || endMs > now.getTime();
-      const isPro =
-        s &&
+      const isPro = !!s && (
         (["active", "trialing", "past_due"].includes(s.status) && inPeriod) ||
-        (s.status === "canceled" && endMs !== null && endMs > now.getTime());
+        (s.status === "canceled" && endMs !== null && endMs > now.getTime())
+      );
 
       const reviews = reviewCountByUser.get(p.id) ?? 0;
       const roadmaps = roadmapCountByUser.get(p.id) ?? 0;

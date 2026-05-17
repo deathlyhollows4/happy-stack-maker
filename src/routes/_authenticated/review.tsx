@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -10,7 +10,16 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { reviewCode } from "@/lib/codewise.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
-import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import {
+  Sparkles,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  ArrowLeft,
+  Upload,
+  RefreshCw,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({ meta: [{ title: "Code Review. CodeWise" }] }),
@@ -46,23 +55,59 @@ function Review() {
   const [code, setCode] = useState(DEFAULTS.python);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Awaited<ReturnType<typeof reviewCode>> | null>(null);
+  const [exception, setException] = useState<string | null>(null);
   const fn = useServerFn(reviewCode);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onLang = (l: Lang) => {
     setLang(l);
     setCode(DEFAULTS[l]);
     setResult(null);
+    setException(null);
+  };
+
+  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 200_000) {
+      toast.error("File too large (max 200KB).");
+      return;
+    }
+    const text = await file.text();
+    setCode(text);
+    setResult(null);
+    setException(null);
+    // Infer language from extension
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const map: Record<string, Lang> = {
+      py: "python",
+      js: "javascript",
+      mjs: "javascript",
+      ts: "javascript",
+      java: "java",
+      cpp: "cpp",
+      cc: "cpp",
+      c: "cpp",
+      h: "cpp",
+      hpp: "cpp",
+    };
+    if (ext && map[ext]) setLang(map[ext]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const submit = async () => {
     setBusy(true);
+    setException(null);
     try {
       const r = await fn({ data: { code, language: lang, environment: getPaddleEnvironment() } });
       setResult(r);
       if (!r.ok) toast.error(r.error);
       else toast.success("Review complete");
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to review");
+      const msg = e?.message ?? "Failed to review";
+      setException(msg);
+      setResult(null);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -70,7 +115,14 @@ function Review() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+      <Link
+        to="/dashboard"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+      >
+        <ArrowLeft className="size-3.5" /> Back to Dashboard
+      </Link>
+
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Workspace
@@ -78,7 +130,20 @@ function Review() {
           <h1 className="mt-2 font-display text-5xl tracking-tight">Code Review</h1>
           <p className="text-muted-foreground mt-2">Paste your code. Get concept-aware feedback.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".py,.js,.mjs,.ts,.java,.cpp,.cc,.c,.h,.hpp,text/plain"
+            onChange={onUpload}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent/10"
+          >
+            <Upload className="size-4" /> Upload file
+          </button>
           <select
             value={lang}
             onChange={(e) => onLang(e.target.value as Lang)}
@@ -116,12 +181,32 @@ function Review() {
         </div>
 
         <div className="rounded-lg border border-border bg-card p-6 min-h-[60vh] overflow-auto">
-          {!result && !busy && (
+          {!result && !busy && !exception && (
             <p className="text-sm text-muted-foreground">Your review will appear here.</p>
           )}
           {busy && (
             <p className="text-sm text-muted-foreground animate-pulse">Analyzing your code…</p>
           )}
+
+          {exception && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="size-4 mt-0.5 text-destructive" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm">Review failed</p>
+                  <p className="text-sm text-muted-foreground mt-1">{exception}</p>
+                </div>
+              </div>
+              <button
+                onClick={submit}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                <RefreshCw className="size-3.5" /> Retry
+              </button>
+            </div>
+          )}
+
           {result?.ok && (
             <div className="space-y-5">
               <div>
@@ -163,7 +248,25 @@ function Review() {
               </div>
             </div>
           )}
-          {result && !result.ok && <p className="text-sm text-destructive">{result.error}</p>}
+
+          {result && !result.ok && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="size-4 mt-0.5 text-destructive" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm">Couldn't complete review</p>
+                  <p className="text-sm text-muted-foreground mt-1">{result.error}</p>
+                </div>
+              </div>
+              <button
+                onClick={submit}
+                disabled={busy}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                <RefreshCw className="size-3.5" /> Retry
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
