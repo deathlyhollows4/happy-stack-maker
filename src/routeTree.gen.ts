@@ -26,6 +26,7 @@ import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicOgSubmissionIdPngRouteImport } from './routes/api/public/og.$submissionId.png'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -113,6 +114,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicOgSubmissionIdPngRoute =
+  ApiPublicOgSubmissionIdPngRouteImport.update({
+    id: '/api/public/og/$submissionId/png',
+    path: '/api/public/og/$submissionId/png',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/og/$submissionId/png': typeof ApiPublicOgSubmissionIdPngRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,6 +157,7 @@ export interface FileRoutesByTo {
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/og/$submissionId/png': typeof ApiPublicOgSubmissionIdPngRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -169,6 +178,7 @@ export interface FileRoutesById {
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/api/public/og/$submissionId/png': typeof ApiPublicOgSubmissionIdPngRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/s/$submissionId'
     | '/submission/$submissionId'
     | '/api/public/payments/webhook'
+    | '/api/public/og/$submissionId/png'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/s/$submissionId'
     | '/submission/$submissionId'
     | '/api/public/payments/webhook'
+    | '/api/public/og/$submissionId/png'
   id:
     | '__root__'
     | '/'
@@ -226,6 +238,7 @@ export interface FileRouteTypes {
     | '/s/$submissionId'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/payments/webhook'
+    | '/api/public/og/$submissionId/png'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -242,6 +255,7 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   SSubmissionIdRoute: typeof SSubmissionIdRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
+  ApiPublicOgSubmissionIdPngRoute: typeof ApiPublicOgSubmissionIdPngRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -365,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/og/$submissionId/png': {
+      id: '/api/public/og/$submissionId/png'
+      path: '/api/public/og/$submissionId/png'
+      fullPath: '/api/public/og/$submissionId/png'
+      preLoaderRoute: typeof ApiPublicOgSubmissionIdPngRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -400,6 +421,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   SSubmissionIdRoute: SSubmissionIdRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
+  ApiPublicOgSubmissionIdPngRoute: ApiPublicOgSubmissionIdPngRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

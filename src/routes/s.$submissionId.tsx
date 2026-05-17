@@ -11,12 +11,21 @@ import { getPublicSubmission } from "@/lib/codewise.functions";
 import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/s/$submissionId")({
-  head: () => ({
+  head: ({ params }) => ({
     meta: [
       { title: "Shared Code Review — CodeWise" },
       { name: "description", content: "Check out this AI-powered CS code review from CodeWise." },
       { property: "og:title", content: "Shared CodeWise Review" },
       { property: "og:description", content: "AI-powered pedagogical code review for CS students." },
+      { name: "twitter:card", content: "summary_large_image" },
+      {
+        property: "og:image",
+        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}.png`,
+      },
+      {
+        name: "twitter:image",
+        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}.png`,
+      },
     ],
   }),
   component: SharePage,

@@ -12,7 +12,15 @@ import { toast } from "sonner";
 import { ArrowLeft, Share2, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/submission/$submissionId")({
-  head: () => ({ meta: [{ title: "Submission Detail. CodeWise" }] }),
+  head: ({ params }) => ({
+    meta: [
+      { title: "Submission Detail. CodeWise" },
+      {
+        property: "og:image",
+        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}.png`,
+      },
+    ],
+  }),
   component: SubmissionDetail,
 });
 
