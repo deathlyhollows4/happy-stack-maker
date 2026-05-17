@@ -22,9 +22,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SSubmissionIdRouteImport } from './routes/s.$submissionId'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
 import { Route as AuthenticatedSettingsExportRouteImport } from './routes/_authenticated/settings.export'
 import { Route as AuthenticatedAdminSeatsRouteImport } from './routes/_authenticated/admin.seats'
@@ -98,6 +100,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReviewRoute = AuthenticatedReviewRouteImport.update({
   id: '/review',
   path: '/review',
@@ -113,6 +120,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSubmissionSubmissionIdRoute =
   AuthenticatedSubmissionSubmissionIdRouteImport.update({
     id: '/submission/$submissionId',
@@ -121,9 +133,9 @@ const AuthenticatedSubmissionSubmissionIdRoute =
   } as any)
 const AuthenticatedSettingsExportRoute =
   AuthenticatedSettingsExportRouteImport.update({
-    id: '/settings/export',
-    path: '/settings/export',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/export',
+    path: '/export',
+    getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
 const AuthenticatedAdminSeatsRoute = AuthenticatedAdminSeatsRouteImport.update({
   id: '/admin/seats',
@@ -170,9 +182,11 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/practice': typeof AuthenticatedPracticeRoute
   '/review': typeof AuthenticatedReviewRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
@@ -195,9 +209,11 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/practice': typeof AuthenticatedPracticeRoute
   '/review': typeof AuthenticatedReviewRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
@@ -222,9 +238,11 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
@@ -249,9 +267,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/terms'
+    | '/billing'
     | '/dashboard'
     | '/practice'
     | '/review'
+    | '/settings'
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
@@ -274,9 +294,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/terms'
+    | '/billing'
     | '/dashboard'
     | '/practice'
     | '/review'
+    | '/settings'
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
@@ -300,9 +322,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/terms'
+    | '/_authenticated/billing'
     | '/_authenticated/dashboard'
     | '/_authenticated/practice'
     | '/_authenticated/review'
+    | '/_authenticated/settings'
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
@@ -427,6 +451,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/review': {
       id: '/_authenticated/review'
       path: '/review'
@@ -448,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/submission/$submissionId': {
       id: '/_authenticated/submission/$submissionId'
       path: '/submission/$submissionId'
@@ -457,10 +495,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/settings/export': {
       id: '/_authenticated/settings/export'
-      path: '/settings/export'
+      path: '/export'
       fullPath: '/settings/export'
       preLoaderRoute: typeof AuthenticatedSettingsExportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedSettingsRoute
     }
     '/_authenticated/admin/seats': {
       id: '/_authenticated/admin/seats'
@@ -507,27 +545,42 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsExportRoute: typeof AuthenticatedSettingsExportRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsExportRoute: AuthenticatedSettingsExportRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedAdminCurriculumRoute: typeof AuthenticatedAdminCurriculumRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminExportRoute: typeof AuthenticatedAdminExportRoute
   AuthenticatedAdminSeatsRoute: typeof AuthenticatedAdminSeatsRoute
-  AuthenticatedSettingsExportRoute: typeof AuthenticatedSettingsExportRoute
   AuthenticatedSubmissionSubmissionIdRoute: typeof AuthenticatedSubmissionSubmissionIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedAdminCurriculumRoute: AuthenticatedAdminCurriculumRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminExportRoute: AuthenticatedAdminExportRoute,
   AuthenticatedAdminSeatsRoute: AuthenticatedAdminSeatsRoute,
-  AuthenticatedSettingsExportRoute: AuthenticatedSettingsExportRoute,
   AuthenticatedSubmissionSubmissionIdRoute:
     AuthenticatedSubmissionSubmissionIdRoute,
 }
@@ -555,3 +608,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
