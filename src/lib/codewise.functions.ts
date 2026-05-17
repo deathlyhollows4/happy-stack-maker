@@ -686,3 +686,56 @@ export const exportAllUserData = createServerFn({ method: "GET" })
       },
     };
   });
+
+export const getCurriculumMappings = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const admin = serviceClient();
+    const { data } = await admin
+      .from("curriculum_mappings")
+      .select("topic_slug, sppu_course, sppu_module, nptel_course, nptel_module, year_semester")
+      .order("topic_slug");
+    return { mappings: data ?? [] };
+  });
+
+export const upsertCurriculumMapping = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        topic_slug: z.string(),
+        sppu_course: z.string().nullable().optional(),
+        sppu_module: z.string().nullable().optional(),
+        nptel_course: z.string().nullable().optional(),
+        nptel_module: z.string().nullable().optional(),
+        year_semester: z.string().nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const admin = serviceClient();
+
+    const { data: isAdmin } = await admin.rpc("has_role", {
+      p_user_id: userId,
+      p_role: "admin",
+    });
+    if (!isAdmin) return { ok: false as const, error: "Forbidden" };
+
+    const { error } = await admin.from("curriculum_mappings").upsert(
+      {
+        topic_slug: data.topic_slug,
+        sppu_course: data.sppu_course ?? null,
+        sppu_module: data.sppu_module ?? null,
+        nptel_course: data.nptel_course ?? null,
+        nptel_module: data.nptel_module ?? null,
+        year_semester: data.year_semester ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "topic_slug" },
+    );
+    if (error) {
+      console.error("upsertCurriculumMapping failed:", error);
+      return { ok: false as const, error: "Failed to save mapping." };
+    }
+    return { ok: true as const };
+  });

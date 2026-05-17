@@ -30,6 +30,7 @@ import { Route as AuthenticatedSettingsExportRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminSeatsRouteImport } from './routes/_authenticated/admin.seats'
 import { Route as AuthenticatedAdminExportRouteImport } from './routes/_authenticated/admin.export'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
+import { Route as AuthenticatedAdminCurriculumRouteImport } from './routes/_authenticated/admin.curriculum'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicOgSubmissionIdRouteImport } from './routes/api/public/og.$submissionId'
 
@@ -141,6 +142,12 @@ const AuthenticatedAdminDashboardRoute =
     path: '/admin/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminCurriculumRoute =
+  AuthenticatedAdminCurriculumRouteImport.update({
+    id: '/admin/curriculum',
+    path: '/admin/curriculum',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/export': typeof AuthenticatedAdminExportRoute
   '/admin/seats': typeof AuthenticatedAdminSeatsRoute
@@ -193,6 +201,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/export': typeof AuthenticatedAdminExportRoute
   '/admin/seats': typeof AuthenticatedAdminSeatsRoute
@@ -219,6 +228,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/_authenticated/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/export': typeof AuthenticatedAdminExportRoute
   '/_authenticated/admin/seats': typeof AuthenticatedAdminSeatsRoute
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/admin/curriculum'
     | '/admin/dashboard'
     | '/admin/export'
     | '/admin/seats'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/admin/curriculum'
     | '/admin/dashboard'
     | '/admin/export'
     | '/admin/seats'
@@ -294,6 +306,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/_authenticated/admin/curriculum'
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/export'
     | '/_authenticated/admin/seats'
@@ -470,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/curriculum': {
+      id: '/_authenticated/admin/curriculum'
+      path: '/admin/curriculum'
+      fullPath: '/admin/curriculum'
+      preLoaderRoute: typeof AuthenticatedAdminCurriculumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -491,6 +511,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedAdminCurriculumRoute: typeof AuthenticatedAdminCurriculumRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminExportRoute: typeof AuthenticatedAdminExportRoute
   AuthenticatedAdminSeatsRoute: typeof AuthenticatedAdminSeatsRoute
@@ -502,6 +523,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedAdminCurriculumRoute: AuthenticatedAdminCurriculumRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminExportRoute: AuthenticatedAdminExportRoute,
   AuthenticatedAdminSeatsRoute: AuthenticatedAdminSeatsRoute,
