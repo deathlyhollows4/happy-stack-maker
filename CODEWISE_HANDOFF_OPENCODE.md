@@ -25,7 +25,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 2 — Monetization | ✅ **DONE** | 2.1, 2.2, 2.3, 2.4 | — |
 | 3 — UI Completion | ✅ **DONE** | 3.1, 3.2, 3.3 | — |
 | 4 — Growth & SEO | ✅ **DONE** | 4.1, 4.2, 4.3 | — |
-| 5 — Research | 🔴 **NEXT** | — | 5.1: eval.ts corpus runner script |
+| 5 — Research | 🔴 **NEXT** | 5.1, 5.2 | 5.3: exportUserData server fn + export page |
 | 6 — B2B & Admin | ⏳ pending | — | — |
 
 ### Session Log
@@ -41,6 +41,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 7 | Share-a-review: public `/s/$uuid` route, getPublicSubmission server fn, Share Results button | `s.$submissionId.tsx`, `codewise.functions.ts`, `submission.$submissionId.tsx` |
 | 8 | Dynamic OG image: SVG card generation API route, og:image meta tags (fixed .png filename→path bug) | `og.$submissionId.ts`, `s.$submissionId.tsx`, `submission.$submissionId.tsx` |
 | 9 | Per-topic SEO landing pages: /learn/$slug route, getTopicBySlug server fn, 20 topic pages with OG meta, related topics, CF Workers routing fix | `learn.$slug.tsx` (new), `codewise.functions.ts`, `.gitignore` |
+| 10 | Eval harness: scripts/eval.ts CSV corpus runner, AI gateway calls, precision/recall/F1 per concept, confusion matrix JSON, per-language breakdown, sample corpus | `scripts/eval.ts` (new), `scripts/corpus/labelled-errors.csv` (new) |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
