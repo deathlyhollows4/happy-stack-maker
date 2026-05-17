@@ -65,9 +65,10 @@ export const runCode = createServerFn({ method: "POST" })
 
       if (!res.ok) {
         const text = await res.text();
+        console.error("Piston execute error:", res.status, text);
         return {
           ok: false as const,
-          error: `Execution service error (${res.status}): ${text.slice(0, 200)}`,
+          error: "Code execution service temporarily unavailable. Try again.",
         };
       }
 
