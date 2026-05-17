@@ -24,11 +24,16 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 1 — Auth & Access | ✅ **DONE** | 1.1, 1.2, 1.3 | — |
 | 2 — Monetization | ✅ **DONE** | 2.1, 2.2, 2.3, 2.4 | — |
 | 3 — UI Completion | ✅ **DONE** | 3.1, 3.2, 3.3 | — |
-| 4 — Growth & SEO | 🔴 **NEXT** | 4.1 | 4.2: dynamic OG image, 4.3: per-topic SEO |
+| 4 — Growth & SEO | 🔴 **NEXT** | 4.1, 4.2 | 4.3: per-topic SEO landing pages |
 | 5 — Research | ⏳ pending | — | — |
 | 6 — B2B & Admin | ⏳ pending | — | — |
 
-**Current session (17 May 2026, session 7 — share-a-review):**
+**Current session (17 May 2026, session 8 — OG image route):**
+- Created `src/routes/api/public/og.$submissionId.png.ts` — server-side API route that generates SVG OG image cards (1200×630px) for social previews. Uses service-role Supabase client for public reads, CSS-gradient backgrounds, CodeWise branding with language badge + date + summary + concept tags + beta marker. Fallback SVG for missing/invalid submissions. Served as `image/svg+xml` with 24h cache headers.
+- Updated `s.$submissionId.tsx` head() to include dynamic `og:image` and `twitter:image` pointing to `/api/public/og/$submissionId.png`, plus `twitter:card: summary_large_image`
+- Updated `submission.$submissionId.tsx` head() with dynamic `og:image`
+
+**Previous session (17 May 2026, session 7 — share-a-review):**
 - Added `getPublicSubmission` to `codewise.functions.ts` — public (no auth) server function using service-role Supabase client
 - Created `src/routes/s.$submissionId.tsx` — public share page at `/s/$uuid` with custom header, split layout (CodeMirror + review results), OG metadata, "Review not found" state, bottom CTA card
 - Added "Share Results" button to authenticated submission detail page — copies `/s/$uuid` URL to clipboard with toast feedback
@@ -694,7 +699,7 @@ Phase 5 (Research)   <── independent, can start anytime
 | Sess. | Task                                                                                                                                                                              | Files Touched                                          | opencode Category |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------- |
 | 4.1   | Create `/s/$submissionId` public route — renders a summary card with review score, concepts touched, and "Try CodeWise" CTA                                                       | `src/routes/s.$submissionId.tsx` (new)                 | ✅ Done            |
-| 4.2   | Create server route for dynamic OG image (SVG → PNG) to enable social preview cards on Twitter/Discord                                                                            | `src/routes/api/public/og.$submissionId.png.tsx` (new) | Code              |
+| 4.2   | Create server route for dynamic OG image (SVG → PNG) to enable social preview cards on Twitter/Discord                                                                            | `src/routes/api/public/og.$submissionId.png.ts` (new) | ✅ Done            |
 | 4.3   | Create `/learn/$slug` SSR route — one page per topic slug, pull name + description from topics table. Unique `<title>` + `<meta description>` per page. Cross-link related topics | `src/routes/learn.$slug.tsx` (new)                     | Code              |
 
 **No manual user action required for Phase 4.**
