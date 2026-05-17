@@ -88,7 +88,8 @@ function SettingsPage() {
       await supabase.auth.signOut();
       toast.success("Account deleted");
       nav({ to: "/" });
-    } catch {
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete account");
       setDeleting(false);
     }
   };

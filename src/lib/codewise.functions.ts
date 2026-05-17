@@ -124,7 +124,7 @@ export const reviewCode = createServerFn({ method: "POST" })
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3-flash",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
@@ -157,7 +157,8 @@ export const reviewCode = createServerFn({ method: "POST" })
       try {
         parsed = ReviewResponseSchema.parse(JSON.parse(content));
         break;
-      } catch {
+      } catch (parseErr) {
+        console.error("reviewCode parse attempt", attempt, "failed:", parseErr, "content preview:", content.slice(0, 200));
         if (attempt < maxAttempts) {
           const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
@@ -166,7 +167,7 @@ export const reviewCode = createServerFn({ method: "POST" })
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
+              model: "google/gemini-3-flash",
               messages: [
                 { role: "system", content: SYSTEM_PROMPT },
                 { role: "user", content: userPrompt },
@@ -394,7 +395,7 @@ export const generatePractice = createServerFn({ method: "POST" })
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3-flash",
         messages: [
           {
             role: "system",
@@ -431,13 +432,14 @@ export const generatePractice = createServerFn({ method: "POST" })
           })
           .parse(JSON.parse(content));
         break;
-      } catch {
+      } catch (parseErr) {
+        console.error("generatePractice parse attempt", attempt, "failed:", parseErr, "content preview:", content.slice(0, 200));
         if (attempt < maxAttempts) {
           const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "google/gemini-3-flash-preview",
+              model: "google/gemini-3-flash",
               messages: [
                 {
                   role: "system",

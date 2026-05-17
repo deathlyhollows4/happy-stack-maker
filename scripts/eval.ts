@@ -58,6 +58,7 @@ const SYSTEM_PROMPT = `You are CodeWise, an AI code reviewer for computer-scienc
 Your job is NOT to write production-quality code. Your job is to diagnose the
 underlying CS concept the student does not yet fully understand, and explain it
 in a teaching tone: concise, encouraging, and concrete.
+Do NOT use em dashes, filler phrases (e.g. "delve", "firstly", "moreover"), markdown headers, or flowery language. Keep explanations direct and professional.
 
 For every issue you raise:
 - explain WHY it's an issue in terms of the underlying CS concept
@@ -236,7 +237,7 @@ async function callAI(code: string, language: string): Promise<z.infer<typeof Re
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
+      model: "google/gemini-3-flash",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userPrompt },
