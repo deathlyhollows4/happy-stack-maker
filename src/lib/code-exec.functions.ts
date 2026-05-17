@@ -1,12 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  getUserPlan,
-  consumeQuota,
-  PLAN_QUOTAS,
-  dayKey,
-} from "@/lib/entitlements.server";
 import type { PaddleEnv } from "@/lib/paddle.server";
 
 const LANGS = ["python", "javascript", "java", "cpp"] as const;
@@ -36,16 +30,6 @@ export const runCode = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-
-    const { plan } = await getUserPlan(userId, data.environment);
-    const limit = PLAN_QUOTAS[plan].codeRunsPerDay;
-    const allowed = await consumeQuota(userId, "code_run", limit, dayKey());
-    if (!allowed) {
-      return {
-        ok: false as const,
-        error: `Daily code-run limit reached (${limit}/day). Resets at UTC midnight.`,
-      };
-    }
 
     const rt = PISTON[data.language];
 
