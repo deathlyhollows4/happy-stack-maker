@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Clock, Tag, ArrowRight } from "lucide-react";
 import { getAllPosts, type BlogPost } from "@/lib/blog-posts";
 
@@ -19,10 +19,12 @@ export const Route = createFileRoute("/explore")({
       },
     ],
   }),
-  component: ExplorePage,
+  component: ExploreLayout,
 });
 
-function ExplorePage() {
+function ExploreLayout() {
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const isList = path === "/explore";
   const posts = getAllPosts();
 
   return (
@@ -58,56 +60,13 @@ function ExplorePage() {
         </div>
       </header>
 
-      <main>
-        <section className="border-b border-border">
-          <div className="mx-auto max-w-6xl px-6 py-24">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-              Blog
-            </p>
-            <h1 className="mt-4 font-display text-6xl tracking-tight md:text-7xl">
-              Explore
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              Deep dives into CS concepts, DSA patterns, and learning strategies.
-              Written for students who'd rather understand than memorise.
-            </p>
-          </div>
-        </section>
-
-        <section className="border-b border-border">
-          <div className="mx-auto max-w-6xl px-6 py-16">
-            {posts.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                No posts yet. Check back soon.
-              </p>
-            ) : (
-              <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {posts.map((post) => (
-                  <PostCard key={post.slug} post={post} />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="bg-card/40">
-          <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-            <h2 className="font-display text-4xl">
-              Have a topic you'd like us to cover?
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              We're always writing new guides. If there's a CS concept you want
-              explained, let us know.
-            </p>
-            <Link
-              to="/signup"
-              className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Join CodeWise <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
-      </main>
+      {isList ? (
+        <ExploreList posts={posts} />
+      ) : (
+        <main>
+          <Outlet />
+        </main>
+      )}
 
       <footer className="border-t border-border py-10 text-center space-y-3">
         <p className="font-mono text-xs text-muted-foreground">
@@ -133,6 +92,61 @@ function ExplorePage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function ExploreList({ posts }: { posts: BlogPost[] }) {
+  return (
+    <main>
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-6 py-24">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Blog
+          </p>
+          <h1 className="mt-4 font-display text-6xl tracking-tight md:text-7xl">
+            Explore
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            Deep dives into CS concepts, DSA patterns, and learning strategies.
+            Written for students who'd rather understand than memorise.
+          </p>
+        </div>
+      </section>
+
+      <section className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          {posts.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              No posts yet. Check back soon.
+            </p>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {posts.map((post) => (
+                <PostCard key={post.slug} post={post} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-card/40">
+        <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+          <h2 className="font-display text-4xl">
+            Have a topic you'd like us to cover?
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            We're always writing new guides. If there's a CS concept you want
+            explained, let us know.
+          </p>
+          <Link
+            to="/signup"
+            className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Join CodeWise <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }
 
