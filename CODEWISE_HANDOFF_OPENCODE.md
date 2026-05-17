@@ -505,20 +505,30 @@ Suggested order, smallest risk first. Each step includes what opencode can do di
 | Create new routes/pages   | Yes                    | Cannot visually verify layouts         |
 | Git operations            | Yes                    | —                                      |
 | Search codebase           | Yes — glob + grep      | —                                      |
+| **GitNexus code intel**   | **Yes — impact/context/query** | —                              |
 | Supabase dashboard config | No — manual step       | —                                      |
 | Stripe dashboard config   | No — manual step       | —                                      |
 | OAuth app registration    | No — manual step       | —                                      |
 | Lovable Cloud secrets     | No — manual step       | —                                      |
 | Visual QA / pixel check   | No                     | Cannot render UI                       |
 
-### opencode workflow for this project
+### opencode workflow for this project (GitNexus-enhanced)
 
-1. **Read** a file to understand existing patterns
-2. **Edit** to implement changes
-3. **Run** `npm run build` (or `npx tsc --noEmit`) to catch TypeScript errors
-4. **Run** `npm run lint` to catch ESLint issues
-5. **Iterate** — fix errors and re-check
-6. User verifies UI changes manually in the browser
+**Before any session:**
+0. **Run** `gitnexus analyze` to ensure the knowledge graph is fresh (skip if index is up-to-date per `gitnexus status`)
+
+**For each edit task:**
+1. **Read** the target file to understand existing patterns
+2. **Run** `gitnexus_impact` on the symbol you're about to change; warn the user if risk is HIGH/CRITICAL
+3. **Run** `gitnexus_context` on the target symbol to see all callers, callees, and participating flows
+4. **Edit** to implement changes
+5. **Run** `npm run build` (or `npx tsc --noEmit`) to catch TypeScript errors
+6. **Run** `npm run lint` to catch ESLint issues
+7. **Iterate** — fix errors and re-check
+8. User verifies UI changes manually in the browser
+
+**Before committing:**
+9. **Run** `gitnexus_detect_changes()` to verify only expected symbols and flows were affected
 
 ---
 
@@ -696,11 +706,11 @@ Phase 5 (Research)   <── independent, can start anytime
 
 #### Phase 1: Auth & Access (2–3 sessions)
 
-| Sess. | Task                                                                                            | Files Touched                                                                                           | opencode Category |
-| ----- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ----------------- |
-| 1.1   | Add Google OAuth callback route + helper to accept OAuth provider tokens                        | `src/routes/auth/callback.tsx` (new), `src/lib/auth-helpers.ts` (new, wraps Supabase `signInWithOAuth`) | Code              |
-| 1.2   | Build forgot-password + reset-password pages with react-hook-form + zod validation              | `src/routes/forgot-password.tsx` (new), `src/routes/reset-password.tsx` (new)                           | Code              |
-| 1.3   | Wire Supabase `resetPasswordForEmail` + `updateUser`, add OAuth buttons to login + signup pages | `src/routes/login.tsx`, `src/routes/signup.tsx`                                                         | Code              |
+| Sess. | Task                                                                                            | Files Touched                                                                                           | GitNexus Pre-Check                                                               | opencode Category |
+| ----- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------- |
+| 1.1   | Add Google OAuth callback route + helper to accept OAuth provider tokens                        | `src/routes/auth/callback.tsx` (new), `src/lib/auth-helpers.ts` (new, wraps Supabase `signInWithOAuth`) | `gitnexus_impact({target: "supabaseAuth"})` — check auth dependency chain       | Code              |
+| 1.2   | Build forgot-password + reset-password pages with react-hook-form + zod validation              | `src/routes/forgot-password.tsx` (new), `src/routes/reset-password.tsx` (new)                           | `gitnexus_query({query: "password reset"})` — find existing password flow       | Code              |
+| 1.3   | Wire Supabase `resetPasswordForEmail` + `updateUser`, add OAuth buttons to login + signup pages | `src/routes/login.tsx`, `src/routes/signup.tsx`                                                         | `gitnexus_context({name: "login"})` — see auth form callers/callees             | Code              |
 
 **Manual user action required for Phase 1:**
 
@@ -712,12 +722,12 @@ Phase 5 (Research)   <── independent, can start anytime
 
 #### Phase 2: Monetization Foundation (3–4 sessions)
 
-| Sess. | Task                                                                                                                                                  | Files Touched                                                                                    | opencode Category |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------- |
-| 2.1   | Create `user_quotas` DB migration: table (user_id, reviews_used, period_start) + RLS. Add quota check guard in `reviewCode` before calling AI Gateway | `supabase/migrations/*_user_quotas.sql` (new), `src/lib/codewise.functions.ts`                   | Code + SQL        |
-| 2.2   | Create Stripe webhook server route, create `subscriptions` table migration                                                                            | `src/routes/api/public/stripe-webhook.ts` (new), `supabase/migrations/*_subscriptions.sql` (new) | Code + SQL        |
-| 2.3   | Build `/pricing` page with tier cards, Stripe Checkout redirect, and `/settings/billing` page showing current subscription                            | `src/routes/pricing.tsx` (new), `src/routes/_authenticated/settings.billing.tsx` (new)           | Code              |
-| 2.4   | Wire "Upgrade to Pro" CTA on dashboard and review page when quota exhausted                                                                           | `src/routes/_authenticated/dashboard.tsx`, `src/routes/_authenticated/review.tsx`                | Code              |
+| Sess. | Task                                                                                                                                                  | Files Touched                                                                                    | GitNexus Pre-Check                                                                           | opencode Category |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | ----------------- |
+| 2.1   | Create `user_quotas` DB migration: table (user_id, reviews_used, period_start) + RLS. Add quota check guard in `reviewCode` before calling AI Gateway | `supabase/migrations/*_user_quotas.sql` (new), `src/lib/codewise.functions.ts`                   | `gitnexus_impact({target: "reviewCode"})` — check all callers of the review function         | Code + SQL        |
+| 2.2   | Create Stripe webhook server route, create `subscriptions` table migration                                                                            | `src/routes/api/public/stripe-webhook.ts` (new), `supabase/migrations/*_subscriptions.sql` (new) | `gitnexus_context({name: "webhook"})` — see existing Paddle webhook pattern for consistency  | Code + SQL        |
+| 2.3   | Build `/pricing` page with tier cards, Stripe Checkout redirect, and `/settings/billing` page showing current subscription                            | `src/routes/pricing.tsx` (new), `src/routes/_authenticated/settings.billing.tsx` (new)           | `gitnexus_impact({target: "pricing"})` — what links to pricing page                         | Code              |
+| 2.4   | Wire "Upgrade to Pro" CTA on dashboard and review page when quota exhausted                                                                           | `src/routes/_authenticated/dashboard.tsx`, `src/routes/_authenticated/review.tsx`                | `gitnexus_impact({target: "getDashboard"})` — what depends on dashboard data                | Code              |
 
 **Manual user action required for Phase 2:**
 
@@ -729,11 +739,11 @@ Phase 5 (Research)   <── independent, can start anytime
 
 #### Phase 3: UI Completion (2–3 sessions)
 
-| Sess. | Task                                                                                                                                                                    | Files Touched                                                                         | opencode Category |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------- |
-| 3.1   | Create `/_authenticated/review.$submissionId.tsx` — split layout: code on left, issues list on right. Reuse existing `getSubmission` server fn                          | `src/routes/_authenticated/review.$submissionId.tsx` (new)                            | Code              |
-| 3.2   | Add clickable "View" button to each recent submission row on dashboard                                                                                                  | `src/routes/_authenticated/dashboard.tsx`                                             | ✅ Done            |
-| 3.3   | Build `<KnowledgeGraph />` component: d3-force layout, nodes = 20 topics colored by user mastery, edges = prerequisite chains (arrays→two-pointers, recursion→dp, etc.) | `src/components/knowledge-graph.tsx` (new), `src/routes/_authenticated/dashboard.tsx` | ✅ Done            |
+| Sess. | Task                                                                                                                                                                    | Files Touched                                                                         | GitNexus Pre-Check                                                                  | opencode Category |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------- |
+| 3.1   | Create `/_authenticated/review.$submissionId.tsx` — split layout: code on left, issues list on right. Reuse existing `getSubmission` server fn                          | `src/routes/_authenticated/review.$submissionId.tsx` (new)                            | `gitnexus_context({name: "getSubmission"})` — check server fn contract              | Code              |
+| 3.2   | Add clickable "View" button to each recent submission row on dashboard                                                                                                  | `src/routes/_authenticated/dashboard.tsx`                                             | ✅ Done                                                                             | ✅ Done            |
+| 3.3   | Build `<KnowledgeGraph />` component: d3-force layout, nodes = 20 topics colored by user mastery, edges = prerequisite chains (arrays→two-pointers, recursion→dp, etc.) | `src/components/knowledge-graph.tsx` (new), `src/routes/_authenticated/dashboard.tsx` | ✅ Done                                                                             | ✅ Done            |
 
 **No manual user action required for Phase 3.**
 
@@ -741,11 +751,11 @@ Phase 5 (Research)   <── independent, can start anytime
 
 #### Phase 4: Growth & SEO (2–3 sessions)
 
-| Sess. | Task                                                                                                                                                                              | Files Touched                                          | opencode Category |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------- |
-| 4.1   | Create `/s/$submissionId` public route — renders a summary card with review score, concepts touched, and "Try CodeWise" CTA                                                       | `src/routes/s.$submissionId.tsx` (new)                 | ✅ Done            |
-| 4.2   | Create server route for dynamic OG image (SVG → PNG) to enable social preview cards on Twitter/Discord                                                                            | `src/routes/api/public/og.$submissionId.png.ts` (new) | ✅ Done            |
-| 4.3   | Create `/learn/$slug` SSR route — one page per topic slug, pull name + description from topics table. Unique `<title>` + `<meta description>` per page. Cross-link related topics | `src/routes/learn.$slug.tsx` (new)                     | Code              |
+| Sess. | Task                                                                                                                                                                              | Files Touched                                          | GitNexus Pre-Check                                                                 | opencode Category |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------- | ----------------- |
+| 4.1   | Create `/s/$submissionId` public route — renders a summary card with review score, concepts touched, and "Try CodeWise" CTA                                                       | `src/routes/s.$submissionId.tsx` (new)                 | ✅ Done                                                                            | ✅ Done            |
+| 4.2   | Create server route for dynamic OG image (SVG → PNG) to enable social preview cards on Twitter/Discord                                                                            | `src/routes/api/public/og.$submissionId.png.ts` (new) | ✅ Done                                                                            | ✅ Done            |
+| 4.3   | Create `/learn/$slug` SSR route — one page per topic slug, pull name + description from topics table. Unique `<title>` + `<meta description>` per page. Cross-link related topics | `src/routes/learn.$slug.tsx` (new)                     | `gitnexus_context({name: "getTopicBySlug"})` — check server fn used by learn pages | Code              |
 
 **No manual user action required for Phase 4.**
 
@@ -753,11 +763,11 @@ Phase 5 (Research)   <── independent, can start anytime
 
 #### Phase 5: Research Scaffolding (2–3 sessions)
 
-| Sess. | Task                                                                                                                                                                     | Files Touched                                                                                                           | opencode Category |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| 5.1   | Create `scripts/eval.ts` — Node.js script that reads a CSV corpus (code + language + expected_concept_slugs), calls `reviewCode` server fn for each, and tallies results | `scripts/eval.ts` (new)                                                                                                 | Script            |
-| 5.2   | Add precision/recall/F1 per concept, confusion matrix output as JSON, per-language breakdown                                                                             | `scripts/eval.ts`                                                                                                       | Script            |
-| 5.3   | Build export endpoint: download all user submissions + issues + progress as CSV/JSON for paper experimental section                                                      | `src/lib/codewise.functions.ts` (new `exportUserData` server fn), `src/routes/_authenticated/settings.export.tsx` (new) | Code              |
+| Sess. | Task                                                                                                                                                                     | Files Touched                                                                                                           | GitNexus Pre-Check                                                                       | opencode Category |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------- |
+| 5.1   | Create `scripts/eval.ts` — Node.js script that reads a CSV corpus (code + language + expected_concept_slugs), calls `reviewCode` server fn for each, and tallies results | `scripts/eval.ts` (new)                                                                                                 | `gitnexus_context({name: "reviewCode"})` — understand input/output contract              | Script            |
+| 5.2   | Add precision/recall/F1 per concept, confusion matrix output as JSON, per-language breakdown                                                                             | `scripts/eval.ts`                                                                                                       | `gitnexus_query({query: "reviewCode AI JSON parsing"})` — find AI response parsing flow  | Script            |
+| 5.3   | Build export endpoint: download all user submissions + issues + progress as CSV/JSON for paper experimental section                                                      | `src/lib/codewise.functions.ts` (new `exportUserData` server fn), `src/routes/_authenticated/settings.export.tsx` (new) | `gitnexus_impact({target: "codewise.functions"})` — check adding to monolithic server fn | Code              |
 
 **Manual user action required for Phase 5:**
 
@@ -768,12 +778,12 @@ Phase 5 (Research)   <── independent, can start anytime
 
 #### Phase 6: B2B & Admin (3–4 sessions) — **Future / Post-Paper**
 
-| Sess. | Task                                                                                                                       | Files Touched                                                                                         | opencode Category |
-| ----- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------- |
-| 6.1   | Create `user_roles` migration + `has_role(user_id, role_name)` SECURITY DEFINER function. Add admin-only RLS policy bypass | `supabase/migrations/*_user_roles.sql` (new)                                                          | SQL               |
-| 6.2   | Build admin dashboard route (protected by admin role): all users table, usage stats, subscription overview                 | `src/routes/_authenticated/admin.dashboard.tsx` (new)                                                 | Code              |
-| 6.3   | Build seat management UI for college licenses, CSV/JSON export for user data                                               | `src/routes/_authenticated/admin.seats.tsx` (new), `src/routes/_authenticated/admin.export.tsx` (new) | Code              |
-| 6.4   | Build CS curriculum mapping UI (SPPU / NPTEL topic alignment)                                                              | `src/routes/_authenticated/admin.curriculum.tsx` (new)                                                | Code              |
+| Sess. | Task                                                                                                                       | Files Touched                                                                                         | GitNexus Pre-Check                                                                      | opencode Category |
+| ----- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------- |
+| 6.1   | Create `user_roles` migration + `has_role(user_id, role_name)` SECURITY DEFINER function. Add admin-only RLS policy bypass | `supabase/migrations/*_user_roles.sql` (new)                                                          | `gitnexus_query({query: "admin authorization RLS"})` — find existing auth patterns      | SQL               |
+| 6.2   | Build admin dashboard route (protected by admin role): all users table, usage stats, subscription overview                 | `src/routes/_authenticated/admin.dashboard.tsx` (new)                                                 | `gitnexus_context({name: "getAdminDashboard"})` — check admin fn dependencies           | Code              |
+| 6.3   | Build seat management UI for college licenses, CSV/JSON export for user data                                               | `src/routes/_authenticated/admin.seats.tsx` (new), `src/routes/_authenticated/admin.export.tsx` (new) | `gitnexus_context({name: "supabaseAdmin"})` — trace admin client usage across codebase  | Code              |
+| 6.4   | Build CS curriculum mapping UI (SPPU / NPTEL topic alignment)                                                              | `src/routes/_authenticated/admin.curriculum.tsx` (new)                                                | `gitnexus_impact({target: "curriculumMappings"})` — check schema dependencies           | Code              |
 
 **Manual user action required for Phase 6:**
 
@@ -781,16 +791,31 @@ Phase 5 (Research)   <── independent, can start anytime
 
 ---
 
-### 13.5 Quick-Start: First opencode Session
+### 13.5 Quick-Start: First opencode Session (GitNexus-powered)
 
 Ready to begin? Start with **Session 1.1** — the smallest, lowest-risk task:
 
 ```
+# 0. Pre-flight: ensure knowledge graph is fresh
+opencode> gitnexus status
+opencode> gitnexus analyze   (if stale)
+
+# 1. Understand the auth landscape first
+opencode> gitnexus_query({query: "login signup authentication"})
+opencode> gitnexus_context({name: "login"})
 opencode> Read src/routes/login.tsx and src/routes/signup.tsx to understand the auth form patterns
 opencode> Read src/integrations/supabase/auth-middleware.ts (read-only — do not edit)
+
+# 2. Plan the change: check blast radius of OAuth integration
+opencode> gitnexus_impact({target: "auth-middleware", direction: "upstream"})
+
+# 3. Implement
 opencode> Create src/lib/auth-helpers.ts with signInWithOAuth wrapper
 opencode> Create src/routes/auth/callback.tsx for OAuth redirect handling
+
+# 4. Verify
 opencode> Run npm run build to verify TypeScript
+opencode> gitnexus_detect_changes()  — verify only auth files affected
 ```
 
 After the session completes, **manually**: enable Google OAuth in Supabase Dashboard, then proceed to Session 1.2.
@@ -798,3 +823,60 @@ After the session completes, **manually**: enable Google OAuth in Supabase Dashb
 ---
 
 Generated 16 May 2026 for handoff from Lovable to opencode. Treat sections 2 (current stack) and 5 (server functions) as authoritative — they reflect the code that is actually running in the Lovable preview.
+
+---
+
+## 14. GitNexus Quick Reference for CodeWise
+
+The codebase is indexed as **happy-stack-maker** (1,700 nodes, 2,727 edges, 48 clusters, 60 execution flows). Use these queries to navigate safely.
+
+### 14.1 Before any edit — always run
+
+| If you're changing... | Run this first |
+|----------------------|----------------|
+| A server function in `codewise.functions.ts` | `gitnexus_impact({target: "reviewCode"})` or equivalent symbol name |
+| An auth file | `gitnexus_query({query: "authentication"})` — find all auth flows |
+| A billing/payment file | `gitnexus_query({query: "payment paddle billing"})` — find all payment flows |
+| A route under `_authenticated/` | `gitnexus_impact({target: "route", direction: "upstream"})` — who links here? |
+| A UI component | `gitnexus_context({name: "ComponentName"})` — who imports it? |
+| A database schema (migration) | `gitnexus_query({query: "subscriptions usage quota"})` — find all touchpoints |
+
+### 14.2 Common exploration queries
+
+These replace `grep`/`glob` for understanding how features connect:
+
+| What you want to know | GitNexus query |
+|----------------------|----------------|
+| How does the review flow work end-to-end? | `gitnexus_query({query: "code review AI flow"})` |
+| What touches the Supabase client? | `gitnexus_context({name: "supabaseAdmin"})` |
+| How does entitlement/quota gating work? | `gitnexus_query({query: "quota consume entitlement"})` |
+| What imports `paddle.server.ts`? | `gitnexus_context({name: "paddle"})` |
+| How are migrations structured? | `gitnexus_query({query: "database schema migration RLS"})` |
+
+### 14.3 High-risk symbols (always check impact before editing)
+
+| Symbol | File | Risk | Why |
+|--------|------|------|-----|
+| `reviewCode` | `src/lib/codewise.functions.ts` | **CRITICAL** | Core AI review pipeline — calls `extractJson`, `getUserPlan`, `consumeQuota`. Breaks all code review. |
+| `supabaseAdmin` | `src/integrations/supabase/client.server.ts` | **CRITICAL** | Centralized admin client used by 7+ server functions. DO NOT EDIT (auto-generated). |
+| `consumeQuota` | `src/lib/entitlements.server.ts` | **HIGH** | SECURITY DEFINER SQL function proxy — breaking it destroys all quota gating. |
+| `generatePractice` | `src/lib/codewise.functions.ts` | **HIGH** | Practice generation pipeline — calls same quota + AI chain as `reviewCode`. |
+| `getDashboard` | `src/lib/codewise.functions.ts` | **MEDIUM** | Dashboard data aggregator — parallel reads to 3 tables. Breaking it breaks dashboard. |
+| `PLAN_QUOTAS` | `src/lib/entitlements.server.ts` | **MEDIUM** | Central quota constants — changing values affects pricing page, billing UI, and gate logic. |
+
+### 14.4 After committing — always run
+
+```
+gitnexus_detect_changes()
+```
+
+This maps your git diff to affected symbols and execution flows, catching unintended blast radius.
+
+### 14.5 When the index goes stale
+
+After major refactors or pulling new commits:
+```
+gitnexus status          # Check if index matches HEAD commit
+gitnexus analyze         # Re-index if stale (~22s for this codebase)
+gitnexus analyze --force # Full rebuild if things look wrong
+```

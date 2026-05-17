@@ -6,6 +6,11 @@
       "command": ["npx", "-y", "@playwright/mcp"],
       "enabled": true,
       "env": { "BROWSER": "chromium" }
+    },
+    "gitnexus": {
+      "type": "local",
+      "command": ["npx", "-y", "gitnexus@latest", "mcp"],
+      "enabled": true
     }
   }
 }
