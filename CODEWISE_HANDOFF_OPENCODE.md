@@ -28,47 +28,20 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 5 — Research | ⏳ pending | — | — |
 | 6 — B2B & Admin | ⏳ pending | — | — |
 
-**Current session (17 May 2026, session 8 — OG image route):**
-- Created `src/routes/api/public/og.$submissionId.png.ts` — server-side API route that generates SVG OG image cards (1200×630px) for social previews. Uses service-role Supabase client for public reads, CSS-gradient backgrounds, CodeWise branding with language badge + date + summary + concept tags + beta marker. Fallback SVG for missing/invalid submissions. Served as `image/svg+xml` with 24h cache headers.
-- Updated `s.$submissionId.tsx` head() to include dynamic `og:image` and `twitter:image` pointing to `/api/public/og/$submissionId.png`, plus `twitter:card: summary_large_image`
-- Updated `submission.$submissionId.tsx` head() with dynamic `og:image`
+### Session Log
 
-**Previous session (17 May 2026, session 7 — share-a-review):**
-- Added `getPublicSubmission` to `codewise.functions.ts` — public (no auth) server function using service-role Supabase client
-- Created `src/routes/s.$submissionId.tsx` — public share page at `/s/$uuid` with custom header, split layout (CodeMirror + review results), OG metadata, "Review not found" state, bottom CTA card
-- Added "Share Results" button to authenticated submission detail page — copies `/s/$uuid` URL to clipboard with toast feedback
+| # | What | Files |
+|---|------|-------|
+| 1 | Auth fixes: reset-password race, restore lovable/index.ts, add Toaster, DB error sanitization | `__root.tsx`, `reset-password.tsx`, `integrations/lovable/index.ts`, `codewise.functions.ts` |
+| 2 | Paddle payments sprint: pricing, checkout, webhook, subscriptions, usage counters, freemium gating, legal pages | `pricing.tsx`, `webhook.ts`, `billing.functions.ts`, `entitlements.server.ts`, `paddle.server.ts` |
+| 3 | Submission detail page + dashboard "View details" links | `review.$submissionId.tsx`, `dashboard.tsx` |
+| 4 | Knowledge graph v1: d3-force, 20 topics, prerequisite edges, mastery colors | `knowledge-graph.tsx` (new), `dashboard.tsx` |
+| 5 | Knowledge graph v2: viewBox, pan/zoom, control bar, neon glow, route fix (review→submission) | `knowledge-graph.tsx`, `submission.$submissionId.tsx` |
+| 6 | Deployment fixes: scroll isolation, boundary clamping, w-full sizing | `knowledge-graph.tsx` |
+| 7 | Share-a-review: public `/s/$uuid` route, getPublicSubmission server fn, Share Results button | `s.$submissionId.tsx`, `codewise.functions.ts`, `submission.$submissionId.tsx` |
+| 8 | Dynamic OG image: SVG card generation API route, og:image meta tags (fixed .png filename→path bug) | `og.$submissionId.ts`, `s.$submissionId.tsx`, `submission.$submissionId.tsx` |
 
-**Previous session (17 May 2026, session 6 — deployment fixes):**
-- **Scroll isolation:** Added `e.stopPropagation()` + native `{ passive: false }` wheel listener on container — page no longer scrolls when wheeling on the graph
-- **Boundary clamping:** Nodes constrained to `[70, VB_W-70] × [70, VB_H-70]` on every d3 simulation tick, preventing overflow outside the card
-- **Sizing fix:** Added missing `w-full` to the graph container div — `aspectRatio` CSS needs explicit width on parent to compute height correctly
-- Playwright-verified in deployed preview: graph at 1038×714px, 20 nodes + 20 edges, contained within card, 0 console errors
-
-**Previous session (17 May 2026, session 5):**
-- **Knowledge graph redesign:** viewBox-based SVG, pan & zoom (drag + wheel), floating control bar (ZoomIn/ZoomOut/Maximize2 with `backdrop-blur-sm`), neon glow SVG filters on hover, smart dimming of unrelated nodes/edges, legend moved to bottom-left overlay
-- **Route fix:** `review.$submissionId.tsx` was a child of `review.tsx` (no `<Outlet />`) → renamed to `submission.$submissionId.tsx` at `/_authenticated/submission/$submissionId`
-
-**Previous session (17 May 2026, session 4):**
-- Installed `d3-force` + `@types/d3-force` for force-directed layout
-- Created initial `src/components/knowledge-graph.tsx` — force-directed SVG graph of 20 CS topics with prerequisite edges. Nodes colored by user mastery, hover tooltips, ResizeObserver responsiveness, 4-color legend
-- Integrated `<KnowledgeGraph />` into dashboard between stat cards and topic mastery section
-
-**Previous session (17 May 2026, session 3):**
-- Created `src/routes/_authenticated/review.$submissionId.tsx` — submission detail page with split layout: CodeMirror (read-only) on left, summary + concepts + issues on right. Reuses existing `getSubmission` server fn. Handles loading, error, and not-found states.
-- Added "View details →" links from dashboard recent submissions list to the new detail page.
-
-**Last session (17 May 2026, session 2):**
-- Pulled Lovable's full Paddle payments sprint: pricing page ($20/mo, $112/yr), Paddle checkout overlay, webhook handler, subscriptions table, usage_counters table, SECURITY DEFINER SQL functions, entitlement engine, free tier gating (5 reviews/mo, 1 roadmap/day), legal pages (/terms, /refunds, /privacy)
-- Installed `@paddle/paddle-node-sdk` for local typecheck
-- Playwright verified: /pricing ✓, /terms ✓, /refunds ✓, /privacy ✓, free tier gating code-verified in `codewise.functions.ts`
-
-**Previous session (17 May 2026, session 1):**
-- Fixed reset-password redirect race: `updateUser` resolves before session settles → now waits for `onAuthStateChange SIGNED_IN`
-- Restored `src/integrations/lovable/index.ts` (accidentally deleted — breaks Google OAuth)
-- Fixed missing `<Toaster />` in `__root.tsx`
-- Pulled Lovable security fix: raw DB errors replaced with generic messages in `reviewCode`/`generatePractice`
-
-**Credentials for testing:** `vidhantomar17082004@gmail.com` / `YAh3TChafK@3.tJ`
+**Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
 
 **Manual actions pending (user):**
