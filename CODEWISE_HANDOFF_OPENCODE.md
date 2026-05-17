@@ -24,11 +24,16 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 1 — Auth & Access | ✅ **DONE** | 1.1, 1.2, 1.3 | — |
 | 2 — Monetization | ✅ **DONE** | 2.1, 2.2, 2.3, 2.4 | — |
 | 3 — UI Completion | ✅ **DONE** | 3.1, 3.2, 3.3 | — |
-| 4 — Growth & SEO | 🔴 **NEXT** | — | 4.1: share-a-review public route |
+| 4 — Growth & SEO | 🔴 **NEXT** | 4.1 | 4.2: dynamic OG image, 4.3: per-topic SEO |
 | 5 — Research | ⏳ pending | — | — |
 | 6 — B2B & Admin | ⏳ pending | — | — |
 
-**Current session (17 May 2026, session 6 — deployment fixes):**
+**Current session (17 May 2026, session 7 — share-a-review):**
+- Added `getPublicSubmission` to `codewise.functions.ts` — public (no auth) server function using service-role Supabase client
+- Created `src/routes/s.$submissionId.tsx` — public share page at `/s/$uuid` with custom header, split layout (CodeMirror + review results), OG metadata, "Review not found" state, bottom CTA card
+- Added "Share Results" button to authenticated submission detail page — copies `/s/$uuid` URL to clipboard with toast feedback
+
+**Previous session (17 May 2026, session 6 — deployment fixes):**
 - **Scroll isolation:** Added `e.stopPropagation()` + native `{ passive: false }` wheel listener on container — page no longer scrolls when wheeling on the graph
 - **Boundary clamping:** Nodes constrained to `[70, VB_W-70] × [70, VB_H-70]` on every d3 simulation tick, preventing overflow outside the card
 - **Sizing fix:** Added missing `w-full` to the graph container div — `aspectRatio` CSS needs explicit width on parent to compute height correctly
@@ -688,7 +693,7 @@ Phase 5 (Research)   <── independent, can start anytime
 
 | Sess. | Task                                                                                                                                                                              | Files Touched                                          | opencode Category |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------- |
-| 4.1   | Create `/s/$submissionId` public route — renders a summary card with review score, concepts touched, and "Try CodeWise" CTA                                                       | `src/routes/s.$submissionId.tsx` (new)                 | Code              |
+| 4.1   | Create `/s/$submissionId` public route — renders a summary card with review score, concepts touched, and "Try CodeWise" CTA                                                       | `src/routes/s.$submissionId.tsx` (new)                 | ✅ Done            |
 | 4.2   | Create server route for dynamic OG image (SVG → PNG) to enable social preview cards on Twitter/Discord                                                                            | `src/routes/api/public/og.$submissionId.png.tsx` (new) | Code              |
 | 4.3   | Create `/learn/$slug` SSR route — one page per topic slug, pull name + description from topics table. Unique `<title>` + `<meta description>` per page. Cross-link related topics | `src/routes/learn.$slug.tsx` (new)                     | Code              |
 
