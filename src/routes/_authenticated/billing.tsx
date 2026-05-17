@@ -141,7 +141,7 @@ function FreePlanCard() {
         </span>
       </div>
       <p className="text-sm text-muted-foreground">
-        5 code reviews / month · 1 roadmap / day. Upgrade for 1500 reviews and 15 roadmaps daily.
+        50 code reviews / month · 50 practice problems / day. Upgrade for 1500 reviews and 15 practice problems daily.
       </p>
       <Link
         to="/pricing"

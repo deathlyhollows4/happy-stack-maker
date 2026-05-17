@@ -327,7 +327,7 @@ export const generatePractice = createServerFn({ method: "POST" })
 
     // Entitlement check
     const { plan } = await getUserPlan(userId, data.environment);
-    const limit = PLAN_QUOTAS[plan].roadmapsPerDay;
+    const limit = PLAN_QUOTAS[plan].problemsPerDay;
     const allowed = await consumeQuota(userId, "roadmap", limit, dayKey());
     if (!allowed) {
       return {
@@ -446,7 +446,7 @@ export const getEntitlements = createServerFn({ method: "POST" })
       reviewsUsed,
       reviewsLimit: quotas.reviewsPerMonth,
       roadmapsUsed,
-      roadmapsLimit: quotas.roadmapsPerDay,
+      problemsLimit: quotas.problemsPerDay,
     };
   });
 

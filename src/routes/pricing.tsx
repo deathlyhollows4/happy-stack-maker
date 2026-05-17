@@ -12,7 +12,7 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "CodeWise Pro: 1500 code reviews per month and 15 roadmap generations per day. Cancel anytime.",
+          "CodeWise Pro: 1500 code reviews per month and 15 practice problems per day. Cancel anytime.",
       },
     ],
   }),
@@ -20,14 +20,14 @@ export const Route = createFileRoute("/pricing")({
 });
 
 const FREE_FEATURES = [
-  "5 code reviews / month",
+  "50 code reviews / month",
   "Mastery tracking across DSA topics",
-  "1 roadmap generation / day",
+  "50 practice problems / day",
 ];
 
 const PRO_FEATURES = [
   "1500 code reviews / month",
-  "15 roadmap generations / day",
+  "15 practice problems / day",
   "Priority support",
 ];
 

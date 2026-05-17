@@ -17,13 +17,13 @@ export type Plan = "free" | "pro";
 
 export type Quotas = {
   reviewsPerMonth: number;
-  roadmapsPerDay: number;
+  problemsPerDay: number;
   codeRunsPerDay: number;
 };
 
 export const PLAN_QUOTAS: Record<Plan, Quotas> = {
-  free: { reviewsPerMonth: 5, roadmapsPerDay: 1, codeRunsPerDay: 30 },
-  pro: { reviewsPerMonth: 1500, roadmapsPerDay: 15, codeRunsPerDay: 100 },
+  free: { reviewsPerMonth: 50, problemsPerDay: 50, codeRunsPerDay: 50 },
+  pro: { reviewsPerMonth: 1500, problemsPerDay: 15, codeRunsPerDay: 100 },
 };
 
 export type QuotaKind = "review" | "roadmap" | "code_run";
