@@ -572,3 +572,117 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       },
     };
   });
+
+export const getAdminSeats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const admin = serviceClient();
+
+    const { data: isAdmin } = await admin.rpc("has_role", {
+      p_user_id: userId,
+      p_role: "admin",
+    });
+    if (!isAdmin) return { ok: false as const, error: "Forbidden", users: [] };
+
+    const [profilesRes, rolesRes] = await Promise.all([
+      admin.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+      admin.from("user_roles").select("user_id, role"),
+    ]);
+
+    const rolesByUser = new Map<string, string[]>();
+    for (const r of rolesRes.data ?? []) {
+      const existing = rolesByUser.get(r.user_id) ?? [];
+      existing.push(r.role as string);
+      rolesByUser.set(r.user_id, existing);
+    }
+
+    const users = (profilesRes.data ?? []).map((p) => ({
+      id: p.id,
+      display_name: p.display_name ?? "—",
+      created_at: p.created_at as string,
+      roles: rolesByUser.get(p.id) ?? [],
+    }));
+
+    return { ok: true as const, users };
+  });
+
+export const grantAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ targetUserId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const admin = serviceClient();
+
+    const { data: isAdmin } = await admin.rpc("has_role", {
+      p_user_id: userId,
+      p_role: "admin",
+    });
+    if (!isAdmin) return { ok: false as const, error: "Forbidden" };
+
+    const { error } = await admin.from("user_roles").upsert(
+      { user_id: data.targetUserId, role: "admin" },
+      { onConflict: "user_id,role" },
+    );
+    if (error) {
+      console.error("grantAdminRole failed:", error);
+      return { ok: false as const, error: "Failed to grant admin role." };
+    }
+    return { ok: true as const };
+  });
+
+export const revokeAdminRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ targetUserId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const admin = serviceClient();
+
+    const { data: isAdmin } = await admin.rpc("has_role", {
+      p_user_id: userId,
+      p_role: "admin",
+    });
+    if (!isAdmin) return { ok: false as const, error: "Forbidden" };
+
+    const { error } = await admin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.targetUserId)
+      .eq("role", "admin");
+    if (error) {
+      console.error("revokeAdminRole failed:", error);
+      return { ok: false as const, error: "Failed to revoke admin role." };
+    }
+    return { ok: true as const };
+  });
+
+export const exportAllUserData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const admin = serviceClient();
+
+    const { data: isAdmin } = await admin.rpc("has_role", {
+      p_user_id: userId,
+      p_role: "admin",
+    });
+    if (!isAdmin) return { ok: false as const, error: "Forbidden", data: null };
+
+    const [submissionsRes, issuesRes, progressRes, practiceRes] = await Promise.all([
+      admin.from("submissions").select("id, user_id, language, code, summary, concepts, created_at").order("created_at", { ascending: false }),
+      admin.from("review_issues").select("id, submission_id, user_id, line, severity, concept_slug, title, explanation, fix_hint"),
+      admin.from("progress").select("user_id, topic_slug, mastery, attempts, last_reviewed"),
+      admin.from("practice_problems").select("id, user_id, topic_slug, title, prompt, starter_code, language, created_at"),
+    ]);
+
+    return {
+      ok: true as const,
+      data: {
+        exported_at: new Date().toISOString(),
+        submissions: submissionsRes.data ?? [],
+        review_issues: issuesRes.data ?? [],
+        progress: progressRes.data ?? [],
+        practice_problems: practiceRes.data ?? [],
+      },
+    };
+  });

@@ -27,6 +27,8 @@ import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
 import { Route as AuthenticatedSettingsExportRouteImport } from './routes/_authenticated/settings.export'
+import { Route as AuthenticatedAdminSeatsRouteImport } from './routes/_authenticated/admin.seats'
+import { Route as AuthenticatedAdminExportRouteImport } from './routes/_authenticated/admin.export'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicOgSubmissionIdRouteImport } from './routes/api/public/og.$submissionId'
@@ -122,6 +124,17 @@ const AuthenticatedSettingsExportRoute =
     path: '/settings/export',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminSeatsRoute = AuthenticatedAdminSeatsRouteImport.update({
+  id: '/admin/seats',
+  path: '/admin/seats',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminExportRoute =
+  AuthenticatedAdminExportRouteImport.update({
+    id: '/admin/export',
+    path: '/admin/export',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminDashboardRoute =
   AuthenticatedAdminDashboardRouteImport.update({
     id: '/admin/dashboard',
@@ -157,6 +170,8 @@ export interface FileRoutesByFullPath {
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
+  '/admin/export': typeof AuthenticatedAdminExportRoute
+  '/admin/seats': typeof AuthenticatedAdminSeatsRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -179,6 +194,8 @@ export interface FileRoutesByTo {
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
+  '/admin/export': typeof AuthenticatedAdminExportRoute
+  '/admin/seats': typeof AuthenticatedAdminSeatsRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -203,6 +220,8 @@ export interface FileRoutesById {
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
+  '/_authenticated/admin/export': typeof AuthenticatedAdminExportRoute
+  '/_authenticated/admin/seats': typeof AuthenticatedAdminSeatsRoute
   '/_authenticated/settings/export': typeof AuthenticatedSettingsExportRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -227,6 +246,8 @@ export interface FileRouteTypes {
     | '/learn/$slug'
     | '/s/$submissionId'
     | '/admin/dashboard'
+    | '/admin/export'
+    | '/admin/seats'
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -249,6 +270,8 @@ export interface FileRouteTypes {
     | '/learn/$slug'
     | '/s/$submissionId'
     | '/admin/dashboard'
+    | '/admin/export'
+    | '/admin/seats'
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -272,6 +295,8 @@ export interface FileRouteTypes {
     | '/learn/$slug'
     | '/s/$submissionId'
     | '/_authenticated/admin/dashboard'
+    | '/_authenticated/admin/export'
+    | '/_authenticated/admin/seats'
     | '/_authenticated/settings/export'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -424,6 +449,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsExportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/seats': {
+      id: '/_authenticated/admin/seats'
+      path: '/admin/seats'
+      fullPath: '/admin/seats'
+      preLoaderRoute: typeof AuthenticatedAdminSeatsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/export': {
+      id: '/_authenticated/admin/export'
+      path: '/admin/export'
+      fullPath: '/admin/export'
+      preLoaderRoute: typeof AuthenticatedAdminExportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/dashboard': {
       id: '/_authenticated/admin/dashboard'
       path: '/admin/dashboard'
@@ -453,6 +492,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
+  AuthenticatedAdminExportRoute: typeof AuthenticatedAdminExportRoute
+  AuthenticatedAdminSeatsRoute: typeof AuthenticatedAdminSeatsRoute
   AuthenticatedSettingsExportRoute: typeof AuthenticatedSettingsExportRoute
   AuthenticatedSubmissionSubmissionIdRoute: typeof AuthenticatedSubmissionSubmissionIdRoute
 }
@@ -462,6 +503,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
+  AuthenticatedAdminExportRoute: AuthenticatedAdminExportRoute,
+  AuthenticatedAdminSeatsRoute: AuthenticatedAdminSeatsRoute,
   AuthenticatedSettingsExportRoute: AuthenticatedSettingsExportRoute,
   AuthenticatedSubmissionSubmissionIdRoute:
     AuthenticatedSubmissionSubmissionIdRoute,
