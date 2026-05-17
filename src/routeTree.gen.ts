@@ -26,6 +26,7 @@ import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
+import { Route as AuthenticatedSettingsExportRouteImport } from './routes/_authenticated/settings.export'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicOgSubmissionIdRouteImport } from './routes/api/public/og.$submissionId'
 
@@ -114,6 +115,12 @@ const AuthenticatedSubmissionSubmissionIdRoute =
     path: '/submission/$submissionId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSettingsExportRoute =
+  AuthenticatedSettingsExportRouteImport.update({
+    id: '/settings/export',
+    path: '/settings/export',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -184,6 +193,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/_authenticated/settings/export': typeof AuthenticatedSettingsExportRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
     | '/api/public/payments/webhook'
@@ -226,6 +237,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
     | '/api/public/payments/webhook'
@@ -247,6 +259,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/_authenticated/settings/export'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/og/$submissionId'
     | '/api/public/payments/webhook'
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubmissionSubmissionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings/export': {
+      id: '/_authenticated/settings/export'
+      path: '/settings/export'
+      fullPath: '/settings/export'
+      preLoaderRoute: typeof AuthenticatedSettingsExportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -412,6 +432,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedSettingsExportRoute: typeof AuthenticatedSettingsExportRoute
   AuthenticatedSubmissionSubmissionIdRoute: typeof AuthenticatedSubmissionSubmissionIdRoute
 }
 
@@ -419,6 +440,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedSettingsExportRoute: AuthenticatedSettingsExportRoute,
   AuthenticatedSubmissionSubmissionIdRoute:
     AuthenticatedSubmissionSubmissionIdRoute,
 }

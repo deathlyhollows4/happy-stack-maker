@@ -448,3 +448,46 @@ export const getEntitlements = createServerFn({ method: "POST" })
       roadmapsLimit: quotas.roadmapsPerDay,
     };
   });
+
+export const exportUserData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const [submissionsRes, progressRes, practiceRes] = await Promise.all([
+      supabase
+        .from("submissions")
+        .select("id, language, code, summary, concepts, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("progress")
+        .select("topic_slug, mastery, attempts, last_reviewed")
+        .eq("user_id", userId),
+      supabase
+        .from("practice_problems")
+        .select("id, topic_slug, title, prompt, starter_code, language, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    const submissions = submissionsRes.data ?? [];
+    const submissionIds = submissions.map((s) => s.id);
+
+    let issues: any[] = [];
+    if (submissionIds.length > 0) {
+      const { data: issuesData } = await supabase
+        .from("review_issues")
+        .select("id, submission_id, line, severity, concept_slug, title, explanation, fix_hint")
+        .in("submission_id", submissionIds)
+        .order("submission_id");
+      issues = issuesData ?? [];
+    }
+
+    return {
+      exported_at: new Date().toISOString(),
+      submissions,
+      review_issues: issues,
+      progress: progressRes.data ?? [],
+      practice_problems: practiceRes.data ?? [],
+    };
+  });
