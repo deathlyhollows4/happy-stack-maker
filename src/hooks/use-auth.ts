@@ -28,11 +28,15 @@ export function useAuth() {
   }, []);
 
   async function fetchAdminRole(uid: string) {
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", uid);
-    setIsAdmin((roles ?? []).some((r) => r.role === "admin"));
+    try {
+      const { data } = await supabase.rpc("has_role", {
+        p_user_id: uid,
+        p_role: "admin",
+      });
+      setIsAdmin(!!data);
+    } catch {
+      setIsAdmin(false);
+    }
   }
 
   return { user, session, loading, isAdmin };
