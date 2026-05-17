@@ -7,8 +7,8 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 16 May 2026                                                            |
-| Status                | Working MVP deployed in preview — auth, dashboard, AI review, practice |
+| Document date         | 17 May 2026                                                            |
+| Status                | All 6 phases complete — 15 sessions — auth, payments, UI, SEO, research, B2B/admin |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -119,18 +119,27 @@ src/
 │   ├── terms.tsx                  # Terms & Conditions (Paddle requirement)
 │   ├── refunds.tsx                # Refund Policy (Paddle requirement)
 │   ├── privacy.tsx                # Privacy Notice (Paddle requirement)
-│   ├── auth/
-│   │   └── callback.tsx           # OAuth post-redirect handler
-│   ├── api/public/
-│   │   └── payments/
-│   │       └── webhook.ts         # Paddle webhook receiver
-│   └── _authenticated/
-│       ├── route.tsx              # Pathless layout: sidebar + client-side auth gate
-│       ├── dashboard.tsx          # Stats, topic mastery, recent reviews
-│       ├── review.tsx             # Code editor -> reviewCode (quota-gated)
-│       └── practice.tsx           # generatePractice (quota-gated) + listPractice
+  │   ├── learn.$slug.tsx            # Per-topic SEO landing page (public)
+  │   ├── s.$submissionId.tsx        # Share-a-review public page
+  │   ├── auth/
+  │   │   └── callback.tsx           # OAuth post-redirect handler
+  │   ├── api/public/
+  │   │   ├── og.$submissionId.ts    # Dynamic OG image SVG route
+  │   │   └── payments/
+  │   │       └── webhook.ts         # Paddle webhook receiver
+  │   └── _authenticated/
+  │       ├── route.tsx              # Pathless layout: sidebar + client-side auth gate
+  │       ├── dashboard.tsx          # Stats, topic mastery, recent reviews, knowledge graph
+  │       ├── review.tsx             # Code editor -> reviewCode (quota-gated)
+  │       ├── practice.tsx           # generatePractice (quota-gated) + listPractice
+  │       ├── submission.$submissionId.tsx  # Submission detail + review issues
+  │       ├── settings.export.tsx    # User data export (JSON/CSV)
+  │       └── admin.dashboard.tsx    # Admin dashboard: all users, stats, subscriptions
+  │       └── admin.seats.tsx        # Seat management: grant/revoke admin roles
+  │       └── admin.export.tsx       # Admin data export: all users JSON/CSV
+  │       └── admin.curriculum.tsx   # SPPU/NPTEL curriculum mapping (inline edit)
 ├── lib/
-│   ├── codewise.functions.ts      # Server fn: reviewCode, getDashboard, getSubmission, generatePractice, listPractice, getEntitlements
+  │   ├── codewise.functions.ts      # Server fns: reviewCode, getDashboard, getSubmission, generatePractice, listPractice, getEntitlements, getPublicSubmission, getTopicBySlug, exportUserData, getAdminDashboard, getAdminSeats, grantAdminRole, revokeAdminRole, exportAllUserData, getCurriculumMappings, upsertCurriculumMapping
 │   ├── billing.functions.ts       # Server fn: cancelSubscription, getCustomerPortalUrl
 │   ├── entitlements.server.ts     # getUserPlan, consumeQuota, readUsage, PLAN_QUOTAS
 │   ├── paddle.server.ts           # Paddle SDK init, webhook verify, gateway fetch
@@ -152,7 +161,11 @@ src/
 │   └── lovable/
 │       └── index.ts               # Lovable Cloud Auth OAuth bridge — DO NOT EDIT
 ├── supabase/
-│   └── migrations/                # SQL migrations (run manually on Supabase)
+│   └── migrations/                # SQL migrations: tables, RLS, SECURITY DEFINER fns, seed data
+├── scripts/
+│   ├── eval.ts                    # Eval harness: CSV corpus → AI gateway → metrics
+│   └── corpus/
+│       └── labelled-errors.csv    # Sample labelled buggy-code dataset
 ├── styles.css                     # Tailwind v4 tokens + font imports
 ├── start.ts                       # createStart() — registers errorMiddleware + attachSupabaseAuth
 ├── server.ts                      # Worker entry with lazy import + h3 normalization
@@ -307,24 +320,26 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 - Legal pages: /terms, /refunds, /privacy (Paddle merchant-of-record requirement)
 - Cancellation grace period: 7 days from cancel click, enforced in `cancelSubscription` server fn
 
-### 6.2 Not yet built (gaps for opencode to close)
+### 6.2 Not yet built (remaining polish items)
 
-- Google OAuth + Apple sign-in (currently email/password only)
-- Password reset flow (/forgot-password + /reset-password pages)
-- ~~Stripe (or Razorpay) payment + freemium gating~~ → Done: Paddle via Lovable Gateway
+- Google OAuth + Apple sign-in (currently email/password only — requires Google Cloud Console setup)
 - Billing page UI at `/_authenticated/billing` (server fns exist: `cancelSubscription`, `getCustomerPortalUrl`, `getEntitlements`)
 - Past-due banner in authenticated layout (read `pastDue` from entitlements)
 - `?checkout=success` toast on landing page after Paddle checkout completes
-- Submission detail page (/\_authenticated/review/$submissionId) — server fn exists, UI does not
-- Knowledge graph visualization (prerequisite chains across the 20 topics)
-- Share-your-review-score viral loop (public OG image + /s/$id route)
-- College / team licenses: user_roles table + admin dashboard
-- SEO landing pages per topic (/learn/$slug) and per language
 - Analytics (Plausible or PostHog) — currently nothing wired
-- Export user data (submissions + mastery as CSV/JSON)
-- CS curriculum mapping UI (SPPU / NPTEL alignment)
-- Research corpus: import labelled CS1/CS2 buggy-code dataset for eval harness
 - User study scaffolding for the ICNDIA paper (consent flow, anonymized telemetry)
+
+Previously listed gaps now completed:
+- ~~Stripe payment~~ → Done: Paddle via Lovable Gateway
+- ~~Password reset flow~~ → Done: /forgot-password + /reset-password
+- ~~Submission detail page~~ → Done: /_authenticated/submission/$submissionId
+- ~~Knowledge graph visualization~~ → Done: d3-force with pan/zoom, 20 topics
+- ~~Share-your-review viral loop~~ → Done: /s/$id route + OG image
+- ~~SEO landing pages per topic~~ → Done: /learn/$slug (Phase 4)
+- ~~College / team licenses~~ → Done: user_roles table + admin dashboard (Phase 6)
+- ~~Export user data~~ → Done: /settings/export + admin export (Phase 5 + 6)
+- ~~CS curriculum mapping UI~~ → Done: /admin/curriculum with SPPU/NPTEL alignment (Phase 6)
+- ~~Research corpus / eval harness~~ → Done: scripts/eval.ts with metrics (Phase 5)
 
 ---
 
