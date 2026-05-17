@@ -142,8 +142,15 @@ export function KnowledgeGraph({ topics, progress }: Props) {
       .alphaDecay(0.015)
       .stop();
 
+    const margin = 70;
+    const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
     let raf = 0;
     sim.on("tick", () => {
+      for (const n of simNodesCopy) {
+        n.x = clamp(n.x, margin, VB_W - margin);
+        n.y = clamp(n.y, margin, VB_H - margin);
+      }
       if (raf) return;
       raf = requestAnimationFrame(() => {
         setSimNodes([...simNodesCopy] as SimNode[]);
