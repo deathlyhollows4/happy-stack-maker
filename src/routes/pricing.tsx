@@ -46,7 +46,7 @@ function PricingPage() {
       priceId,
       customerEmail: user.email,
       customData: { userId: user.id },
-      successUrl: `${window.location.origin}/?checkout=success`,
+      successUrl: `${window.location.origin}/dashboard?checkout=success`,
     });
   };
 
