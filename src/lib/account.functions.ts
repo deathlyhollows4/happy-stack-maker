@@ -54,7 +54,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const { userId } = context;
     const sb = admin();
 
-    // App-level data — order matters for FK-less tables.
+    // App-level data: order matters for FK-less tables.
     const tables = [
       "review_issues",
       "submissions",

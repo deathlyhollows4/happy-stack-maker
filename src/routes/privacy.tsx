@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Notice — CodeWise" },
+      { title: "Privacy Notice | CodeWise" },
       { name: "description", content: "How CodeWise collects, uses, and shares personal data." },
     ],
   }),
@@ -48,13 +48,13 @@ function PrivacyPage() {
           <section>
             <h2 className="font-display text-2xl">3. Why we use your data (and our legal basis)</h2>
             <ul className="ml-6 list-disc space-y-1">
-              <li><strong>To provide the service</strong> — create your account, run reviews, track mastery (contract performance).</li>
-              <li><strong>To bill you and manage subscriptions</strong> — via Paddle (contract).</li>
-              <li><strong>To keep the service secure</strong> — prevent fraud and abuse (legitimate interests).</li>
-              <li><strong>To improve the product</strong> — analytics, aggregated usage (legitimate interests).</li>
-              <li><strong>To support you</strong> — respond to questions (legitimate interests / contract).</li>
-              <li><strong>To send important notices</strong> — billing or service messages (legal obligation / legitimate interests).</li>
-              <li><strong>Marketing</strong> — only with your consent, and you can opt out at any time.</li>
+              <li><strong>To provide the service</strong>, create your account, run reviews, track mastery (contract performance).</li>
+              <li><strong>To bill you and manage subscriptions</strong>, via Paddle (contract).</li>
+              <li><strong>To keep the service secure</strong>, prevent fraud and abuse (legitimate interests).</li>
+              <li><strong>To improve the product</strong>, analytics, aggregated usage (legitimate interests).</li>
+              <li><strong>To support you</strong>, respond to questions (legitimate interests / contract).</li>
+              <li><strong>To send important notices</strong>, billing or service messages (legal obligation / legitimate interests).</li>
+              <li><strong>Marketing</strong>, only with your consent, and you can opt out at any time.</li>
             </ul>
           </section>
 
@@ -100,8 +100,8 @@ function PrivacyPage() {
           <section>
             <h2 className="font-display text-2xl">8. Security</h2>
             <p>
-              We use appropriate technical and organisational measures — encryption in transit,
-              access controls, audit logging — to protect your data. No system is perfectly secure;
+              We use appropriate technical and organisational measures, including encryption in transit,
+              access controls, and audit logging, to protect your data. No system is perfectly secure;
               please use a strong password and notify us of any suspected compromise.
             </p>
           </section>

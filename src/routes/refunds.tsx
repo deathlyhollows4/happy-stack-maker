@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/refunds")({
   head: () => ({
     meta: [
-      { title: "Refund Policy — CodeWise" },
+      { title: "Refund Policy | CodeWise" },
       { name: "description", content: "CodeWise 30-day money-back refund policy." },
     ],
   }),
@@ -24,7 +24,7 @@ function RefundsPage() {
           <p>
             We offer a <strong>30-day money-back guarantee</strong>. If you're not satisfied with
             your CodeWise purchase, you can request a full refund within 30 days of your order
-            date — no questions asked.
+            date, no questions asked.
           </p>
 
           <h2 className="font-display text-2xl">How to request a refund</h2>

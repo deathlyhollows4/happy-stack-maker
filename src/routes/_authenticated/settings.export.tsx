@@ -5,7 +5,7 @@ import { exportUserData } from "@/lib/codewise.functions";
 import { FileJson, FileSpreadsheet, Download, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings/export")({
-  head: () => ({ meta: [{ title: "Export Data — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Export Data | CodeWise" }] }),
   component: ExportPage,
 });
 

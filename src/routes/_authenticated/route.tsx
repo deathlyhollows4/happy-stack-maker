@@ -117,7 +117,7 @@ function AuthLayout() {
             </span>
           </Link>
 
-          {/* Desktop nav — centered */}
+          {/* Desktop nav: centered */}
           <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             {NAV_ITEMS.map((it) => (
               <Link
@@ -135,7 +135,7 @@ function AuthLayout() {
             ))}
           </nav>
 
-          {/* Right side — user menu + mobile hamburger */}
+          {/* Right side: user menu + mobile hamburger */}
           <div className="flex items-center gap-2">
             {/* Desktop user dropdown */}
             <div className="hidden md:block relative" ref={userMenuRef}>

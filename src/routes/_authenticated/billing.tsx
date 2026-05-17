@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/billing")({
-  head: () => ({ meta: [{ title: "Billing — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Billing | CodeWise" }] }),
   component: BillingPage,
 });
 

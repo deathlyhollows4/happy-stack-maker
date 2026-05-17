@@ -107,7 +107,7 @@ function svgCard(sub: {
 
   <line x1="80" y1="${CARD_H - 70}" x2="${CARD_W - 80}" y2="${CARD_H - 70}" stroke="oklch(0.28 0.012 60)" stroke-width="1"/>
 
-  <text x="80" y="${CARD_H - 40}" font-family="Inter, sans-serif" font-size="14" fill="oklch(0.45 0.018 70)">Shared from CodeWise — AI code reviewer for CS students</text>
+  <text x="80" y="${CARD_H - 40}" font-family="Inter, sans-serif" font-size="14" fill="oklch(0.45 0.018 70)">Shared from CodeWise, AI code reviewer for CS students</text>
   <text x="${CARD_W - 80}" y="${CARD_H - 40}" text-anchor="end" font-family="Fraunces, Georgia, serif" font-size="14" fill="oklch(0.5 0.018 70)">codewise.app</text>
 
   <rect x="${CARD_W - 170}" y="20" width="90" height="24" rx="4" fill="oklch(0.7 0.16 35 / 0.12)"/>

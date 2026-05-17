@@ -6,7 +6,7 @@ import { Shield, Loader2, GraduationCap, Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/curriculum")({
-  head: () => ({ meta: [{ title: "Curriculum Mapping — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Curriculum Mapping | CodeWise" }] }),
   component: CurriculumMapping,
 });
 
@@ -248,7 +248,7 @@ function CurriculumMapping() {
 function MappingCell({ value }: { value: string | null | undefined }) {
   return (
     <td className="px-4 py-2.5 text-xs text-muted-foreground">
-      {value || <span className="text-muted-foreground/40">—</span>}
+      {value || <span className="text-muted-foreground/40">&mdash;</span>}
     </td>
   );
 }
@@ -266,7 +266,7 @@ function EditableCell({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-accent"
-        placeholder="—"
+        placeholder="&mdash;"
       />
     </td>
   );

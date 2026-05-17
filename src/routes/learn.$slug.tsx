@@ -8,15 +8,15 @@ export const Route = createFileRoute("/learn/$slug")({
   head: ({ params }) => ({
     meta: [
       {
-        title: `${capitalize(params.slug)} — AI Code Review Practice | CodeWise`,
+        title: `${capitalize(params.slug)}, AI Code Review Practice | CodeWise`,
       },
       {
         name: "description",
-        content: `Master ${capitalize(params.slug)} with CodeWise — AI-powered code review that teaches CS concepts through pedagogical feedback and knowledge tracing.`,
+        content: `Master ${capitalize(params.slug)} with CodeWise, AI-powered code review that teaches CS concepts through pedagogical feedback and knowledge tracing.`,
       },
       {
         property: "og:title",
-        content: `${capitalize(params.slug)} — AI Code Review Practice | CodeWise`,
+        content: `${capitalize(params.slug)}, AI Code Review Practice | CodeWise`,
       },
       {
         property: "og:description",

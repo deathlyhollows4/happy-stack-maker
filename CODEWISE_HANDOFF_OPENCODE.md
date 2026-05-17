@@ -573,6 +573,18 @@ npm install @lovable.dev/cloud-auth-js@1.1.2 @paddle/paddle-node-sdk
 | **Paddle: webhook is at `/api/public/payments/webhook`** | Must be configured in Paddle sandbox/live dashboard. Lovable auto-provisions this via the gateway. |
 | **SQL: `SECURITY DEFINER` functions have revoked public EXECUTE** | `consume_quota` and `get_usage` in Supabase. Do not grant public EXECUTE — the Lovable security agent flags this. Access is via service role only in `entitlements.server.ts`. |
 
+### Content Style Guidelines
+
+> These rules keep the CodeWise brand voice professional and AI-agnostic.
+
+| Rule | Why |
+|------|-----|
+| **Never use em dashes (—)** | Em dashes are the hallmark of AI-generated text. Replace with commas, semicolons, colons, or periods. In meta titles, use `|` pipe instead. |
+| **Avoid filler phrases** | Words like "delve", "firstly", "secondly", "moreover", "furthermore", "consequently", "in conclusion" read as AI-generated fluff. Keep writing direct and concise. |
+| **No flowery language** | Avoid poetic or overly descriptive language in AI outputs. The tone should be teaching-focused, direct, and professional — not literary. |
+| **Use active voice** | Prefer "The function returns" over "The value is returned by the function". |
+| **Keep AI outputs focused** | AI-generated summaries, explanations, and hints should be concise (1-3 sentences for issues, 1 paragraph for summaries). No preamble, no self-praise, no meta-commentary. |
+
 ---
 
 ## 12. Still-valid sections from the original plan

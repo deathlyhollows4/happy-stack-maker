@@ -5,13 +5,13 @@ import { getAllPosts, type BlogPost } from "@/lib/blog-posts";
 export const Route = createFileRoute("/explore")({
   head: () => ({
     meta: [
-      { title: "Explore — CodeWise" },
+      { title: "Explore | CodeWise" },
       {
         name: "description",
         content:
           "Deep dives into CS concepts, DSA patterns, and learning strategies for computer science students preparing for placements.",
       },
-      { property: "og:title", content: "Explore — CodeWise" },
+      { property: "og:title", content: "Explore | CodeWise" },
       {
         property: "og:description",
         content:

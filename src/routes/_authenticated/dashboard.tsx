@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, lazy } from "react";
 import { getDashboard } from "@/lib/codewise.functions";
+import { Markdown } from "@/components/markdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUpRight, Code2 } from "lucide-react";
 
@@ -127,9 +128,9 @@ function Dashboard() {
                         {new Date(s.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-muted-foreground line-clamp-2">
-                      {s.summary ?? "No summary"}
-                    </p>
+                    <div className="line-clamp-2">
+                      <Markdown className="text-muted-foreground">{s.summary ?? "No summary"}</Markdown>
+                    </div>
                     <Link
                       to="/submission/$submissionId"
                       params={{ submissionId: s.id }}

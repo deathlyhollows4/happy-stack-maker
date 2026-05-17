@@ -7,7 +7,7 @@ import { getPaddleEnvironment } from "@/lib/paddle";
 import { Shield, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/update-price")({
-  head: () => ({ meta: [{ title: "Update Paddle Price — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Update Paddle Price | CodeWise" }] }),
   component: UpdatePricePage,
 });
 

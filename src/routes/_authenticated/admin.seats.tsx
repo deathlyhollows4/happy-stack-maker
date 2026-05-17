@@ -5,7 +5,7 @@ import { getAdminSeats, grantAdminRole, revokeAdminRole } from "@/lib/codewise.f
 import { Shield, Loader2, ShieldOff, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/seats")({
-  head: () => ({ meta: [{ title: "Seat Management — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Seat Management | CodeWise" }] }),
   component: SeatManagement,
 });
 
@@ -130,7 +130,7 @@ function SeatManagement() {
                           </span>
                         ))
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <span className="text-xs text-muted-foreground">&mdash;</span>
                       )}
                     </div>
                   </td>

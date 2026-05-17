@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms & Conditions — CodeWise" },
+      { title: "Terms & Conditions | CodeWise" },
       { name: "description", content: "CodeWise terms and conditions of service." },
     ],
   }),

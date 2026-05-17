@@ -6,10 +6,11 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { updateDisplayName, getProfile, deleteAccount } from "@/lib/account.functions";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/hooks/use-theme";
 import { ArrowLeft, Save, KeyRound, Trash2, Download, CreditCard } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Settings | CodeWise" }] }),
   component: SettingsPage,
 });
 
@@ -37,6 +38,7 @@ function SettingsPage() {
 
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState("");
+  const { theme } = useTheme();
 
   const saveName = async () => {
     if (!name.trim()) return;
@@ -149,6 +151,11 @@ function SettingsPage() {
         {/* Appearance */}
         <Section title="Appearance" desc="Pick a theme. Persists across reloads.">
           <ThemeToggle />
+          {theme === "light" && (
+            <p className="mt-3 text-xs text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 rounded-md px-3 py-2">
+              Light mode is in beta. Some elements may need polish.
+            </p>
+          )}
         </Section>
 
         {/* Data + Billing links */}

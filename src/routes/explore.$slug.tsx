@@ -8,7 +8,7 @@ export const Route = createFileRoute("/explore/$slug")({
     if (!post) {
       return {
         meta: [
-          { title: "Post not found — CodeWise Explore" },
+          { title: "Post not found | CodeWise Explore" },
           {
             name: "description",
             content: "The blog post you're looking for doesn't exist.",
@@ -18,9 +18,9 @@ export const Route = createFileRoute("/explore/$slug")({
     }
     return {
       meta: [
-        { title: `${post.title} — CodeWise Explore` },
+        { title: `${post.title} | CodeWise Explore` },
         { name: "description", content: post.excerpt },
-        { property: "og:title", content: `${post.title} — CodeWise Explore` },
+        { property: "og:title", content: `${post.title} | CodeWise Explore` },
         { property: "og:description", content: post.excerpt },
         { property: "og:type", content: "article" },
       ],

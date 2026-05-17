@@ -62,6 +62,7 @@ const SYSTEM_PROMPT = `You are CodeWise, an AI code reviewer for computer-scienc
 Your job is NOT to write production-quality code. Your job is to diagnose the
 underlying CS concept the student does not yet fully understand, and explain it
 in a teaching tone: concise, encouraging, and concrete.
+Do NOT use em dashes, filler phrases (e.g. "delve", "firstly", "moreover"), markdown headers, or flowery language. Keep explanations direct and professional.
 
 For every issue you raise:
 - explain WHY it's an issue in terms of the underlying CS concept
@@ -146,13 +147,44 @@ export const reviewCode = createServerFn({ method: "POST" })
     }
 
     const aiJson = await aiRes.json();
-    const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
+    let content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
 
-    let parsed;
-    try {
-      parsed = ReviewResponseSchema.parse(JSON.parse(content));
-    } catch {
-      return { ok: false as const, error: "AI returned malformed output. Try again." };
+    let parsed: z.infer<typeof ReviewResponseSchema> | null = null;
+    let attempt = 0;
+    const maxAttempts = 3;
+    while (attempt < maxAttempts) {
+      attempt++;
+      try {
+        parsed = ReviewResponseSchema.parse(JSON.parse(content));
+        break;
+      } catch {
+        if (attempt < maxAttempts) {
+          const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3-flash-preview",
+              messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: userPrompt },
+              ],
+              response_format: { type: "json_object" },
+            }),
+          });
+          if (!retryRes.ok) {
+            console.error("AI gateway retry error:", retryRes.status);
+            continue;
+          }
+          const retryJson = await retryRes.json();
+          content = retryJson?.choices?.[0]?.message?.content ?? "{}";
+        }
+      }
+    }
+    if (!parsed) {
+      return { ok: false as const, error: "AI returned malformed output after 3 attempts. Please try again." };
     }
 
     // persist submission
@@ -382,18 +414,53 @@ export const generatePractice = createServerFn({ method: "POST" })
       return { ok: false as const, error: "AI error generating problem." };
     }
     const aiJson = await aiRes.json();
-    const content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-    let parsed;
-    try {
-      parsed = z
-        .object({
-          title: z.string().min(1).max(200),
-          prompt: z.string().min(1).max(5000),
-          starter_code: z.string().max(5000).optional().default(""),
-        })
-        .parse(JSON.parse(content));
-    } catch {
-      return { ok: false as const, error: "Malformed problem JSON." };
+    let content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
+
+    let parsed: { title: string; prompt: string; starter_code: string } | null = null;
+    let attempt = 0;
+    const maxAttempts = 3;
+    while (attempt < maxAttempts) {
+      attempt++;
+      try {
+        parsed = z
+          .object({
+            title: z.string().min(1).max(200),
+            prompt: z.string().min(1).max(5000),
+            starter_code: z.string().max(5000).optional().default(""),
+          })
+          .parse(JSON.parse(content));
+        break;
+      } catch {
+        if (attempt < maxAttempts) {
+          const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "google/gemini-3-flash-preview",
+              messages: [
+                {
+                  role: "system",
+                  content: `You generate small, focused CS practice problems for students. Difficulty: easy-medium (LeetCode Easy / classic CS1-CS2). Return JSON: { "title": string, "prompt": string (markdown ok, include examples + constraints), "starter_code": string (skeleton in the requested language with TODO comments) }. No markdown fences around the JSON.`,
+                },
+                {
+                  role: "user",
+                  content: `Topic: ${topic?.name ?? topicSlug}. ${topic?.description ?? ""}\nLanguage: ${data.language}\nGenerate ONE practice problem aimed at strengthening this concept.`,
+                },
+              ],
+              response_format: { type: "json_object" },
+            }),
+          });
+          if (!retryRes.ok) {
+            console.error("AI gateway retry error:", retryRes.status);
+            continue;
+          }
+          const retryJson = await retryRes.json();
+          content = retryJson?.choices?.[0]?.message?.content ?? "{}";
+        }
+      }
+    }
+    if (!parsed) {
+      return { ok: false as const, error: "AI returned malformed output after 3 attempts. Please try again." };
     }
 
     const { data: row, error } = await supabase
@@ -553,7 +620,7 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
 
       return {
         id: p.id,
-        display_name: p.display_name ?? "—",
+        display_name: p.display_name ?? "",
         created_at: p.created_at as string,
         plan: isPro ? "pro" : "free",
         subscription: s?.status ?? null,
@@ -600,7 +667,7 @@ export const getAdminSeats = createServerFn({ method: "GET" })
 
     const users = (profilesRes.data ?? []).map((p) => ({
       id: p.id,
-      display_name: p.display_name ?? "—",
+      display_name: p.display_name ?? "",
       created_at: p.created_at as string,
       roles: rolesByUser.get(p.id) ?? [],
     }));

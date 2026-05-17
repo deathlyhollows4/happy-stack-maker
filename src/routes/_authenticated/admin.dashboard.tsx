@@ -5,7 +5,7 @@ import { getAdminDashboard } from "@/lib/codewise.functions";
 import { Shield, Users, Star, Activity, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
-  head: () => ({ meta: [{ title: "Admin Dashboard — CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Admin Dashboard | CodeWise" }] }),
   component: AdminDashboard,
 });
 
@@ -132,7 +132,7 @@ function AdminDashboard() {
                               : "text-muted-foreground"
                       }
                     >
-                      {u.subscription ?? "—"}
+                      {u.subscription ?? ""}
                     </span>
                   </td>
                   <td className="px-5 py-2.5 font-mono text-xs text-right">{u.reviews_this_month}</td>

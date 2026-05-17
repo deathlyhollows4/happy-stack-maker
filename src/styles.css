@@ -110,7 +110,7 @@
   --sidebar-ring: oklch(0.88 0.075 75);
 }
 
-/* Light theme — opt in by adding `.light` to <html>. */
+/* Light theme: opt in by adding `.light` to <html>. */
 :root.light {
   --background: oklch(0.985 0.005 80);
   --foreground: oklch(0.2 0.012 60);

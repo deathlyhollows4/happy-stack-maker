@@ -8,6 +8,7 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { reviewCode } from "@/lib/codewise.functions";
+import { Markdown } from "@/components/markdown";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
 import {
@@ -211,7 +212,7 @@ function Review() {
             <div className="space-y-5">
               <div>
                 <h3 className="font-display text-2xl mb-2">Summary</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{result.summary}</p>
+                <Markdown className="text-muted-foreground">{result.summary}</Markdown>
               </div>
               {result.concepts.length > 0 && (
                 <div>
@@ -298,14 +299,14 @@ function IssueCard({ issue }: { issue: any }) {
               </span>
             )}
           </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">{issue.explanation}</p>
+          <Markdown className="text-muted-foreground">{issue.explanation}</Markdown>
           {issue.fix_hint && (
-            <p className="mt-2 text-sm border-l-2 border-accent/50 pl-3 text-foreground/90">
+            <div className="mt-2 text-sm border-l-2 border-accent/50 pl-3">
               <span className="font-mono text-[10px] uppercase tracking-widest text-accent mr-2">
                 fix
               </span>
-              {issue.fix_hint}
-            </p>
+              <Markdown className="text-foreground/90 mt-1">{issue.fix_hint}</Markdown>
+            </div>
           )}
         </div>
       </div>

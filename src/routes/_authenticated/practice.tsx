@@ -9,6 +9,7 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.functions";
+import { Markdown } from "@/components/markdown";
 import { runCode } from "@/lib/code-exec.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
@@ -204,9 +205,9 @@ function ProblemWorkspace({ problem }: { problem: any }) {
             {problem.topic_slug}
           </span>
         )}
-        <pre className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed font-sans mt-4">
+        <Markdown className="text-muted-foreground mt-4">
           {problem.prompt}
-        </pre>
+        </Markdown>
       </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">

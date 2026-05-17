@@ -8,7 +8,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing — CodeWise" },
+      { title: "Pricing | CodeWise" },
       {
         name: "description",
         content:
@@ -180,7 +180,7 @@ function PricingPage() {
         </div>
 
         <p className="mt-12 text-center text-xs text-muted-foreground">
-          Payments handled by Paddle, our merchant of record. Cancel anytime — you'll keep access
+          Payments handled by Paddle, our merchant of record. Cancel anytime, you'll keep access
           for 7 days after cancellation. See our{" "}
           <Link to="/terms" className="underline">Terms</Link>,{" "}
           <Link to="/refunds" className="underline">Refund Policy</Link>, and{" "}
