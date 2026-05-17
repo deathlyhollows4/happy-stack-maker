@@ -56,7 +56,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
     ] as const;
 
     for (const t of tables) {
-      const { error } = await sb.from(t).delete().eq("user_id", userId);
+      const { error } = await (sb as any).from(t).delete().eq("user_id", userId);
       // profiles uses id, not user_id
       if (error && t === "profiles") {
         await sb.from("profiles").delete().eq("id", userId);

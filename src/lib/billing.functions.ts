@@ -140,7 +140,7 @@ export const updateProYearlyPrice = createServerFn({ method: "POST" })
       let targetPriceId: string | null = null;
       const products = await paddle.products.list();
       for await (const product of products) {
-        const prices = await paddle.prices.list({ productId: product.id });
+        const prices = await paddle.prices.list({ productId: [product.id] });
         for await (const price of prices) {
           const custom = (price as any).customData;
           if (custom?.external_id === "pro_yearly") {
