@@ -41,7 +41,7 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    const sb = admin();
+    const sb = supabaseAdmin;
 
     // App-level data: order matters for FK-less tables.
     const tables = [
