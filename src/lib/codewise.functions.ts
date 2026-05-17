@@ -133,7 +133,6 @@ export const reviewCode = createServerFn({ method: "POST" })
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
-        "Lovable-API-Key": apiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -142,7 +141,6 @@ export const reviewCode = createServerFn({ method: "POST" })
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userPrompt },
         ],
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -156,7 +154,7 @@ export const reviewCode = createServerFn({ method: "POST" })
           ok: false as const,
           error: "AI credits exhausted. Add credits in Lovable settings.",
         };
-      return { ok: false as const, error: `AI service error (${aiRes.status}). Try again.` };
+      return { ok: false as const, error: `AI service error (${aiRes.status}). ${text.slice(0, 300)}` };
     }
 
     const aiJson = await aiRes.json();
@@ -177,7 +175,6 @@ export const reviewCode = createServerFn({ method: "POST" })
             method: "POST",
             headers: {
               Authorization: `Bearer ${apiKey}`,
-              "Lovable-API-Key": apiKey,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
@@ -186,7 +183,6 @@ export const reviewCode = createServerFn({ method: "POST" })
                 { role: "system", content: SYSTEM_PROMPT },
                 { role: "user", content: userPrompt },
               ],
-              response_format: { type: "json_object" },
             }),
           });
           if (!retryRes.ok) {
@@ -407,7 +403,7 @@ export const generatePractice = createServerFn({ method: "POST" })
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-            headers: { Authorization: `Bearer ${apiKey}`, "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-flash",
         messages: [
@@ -420,7 +416,6 @@ export const generatePractice = createServerFn({ method: "POST" })
             content: `Topic: ${topic?.name ?? topicSlug}. ${topic?.description ?? ""}\nLanguage: ${data.language}\nGenerate ONE practice problem aimed at strengthening this concept.`,
           },
         ],
-        response_format: { type: "json_object" },
       }),
     });
 
@@ -451,7 +446,7 @@ export const generatePractice = createServerFn({ method: "POST" })
         if (attempt < maxAttempts) {
           const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Lovable-API-Key": apiKey, "Content-Type": "application/json" },
+            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: "google/gemini-3-flash",
               messages: [
@@ -464,7 +459,6 @@ export const generatePractice = createServerFn({ method: "POST" })
                   content: `Topic: ${topic?.name ?? topicSlug}. ${topic?.description ?? ""}\nLanguage: ${data.language}\nGenerate ONE practice problem aimed at strengthening this concept.`,
                 },
               ],
-              response_format: { type: "json_object" },
             }),
           });
           if (!retryRes.ok) {

@@ -22,7 +22,7 @@ export type Quotas = {
 };
 
 export const PLAN_QUOTAS: Record<Plan, Quotas> = {
-  free: { reviewsPerMonth: 50, problemsPerDay: 25, codeRunsPerDay: 100 },
+  free: { reviewsPerMonth: 9999, problemsPerDay: 9999, codeRunsPerDay: 9999 },
   pro: { reviewsPerMonth: 1500, problemsPerDay: 15, codeRunsPerDay: 100 },
 };
 
