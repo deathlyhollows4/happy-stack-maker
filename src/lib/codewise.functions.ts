@@ -491,3 +491,84 @@ export const exportUserData = createServerFn({ method: "GET" })
       practice_problems: practiceRes.data ?? [],
     };
   });
+
+export const getAdminDashboard = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const admin = serviceClient();
+
+    const { data: isAdmin } = await admin.rpc("has_role", {
+      p_user_id: userId,
+      p_role: "admin",
+    });
+    if (!isAdmin) {
+      return { ok: false as const, error: "Forbidden", users: [], totals: {} };
+    }
+
+    const now = new Date();
+    const mk = monthKey(now);
+
+    const [profilesRes, subsRes, usageRes] = await Promise.all([
+      admin.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+      admin.from("subscriptions").select("user_id, status, current_period_end, environment"),
+      admin.from("usage_counters").select("user_id, kind, count").eq("period_key", mk),
+    ]);
+
+    const profiles = profilesRes.data ?? [];
+    const subs = subsRes.data ?? [];
+    const usage = usageRes.data ?? [];
+
+    const subByUser = new Map<string, { status: string; end: string | null }>();
+    for (const s of subs) {
+      const existing = subByUser.get(s.user_id);
+      if (!existing || (s.status === "active" && existing.status !== "active")) {
+        subByUser.set(s.user_id, { status: s.status as string, end: s.current_period_end as string | null });
+      }
+    }
+
+    const reviewCountByUser = new Map<string, number>();
+    const roadmapCountByUser = new Map<string, number>();
+    for (const u of usage) {
+      if (u.kind === "review") reviewCountByUser.set(u.user_id, (reviewCountByUser.get(u.user_id) ?? 0) + (u.count as number));
+      else if (u.kind === "roadmap") roadmapCountByUser.set(u.user_id, (roadmapCountByUser.get(u.user_id) ?? 0) + (u.count as number));
+    }
+
+    let totalReviews = 0;
+    let totalPro = 0;
+    const users = profiles.map((p) => {
+      const s = subByUser.get(p.id);
+      const endMs = s?.end ? new Date(s.end).getTime() : null;
+      const inPeriod = endMs === null || endMs > now.getTime();
+      const isPro =
+        s &&
+        (["active", "trialing", "past_due"].includes(s.status) && inPeriod) ||
+        (s.status === "canceled" && endMs !== null && endMs > now.getTime());
+
+      const reviews = reviewCountByUser.get(p.id) ?? 0;
+      const roadmaps = roadmapCountByUser.get(p.id) ?? 0;
+      totalReviews += reviews;
+      if (isPro) totalPro++;
+
+      return {
+        id: p.id,
+        display_name: p.display_name ?? "—",
+        created_at: p.created_at as string,
+        plan: isPro ? "pro" : "free",
+        subscription: s?.status ?? null,
+        reviews_this_month: reviews,
+        roadmaps_today: roadmaps,
+      };
+    });
+
+    return {
+      ok: true as const,
+      users,
+      totals: {
+        users: users.length,
+        pro_users: totalPro,
+        reviews_this_month: totalReviews,
+        free_users: users.length - totalPro,
+      },
+    };
+  });

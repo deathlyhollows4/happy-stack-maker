@@ -27,6 +27,7 @@ import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
 import { Route as AuthenticatedSettingsExportRouteImport } from './routes/_authenticated/settings.export'
+import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicOgSubmissionIdRouteImport } from './routes/api/public/og.$submissionId'
 
@@ -121,6 +122,12 @@ const AuthenticatedSettingsExportRoute =
     path: '/settings/export',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminDashboardRoute =
+  AuthenticatedAdminDashboardRouteImport.update({
+    id: '/admin/dashboard',
+    path: '/admin/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -170,6 +178,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/settings/export': typeof AuthenticatedSettingsExportRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/admin/dashboard'
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/admin/dashboard'
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/_authenticated/admin/dashboard'
     | '/_authenticated/settings/export'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/og/$submissionId'
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsExportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/dashboard': {
+      id: '/_authenticated/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -432,6 +452,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedSettingsExportRoute: typeof AuthenticatedSettingsExportRoute
   AuthenticatedSubmissionSubmissionIdRoute: typeof AuthenticatedSubmissionSubmissionIdRoute
 }
@@ -440,6 +461,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedSettingsExportRoute: AuthenticatedSettingsExportRoute,
   AuthenticatedSubmissionSubmissionIdRoute:
     AuthenticatedSubmissionSubmissionIdRoute,
