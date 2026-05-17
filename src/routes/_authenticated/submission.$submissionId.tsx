@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/submission/$submissionId")
       { title: "Submission Detail. CodeWise" },
       {
         property: "og:image",
-        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}.png`,
+        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
       },
     ],
   }),

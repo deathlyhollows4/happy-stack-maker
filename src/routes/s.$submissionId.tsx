@@ -20,11 +20,11 @@ export const Route = createFileRoute("/s/$submissionId")({
       { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:image",
-        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}.png`,
+        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
       },
       {
         name: "twitter:image",
-        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}.png`,
+        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
       },
     ],
   }),

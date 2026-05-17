@@ -115,7 +115,7 @@ function svgCard(sub: {
 </svg>`;
 }
 
-export const Route = createFileRoute("/api/public/og/$submissionId/png")({
+export const Route = createFileRoute("/api/public/og/$submissionId")({
   server: {
     handlers: {
       GET: async ({ params }) => {
