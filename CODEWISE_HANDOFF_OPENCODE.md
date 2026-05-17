@@ -26,7 +26,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 3 — UI Completion | ✅ **DONE** | 3.1, 3.2, 3.3 | — |
 | 4 — Growth & SEO | ✅ **DONE** | 4.1, 4.2, 4.3 | — |
 | 5 — Research | ✅ **DONE** | 5.1, 5.2, 5.3 | — |
-| 6 — B2B & Admin | 🔴 **NEXT** | 6.1 | 6.2: admin dashboard route + admin-only gate |
+| 6 — B2B & Admin | 🔴 **NEXT** | 6.1, 6.2 | 6.3: seat management UI + CSV/JSON user export |
 
 ### Session Log
 
@@ -44,6 +44,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 10 | Eval harness: scripts/eval.ts CSV corpus runner, AI gateway calls, precision/recall/F1 per concept, confusion matrix JSON, per-language breakdown, sample corpus | `scripts/eval.ts` (new), `scripts/corpus/labelled-errors.csv` (new) |
 | 11 | Export user data: exportUserData server fn, /settings/export page with JSON/CSV download, submissions/issues/progress/practice preview table | `codewise.functions.ts`, `settings.export.tsx` (new) |
 | 12 | User roles migration: user_roles table (user_id, role, unique constraint), has_role SECURITY DEFINER function, admin-only RLS policies, public EXECUTE revoked | `supabase/migrations/*_user_roles.sql` (new) |
+| 13 | Admin dashboard: getAdminDashboard server fn with has_role guard (service client), /admin/dashboard route with users table, stats cards, plan/subscription/usage columns | `codewise.functions.ts`, `admin.dashboard.tsx` (new) |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
