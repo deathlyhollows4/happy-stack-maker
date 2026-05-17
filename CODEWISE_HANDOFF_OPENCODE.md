@@ -7,7 +7,7 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 17 May 2026                                                            |
+| Document date         | 17 May 2026 (updated, sessions 25-37)                               |
 | Status                | Phase 7 complete — 24 sessions — UX improvements: Explore blog, top nav, billing, perf, free tier 50/50/100, Pro Yearly $199/yr |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
@@ -57,7 +57,21 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 22 | Free tier adjustments: problems 25/day, code runs 100/day, update pricing/billing copy | `entitlements.server.ts`, `pricing.tsx`, `billing.tsx` |
 | 23 | Pro Yearly pricing: $199/yr with ~~$240~~ strikethrough + Save 17% badge, removed subtitle | `pricing.tsx` |
 | 24 | Admin Paddle price update: updateProYearlyPrice server fn (admin-gated), /admin/update-price page, local script (requires Cloud secrets) | `billing.functions.ts`, `admin.update-price.tsx` (new), `scripts/update-yearly-price.ts` (new) |
-| 18 | Perf: React Query caching (staleTime/gcTime) on all 11 queries, lazy-loaded knowledge-graph (d3), Skeleton loading on dashboard + practice + submission detail | `dashboard.tsx`, `practice.tsx`, `settings.tsx`, `learn.$slug.tsx`, `submission.$submissionId.tsx`, `s.$submissionId.tsx`, `admin.dashboard.tsx`, `admin.seats.tsx`, `admin.export.tsx`, `admin.curriculum.tsx`, `settings.export.tsx` |
+| 25 | Playwright E2E: 18 route tests, 0 errors | — |
+| 26 | Markdown rendering: install react-markdown, create `<Markdown>` wrapper, apply to review/submission/practice/dashboard AI output | `markdown.tsx` (new), `review.tsx`, `submission.$submissionId.tsx`, `s.$submissionId.tsx`, `practice.tsx`, `dashboard.tsx` |
+| 27 | Em-dash purge (61→0): replace all em-dashes across 20 files, add content style guidelines to SYSTEM_PROMPT and handoff doc | 20 files across `src/` |
+| 28 | AI retry logic: 3-attempt retry on JSON parse failure in reviewCode + generatePractice, review_issues error logging | `codewise.functions.ts` |
+| 29 | Light mode beta warning: conditional amber badge in settings when theme=light | `settings.tsx` |
+| 30 | Content style guidelines: added to handoff doc (Section 11.1) | `CODEWISE_HANDOFF_OPENCODE.md` |
+| 31 | AI model fix: `google/gemini-3-flash-preview` → `google/gemini-3-flash` (wrong model name was causing 400) | `codewise.functions.ts`, `eval.ts` |
+| 32 | JSON extraction helper `extractJson()`: strips markdown fences + extra text from AI responses | `codewise.functions.ts` |
+| 33 | Schema tolerance: `.passthrough()` + `.default()` on ReviewResponseSchema | `codewise.functions.ts` |
+| 34 | Gateway header fix: added `Lovable-API-Key` (caused 400, reverted), removed `response_format` (reverted) | `codewise.functions.ts` |
+| 35 | Debug logging: show raw AI content + HTTP status in error messages | `codewise.functions.ts` |
+| 36 | Model switch: `google/gemini-2.5-flash` → `openai/gpt-5-mini`, explicit JSON example in system prompt | `codewise.functions.ts`, `eval.ts` |
+| 37 | Code-run fix: bypass quota (CHECK constraint missing `code_run`), add migration, restore quota after migration applied | `code-exec.functions.ts`, `supabase/migrations/*_add_code_run_kind.sql` (new) |
+| 38 | Admin client centralization: 7 files now use `supabaseAdmin` from `client.server.ts` instead of duplicate singletons | `codewise.functions.ts`, `billing.functions.ts`, `entitlements.server.ts`, `og.$submissionId.ts`, `webhook.ts` |
+| 39 | Run button on review page: code execution + output display, Zod validation on payments.functions.ts | `review.tsx`, `payments.functions.ts` |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -78,7 +92,7 @@ The original document described a Next.js + Python FastAPI + Prisma + DeepSeek s
 | Frontend framework | Next.js (App Router)      | TanStack Start v1 (React 19, Vite 7)                 |
 | Server logic       | Python FastAPI backend    | TanStack createServerFn (TypeScript)                 |
 | ORM / DB layer     | Prisma + Postgres         | Supabase JS client (RLS-enforced)                    |
-| AI provider        | DeepSeek API              | Lovable AI Gateway → google/gemini-3-flash-preview   |
+| AI provider        | DeepSeek API              | Lovable AI Gateway → openai/gpt-5-mini   |
 | Hosting (frontend) | Lovable Pro               | Lovable (Cloudflare Workers via vite-plugin)         |
 | Hosting (backend)  | Railway / VPS for FastAPI | Same Worker — no separate backend                    |
 | Auth               | OAuth (Google, GitHub)    | Supabase Auth — email + password only (no OAuth yet) |
@@ -105,7 +119,7 @@ Why the change: collapsing frontend + backend into TanStack Start removes a depl
 | Server logic       | createServerFn (@tanstack/react-start)             | All AI + DB writes go through src/lib/codewise.functions.ts       |
 | Auth               | Supabase Auth (email + password)                   | Session bearer attached via attachSupabaseAuth middleware         |
 | Database           | Supabase Postgres (via Lovable Cloud)              | RLS on every user-data table                                      |
-| AI                 | Lovable AI Gateway                                 | Model: google/gemini-3-flash-preview, JSON-object response_format |
+| AI                 | Lovable AI Gateway                                 | Model: openai/gpt-5-mini                               |
 | Code editor        | CodeMirror 6 (@uiw/react-codemirror)               | Python, JavaScript, Java, C++ language packs                      |
 | Charts             | Recharts 2.15                                      | Only imported where needed (dashboard mastery bars)               |
 | Toasts             | Sonner 2.0                                         | Used for login/signup/review feedback                             |
@@ -346,9 +360,6 @@ Previously listed gaps now completed:
 - `?checkout=success` toast on landing page after Paddle checkout completes
 - Analytics (Plausible or PostHog) — currently nothing wired
 - User study scaffolding for the ICNDIA paper (consent flow, anonymized telemetry)
-- `?checkout=success` toast on landing page after Paddle checkout completes
-- Analytics (Plausible or PostHog) — currently nothing wired
-- User study scaffolding for the ICNDIA paper (consent flow, anonymized telemetry)
 
 Previously listed gaps now completed:
 - ~~Stripe payment~~ → Done: Paddle via Lovable Gateway
@@ -361,6 +372,12 @@ Previously listed gaps now completed:
 - ~~Export user data~~ → Done: /settings/export + admin export (Phase 5 + 6)
 - ~~CS curriculum mapping UI~~ → Done: /admin/curriculum with SPPU/NPTEL alignment (Phase 6)
 - ~~Research corpus / eval harness~~ → Done: scripts/eval.ts with metrics (Phase 5)
+- ~~AI model connectivity~~ → Done: `openai/gpt-5-mini`, works reliably with JSON schema
+- ~~Code-run quota~~ → Done: DB migration applied, quota check restored
+- ~~Em-dash cleanup~~ → Done: 0 em-dashes in source, content guidelines in system prompt
+- ~~Markdown rendering for AI output~~ → Done: react-markdown wrapper applied to all AI text
+- ~~Duplicate admin clients~~ → Done: centralized to supabaseAdmin from client.server.ts (7 files)
+- ~~Run button on review page~~ → Done: code execution with output display
 
 ---
 
