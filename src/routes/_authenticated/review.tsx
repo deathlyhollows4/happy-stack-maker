@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -10,7 +10,16 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { reviewCode } from "@/lib/codewise.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
-import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import {
+  Sparkles,
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  ArrowLeft,
+  Upload,
+  RefreshCw,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({ meta: [{ title: "Code Review. CodeWise" }] }),
