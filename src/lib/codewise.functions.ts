@@ -197,7 +197,7 @@ export const reviewCode = createServerFn({ method: "POST" })
       }
     }
     if (!parsed) {
-      return { ok: false as const, error: "AI returned malformed output after 3 attempts. Please try again." };
+      return { ok: false as const, error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}` };
     }
 
     // persist submission
@@ -475,7 +475,7 @@ export const generatePractice = createServerFn({ method: "POST" })
       }
     }
     if (!parsed) {
-      return { ok: false as const, error: "AI returned malformed output after 3 attempts. Please try again." };
+      return { ok: false as const, error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}` };
     }
 
     const { data: row, error } = await supabase
