@@ -32,10 +32,12 @@ import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedSubmissionSubmissionIdRouteImport } from './routes/_authenticated/submission.$submissionId'
 import { Route as AuthenticatedSettingsExportRouteImport } from './routes/_authenticated/settings.export'
 import { Route as AuthenticatedAdminUpdatePriceRouteImport } from './routes/_authenticated/admin.update-price'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminSeatsRouteImport } from './routes/_authenticated/admin.seats'
 import { Route as AuthenticatedAdminExportRouteImport } from './routes/_authenticated/admin.export'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as AuthenticatedAdminCurriculumRouteImport } from './routes/_authenticated/admin.curriculum'
+import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as ApiPublicOgSubmissionIdRouteImport } from './routes/api/public/og.$submissionId'
 
@@ -156,6 +158,12 @@ const AuthenticatedAdminUpdatePriceRoute =
     path: '/admin/update-price',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/admin/settings',
+    path: '/admin/settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSeatsRoute = AuthenticatedAdminSeatsRouteImport.update({
   id: '/admin/seats',
   path: '/admin/seats',
@@ -179,6 +187,11 @@ const AuthenticatedAdminCurriculumRoute =
     path: '/admin/curriculum',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminBlogRoute = AuthenticatedAdminBlogRouteImport.update({
+  id: '/admin/blog',
+  path: '/admin/blog',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -211,10 +224,12 @@ export interface FileRoutesByFullPath {
   '/explore/$slug': typeof ExploreSlugRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/export': typeof AuthenticatedAdminExportRoute
   '/admin/seats': typeof AuthenticatedAdminSeatsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/update-price': typeof AuthenticatedAdminUpdatePriceRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
@@ -241,10 +256,12 @@ export interface FileRoutesByTo {
   '/explore/$slug': typeof ExploreSlugRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/export': typeof AuthenticatedAdminExportRoute
   '/admin/seats': typeof AuthenticatedAdminSeatsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/update-price': typeof AuthenticatedAdminUpdatePriceRoute
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
@@ -273,10 +290,12 @@ export interface FileRoutesById {
   '/explore/$slug': typeof ExploreSlugRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/export': typeof AuthenticatedAdminExportRoute
   '/_authenticated/admin/seats': typeof AuthenticatedAdminSeatsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/update-price': typeof AuthenticatedAdminUpdatePriceRoute
   '/_authenticated/settings/export': typeof AuthenticatedSettingsExportRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
@@ -305,10 +324,12 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/admin/blog'
     | '/admin/curriculum'
     | '/admin/dashboard'
     | '/admin/export'
     | '/admin/seats'
+    | '/admin/settings'
     | '/admin/update-price'
     | '/settings/export'
     | '/submission/$submissionId'
@@ -335,10 +356,12 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/admin/blog'
     | '/admin/curriculum'
     | '/admin/dashboard'
     | '/admin/export'
     | '/admin/seats'
+    | '/admin/settings'
     | '/admin/update-price'
     | '/settings/export'
     | '/submission/$submissionId'
@@ -366,10 +389,12 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/_authenticated/admin/blog'
     | '/_authenticated/admin/curriculum'
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/export'
     | '/_authenticated/admin/seats'
+    | '/_authenticated/admin/settings'
     | '/_authenticated/admin/update-price'
     | '/_authenticated/settings/export'
     | '/_authenticated/submission/$submissionId'
@@ -559,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUpdatePriceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/seats': {
       id: '/_authenticated/admin/seats'
       path: '/admin/seats'
@@ -585,6 +617,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/curriculum'
       fullPath: '/admin/curriculum'
       preLoaderRoute: typeof AuthenticatedAdminCurriculumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/blog': {
+      id: '/_authenticated/admin/blog'
+      path: '/admin/blog'
+      fullPath: '/admin/blog'
+      preLoaderRoute: typeof AuthenticatedAdminBlogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/payments/webhook': {
@@ -623,10 +662,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
+  AuthenticatedAdminBlogRoute: typeof AuthenticatedAdminBlogRoute
   AuthenticatedAdminCurriculumRoute: typeof AuthenticatedAdminCurriculumRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminExportRoute: typeof AuthenticatedAdminExportRoute
   AuthenticatedAdminSeatsRoute: typeof AuthenticatedAdminSeatsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminUpdatePriceRoute: typeof AuthenticatedAdminUpdatePriceRoute
   AuthenticatedSubmissionSubmissionIdRoute: typeof AuthenticatedSubmissionSubmissionIdRoute
 }
@@ -637,10 +678,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPracticeRoute: AuthenticatedPracticeRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
+  AuthenticatedAdminBlogRoute: AuthenticatedAdminBlogRoute,
   AuthenticatedAdminCurriculumRoute: AuthenticatedAdminCurriculumRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminExportRoute: AuthenticatedAdminExportRoute,
   AuthenticatedAdminSeatsRoute: AuthenticatedAdminSeatsRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminUpdatePriceRoute: AuthenticatedAdminUpdatePriceRoute,
   AuthenticatedSubmissionSubmissionIdRoute:
     AuthenticatedSubmissionSubmissionIdRoute,
