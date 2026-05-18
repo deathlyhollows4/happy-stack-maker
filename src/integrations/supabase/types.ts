@@ -71,6 +71,36 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_mappings: {
+        Row: {
+          nptel_course: string | null
+          nptel_module: string | null
+          sppu_course: string | null
+          sppu_module: string | null
+          topic_slug: string
+          updated_at: string
+          year_semester: string | null
+        }
+        Insert: {
+          nptel_course?: string | null
+          nptel_module?: string | null
+          sppu_course?: string | null
+          sppu_module?: string | null
+          topic_slug: string
+          updated_at?: string
+          year_semester?: string | null
+        }
+        Update: {
+          nptel_course?: string | null
+          nptel_module?: string | null
+          sppu_course?: string | null
+          sppu_module?: string | null
+          topic_slug?: string
+          updated_at?: string
+          year_semester?: string | null
+        }
+        Relationships: []
+      }
       practice_problems: {
         Row: {
           created_at: string
