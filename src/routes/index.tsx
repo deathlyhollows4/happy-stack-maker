@@ -197,22 +197,35 @@ function LandingPage() {
         <p className="font-mono text-xs text-muted-foreground">
           CodeWise · Built for CS students who'd rather understand than autocomplete.
         </p>
-        <div className="flex justify-center gap-4 font-mono text-[11px] text-muted-foreground">
-          <Link to="/explore" className="hover:text-foreground">
-            Explore
-          </Link>
-          <Link to="/pricing" className="hover:text-foreground">
-            Pricing
-          </Link>
-          <Link to="/terms" className="hover:text-foreground">
-            Terms
-          </Link>
-          <Link to="/refunds" className="hover:text-foreground">
-            Refunds
-          </Link>
-          <Link to="/privacy" className="hover:text-foreground">
-            Privacy
-          </Link>
+        <div className="flex justify-between px-4 max-w-4xl mx-auto font-mono text-[11px] text-muted-foreground">
+          <div className="flex gap-4">
+            <Link to="/login" className="hover:text-foreground">
+              Dashboard
+            </Link>
+            <Link to="/pricing" className="hover:text-foreground">
+              Pricing
+            </Link>
+            <Link to="/login" className="hover:text-foreground">
+              Sign in
+            </Link>
+            <Link to="/signup" className="hover:text-foreground">
+              Get started
+            </Link>
+          </div>
+          <div className="flex gap-4">
+            <Link to="/explore" className="hover:text-foreground">
+              Explore
+            </Link>
+            <Link to="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link to="/refunds" className="hover:text-foreground">
+              Refunds
+            </Link>
+            <Link to="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
