@@ -6,7 +6,7 @@ import { AuthShell, Field } from "./login";
 import { signInWithGoogleSignUp } from "@/lib/auth-helpers";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account. CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Create account | CodeWise" }] }),
   component: SignupPage,
 });
 

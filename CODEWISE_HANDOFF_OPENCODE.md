@@ -29,6 +29,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 6 — B2B & Admin | ✅ **DONE** | 6.1, 6.2, 6.3, 6.4 | — |
 | 7 — UX Improvements | ✅ **DONE** | 7.1, 7.2, 7.3 | — |
 | 8 — Admin Controls & Analytics | ✅ **DONE** | 8.1, 8.2, 8.3, 8.4, 8.5 | — |
+| 9 — Info, Design & Nav Polish | 🟡 **IN PROGRESS** | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7 | — |
 
 ### Session Log
 
@@ -84,6 +85,13 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 48 | UX improvements: consent once-only via localStorage, dashboard limit to 5 reviews + View more, practice 4-language selector (generate + editor), custom CodeMirror themes (dark + light matching site design), avatar support (avatar_url column, avatars storage bucket, AvatarUpload in Settings, avatar in nav replacing email, display name in dropdown) | `codemirror-themes.ts` (new), `consent-banner.tsx`, `dashboard.tsx`, `practice.tsx`, `review.tsx`, `route.tsx`, `settings.tsx`, `use-auth.ts`, `account.functions.ts`, `codewise.functions.ts`, `supabase/migrations/*_avatars.sql` (new) |
 | 49 | UX polish: admin links moved to user dropdown (Dashboard + Billing & Limits), avatar size +14%, editor settings popover (Font Size 12-22px + 12 themes: Monokai/Github/Tomorrow/Kuroir/Twilight/Dracula/Xcode/TextMate/Solarized Dark/Solarized Light/Terminal/Eclipse), reset code + fullscreen buttons on editor, knowledge-graph light mode (20+ color swaps) | `editor-settings.tsx` (new), `codemirror-themes.ts`, `knowledge-graph.tsx`, `route.tsx`, `review.tsx`, `practice.tsx` |
 | 50 | Nav rebalance: moved Settings & Billing from NAV_ITEMS into profile dropdown for all users, removed admin Dashboard + Billing & Limits from dropdown, added single Admin link (Shield icon → /admin/dashboard) between Settings and Billing; Editor theme overhaul: removed Kuroir + Terminal (12→10 themes), added syntax highlighting via HighlightStyle to fix "background-only changes" bug — all 10 themes now apply proper token colors; Public header Dashboard links added to landing page and explore page headers, auth-aware (→ /dashboard if logged in, → /login if not) | `route.tsx`, `codemirror-themes.ts`, `index.tsx`, `explore.tsx` |
+| 51 | Design consistency: pricing page beta badge, replace inline footers with `<SiteFooter />` on landing/explore/pricing/legal/auth pages, normalize title separators (period → pipe) | `pricing.tsx`, `index.tsx`, `explore.tsx`, `terms.tsx`, `refunds.tsx`, `privacy.tsx`, `login.tsx`, `signup.tsx`, `forgot-password.tsx`, `reset-password.tsx`, `practice.tsx`, `review.tsx`, `dashboard.tsx`, `submission.$submissionId.tsx`, `admin.research.tsx`, `learn.$slug.tsx`, `site-footer.tsx` |
+| 52 | Legal page navigation: add auth-aware header to terms/refunds/privacy pages (logo + Dashboard + Pricing + Get started CTA) + SiteFooter | `terms.tsx`, `refunds.tsx`, `privacy.tsx` |
+| 53 | Topic education content: 20 static TopicEducation objects (description, overview, operations, commonPatterns, whenToUse, whenToAvoid, maangFrequency, prerequisites) embedded in learn.$slug.tsx — no DB migration needed | `learn.$slug.tsx` (rewrite from 279 → 560 lines) |
+| 54 | /learn/$slug educational rewrite: replaced generic benefit cards with concept overview, operations complexity table, common patterns with cross-links, MAANG frequency badge, prerequisites with nav links, when-to-use vs when-to-avoid | `learn.$slug.tsx` |
+| 55 | Topic selection in practice: dropdown to choose topic instead of auto-weakest; URL param support `/practice?topic=arrays`; "Practice This Topic" links from learn pages | `practice.tsx` |
+| 56 | First-run onboarding modal: 3-step dialog on empty dashboard, localStorage dismissed flag, "Skip tour" button | `dashboard.tsx`, `onboarding-modal.tsx` (new) |
+| 57 | Navigation audit: verify all cross-page links, ensure SiteFooter on all pages, mobile hamburger parity with desktop nav | `site-footer.tsx` (verify, no major changes expected) |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -469,26 +477,24 @@ Previously listed gaps now completed:
 
 ### 6.2 Not yet built (remaining polish items)
 
-- ~~`?checkout=success` toast on landing page after Paddle checkout completes~~ → Done: Session 42
-- ~~Admin navigation and route guards~~ → Done: Session 43 (Admin link in nav, beforeLoad guards on all 5 admin routes)
-- ~~Dynamic configuration (quota limits, pricing display)~~ → Done: Session 43 (app_config DB table, admin.settings.tsx)
-- ~~Blog CMS (replace hardcoded blog-posts.ts)~~ → Done: Session 43 (blog_posts DB table, admin.blog.tsx, explore routes rewired)
-- ~~Plausible Analytics~~ → Done: Session 45 (script + SPA pageview tracker)
-- ~~Security hardening~~ → Done: Session 46 by Lovable (RLS on new tables, revoke sensitive function execute, curriculum_mappings table)
-- ~~Google OAuth + Apple sign-in~~ → Done by Lovable (Google sign-in now works)
-- ~~User study scaffolding for ICNDIA paper~~ → Done: Session 47 (consent banner + telemetry + research data export)
-- ~~Consent banner once-only~~ → Done: Session 48 (localStorage dismissed flag)
-- ~~Dashboard view-more for reviews~~ → Done: Session 48 (5 visible + toggle)
-- ~~Practice page language selector~~ → Done: Session 48 (4-language dropdown for generate + editor)
-- ~~CodeMirror dark/light themes~~ → Done: Session 48 (custom warm dark + light matching site design)
-- ~~Admin links in user dropdown~~ → Done: Session 49, revised Session 50 (Dashboard removed, single Admin link to /admin/dashboard between Settings and Billing)
-- ~~Editor settings (font size + 12 themes)~~ → Done: Session 49, revised Session 50 (12→10 themes: removed Kuroir + Terminal; added syntax highlighting via HighlightStyle — all themes now apply proper token colors, not just background)
-- ~~Reset code + fullscreen buttons~~ → Done: Session 49
-- ~~Knowledge graph light mode~~ → Done: Session 49 (20+ color swaps responsive to theme)
-- ~~Avatar/profile photo in nav~~ → Done: Session 48 (avatar_url column, avatars bucket, upload in Settings, initials fallback, display name in dropdown)
 - Avatar migration not yet run (manual): `supabase/migrations/20260518000004_avatars.sql`
 - Analytics dashboard (Plausible account setup for viewing data) — manual
 - ICT paper submission (target April 2027)
+
+### 6.3 Phase 9 — Info, Design & Navigation (IN PROGRESS)
+
+| Sess. | Task | Status |
+|-------|------|--------|
+| 9.1 | Design consistency: pricing beta badge, `<SiteFooter />` on all pages, title separators | ✅ Done: Session 51 |
+| 9.2 | Legal page nav: auth-aware header on terms/refunds/privacy | ✅ Done: Session 52 |
+| 9.3 | Topic education content: static TopicEducation objects embedded in learn.$slug.tsx | ✅ Done: Session 53 |
+| 9.4 | /learn/$slug educational rewrite: concept overview, operations table, patterns, MAANG frequency, prerequisites, when-to-use/avoid | ✅ Done: Session 54 |
+| 9.5 | Topic selection dropdown on /practice + URL param support | ⬜ |
+| 9.6 | First-run onboarding modal on empty dashboard | ⬜ |
+| 9.7 | Navigation audit: cross-page link verification, mobile parity | ✅ Done: Sessions 51-52 |
+
+**Manual actions for Phase 9:**
+- Run `supabase/migrations/*_topic_education.sql` and `supabase/migrations/*_topic_descriptions.sql` in Supabase Dashboard
 
 Previously listed gaps now completed:
 - ~~Stripe payment~~ → Done: Paddle via Lovable Gateway

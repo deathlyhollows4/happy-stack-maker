@@ -12,7 +12,7 @@ const KnowledgeGraph = lazy(() =>
 );
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard. CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Dashboard | CodeWise" }] }),
   component: Dashboard,
 });
 

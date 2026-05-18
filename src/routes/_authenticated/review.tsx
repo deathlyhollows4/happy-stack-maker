@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/review")({
-  head: () => ({ meta: [{ title: "Code Review. CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Code Review | CodeWise" }] }),
   component: Review,
 });
 

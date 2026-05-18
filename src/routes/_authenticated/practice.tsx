@@ -19,7 +19,7 @@ import { Sparkles, ArrowLeft, Play, Send, RotateCcw, Maximize2, Minimize2 } from
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/practice")({
-  head: () => ({ meta: [{ title: "Practice. CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Practice | CodeWise" }] }),
   component: Practice,
 });
 

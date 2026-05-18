@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/site-footer";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,7 @@ import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/auth-helpers";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in. CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Sign in | CodeWise" }] }),
   component: LoginPage,
 });
 
@@ -137,6 +138,7 @@ export function AuthShell({
           <div className="rounded-lg border border-border bg-card p-6">{children}</div>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

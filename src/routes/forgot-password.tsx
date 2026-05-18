@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AuthShell, Field } from "./login";
 
 export const Route = createFileRoute("/forgot-password")({
-  head: () => ({ meta: [{ title: "Reset password. CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Reset password | CodeWise" }] }),
   component: ForgotPasswordPage,
 });
 

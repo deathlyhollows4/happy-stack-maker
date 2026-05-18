@@ -1,3 +1,4 @@
+import { SiteFooter } from "@/components/site-footer";
 import { useState, useEffect } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -110,28 +111,7 @@ function ExploreLayout() {
         </main>
       )}
 
-      <footer className="border-t border-border py-10 text-center space-y-3">
-        <p className="font-mono text-xs text-muted-foreground">
-          CodeWise · Built for CS students who'd rather understand than autocomplete.
-        </p>
-        <div className="flex justify-center gap-4 font-mono text-[11px] text-muted-foreground">
-          <Link to="/explore" className="hover:text-foreground">
-            Explore
-          </Link>
-          <Link to="/pricing" className="hover:text-foreground">
-            Pricing
-          </Link>
-          <Link to="/terms" className="hover:text-foreground">
-            Terms
-          </Link>
-          <Link to="/refunds" className="hover:text-foreground">
-            Refunds
-          </Link>
-          <Link to="/privacy" className="hover:text-foreground">
-            Privacy
-          </Link>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

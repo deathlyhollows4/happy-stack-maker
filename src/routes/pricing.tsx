@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/hooks/use-subscription";
 import { usePaddleCheckout } from "@/hooks/use-paddle-checkout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { SiteFooter } from "@/components/site-footer";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -56,8 +57,11 @@ function PricingPage() {
       <PaymentTestModeBanner />
       <header className="border-b border-border/60">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link to="/" className="font-display text-2xl">
-            CodeWise
+          <Link to="/" className="flex items-center gap-2">
+            <span className="font-display text-2xl">CodeWise</span>
+            <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
+              beta
+            </span>
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <Link to="/pricing" className="text-foreground">
@@ -202,6 +206,8 @@ function PricingPage() {
           .
         </p>
       </section>
+
+      <SiteFooter />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthShell } from "../login";
 
 export const Route = createFileRoute("/auth/callback")({
-  head: () => ({ meta: [{ title: "Signing in… CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Signing in... | CodeWise" }] }),
   component: OAuthCallback,
 });
 

@@ -6,7 +6,7 @@ import { exportResearchData } from "@/lib/codewise.functions";
 import { ArrowLeft, Download, BarChart3, Activity, Code, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/research")({
-  head: () => ({ meta: [{ title: "Research Data. Admin. CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Research Data | CodeWise" }] }),
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
