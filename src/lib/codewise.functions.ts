@@ -760,14 +760,23 @@ export const exportAllUserData = createServerFn({ method: "GET" })
     };
   });
 
+export type CurriculumMapping = {
+  topic_slug: string;
+  sppu_course: string | null;
+  sppu_module: string | null;
+  nptel_course: string | null;
+  nptel_module: string | null;
+  year_semester: string | null;
+};
+
 export const getCurriculumMappings = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const admin = supabaseAdmin;
+  .handler(async (): Promise<{ mappings: CurriculumMapping[] }> => {
+    const admin = supabaseAdmin as any;
     const { data } = await admin
       .from("curriculum_mappings")
       .select("topic_slug, sppu_course, sppu_module, nptel_course, nptel_module, year_semester")
       .order("topic_slug");
-    return { mappings: data ?? [] };
+    return { mappings: (data ?? []) as CurriculumMapping[] };
   });
 
 export const upsertCurriculumMapping = createServerFn({ method: "POST" })
@@ -789,7 +798,7 @@ export const upsertCurriculumMapping = createServerFn({ method: "POST" })
 
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
 
-    const { error } = await supabaseAdmin.from("curriculum_mappings").upsert(
+    const { error } = await (supabaseAdmin as any).from("curriculum_mappings").upsert(
       {
         topic_slug: data.topic_slug,
         sppu_course: data.sppu_course ?? null,
