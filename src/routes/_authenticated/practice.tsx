@@ -7,15 +7,15 @@ import { python } from "@codemirror/lang-python";
 import { javascript } from "@codemirror/lang-javascript";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
-import { codemirrorDark, codemirrorLight } from "@/components/codemirror-themes";
-import { useTheme } from "@/hooks/use-theme";
+import { editorTheme } from "@/components/codemirror-themes";
+import { EditorSettingsPopover } from "@/components/editor-settings";
 import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
-import { Sparkles, ArrowLeft, Play, Send } from "lucide-react";
+import { Sparkles, ArrowLeft, Play, Send, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/_authenticated/practice")({
@@ -178,12 +178,18 @@ function ProblemWorkspace({ problem }: { problem: any }) {
   const [output, setOutput] = useState<{ stdout: string; stderr: string; exit: number } | null>(
     null,
   );
+  const [editorSettings, setEditorSettings] = useState(() => {
+    try {
+      const raw = localStorage.getItem("codewise-editor-settings");
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { fontSize: 14, theme: "monokai" };
+  });
+  const [fullscreen, setFullscreen] = useState(false);
 
   const runFn = useServerFn(runCode);
   const reviewFn = useServerFn(reviewCode);
   const { track } = useTelemetry();
-  const { theme } = useTheme();
-  const cmTheme = theme === "light" ? codemirrorLight : codemirrorDark;
 
   useEffect(() => {
     setCode(problem.starter_code || "");
@@ -249,7 +255,9 @@ function ProblemWorkspace({ problem }: { problem: any }) {
         <Markdown className="text-muted-foreground mt-4">{problem.prompt}</Markdown>
       </div>
 
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
+      <div
+        className={`rounded-lg border border-border bg-card overflow-hidden ${fullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : ""}`}
+      >
         <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <span>Editor</span>
@@ -265,31 +273,50 @@ function ProblemWorkspace({ problem }: { problem: any }) {
               ))}
             </select>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
             <button
-              onClick={onRun}
-              disabled={running || reviewing}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent/10 disabled:opacity-50"
+              onClick={() => setCode(problem.starter_code || "")}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
+              title="Reset to starter code"
             >
-              <Play className="size-3.5" /> {running ? "Running…" : "Run"}
+              <RotateCcw className="size-3" /> Reset
             </button>
             <button
-              onClick={onSubmit}
-              disabled={running || reviewing}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              onClick={() => setFullscreen((v) => !v)}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
+              title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
             >
-              <Send className="size-3.5" /> {reviewing ? "Reviewing…" : "Submit for AI review"}
+              {fullscreen ? <Minimize2 className="size-3" /> : <Maximize2 className="size-3" />}
             </button>
+            <EditorSettingsPopover onChange={setEditorSettings} />
+            <div className="flex gap-1 ml-1 pl-1 border-l border-border">
+              <button
+                onClick={onRun}
+                disabled={running || reviewing}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10 disabled:opacity-50"
+              >
+                <Play className="size-3" /> {running ? "Running…" : "Run"}
+              </button>
+              <button
+                onClick={onSubmit}
+                disabled={running || reviewing}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                <Send className="size-3" /> {reviewing ? "Reviewing…" : "Submit"}
+              </button>
+            </div>
           </div>
         </div>
-        <CodeMirror
-          value={code}
-          onChange={setCode}
-          extensions={[langExt(editorLang)]}
-          theme={cmTheme}
-          height="42vh"
-          basicSetup={{ lineNumbers: true, foldGutter: true }}
-        />
+        <div style={{ fontSize: `${editorSettings.fontSize}px` }}>
+          <CodeMirror
+            value={code}
+            onChange={setCode}
+            extensions={[langExt(editorLang)]}
+            theme={editorTheme(editorSettings.theme)}
+            height={fullscreen ? "100vh" : "42vh"}
+            basicSetup={{ lineNumbers: true, foldGutter: true }}
+          />
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">

@@ -131,19 +131,6 @@ function AuthLayout() {
                 {it.label}
               </Link>
             ))}
-            {isAdmin && (
-              <Link
-                to="/admin/dashboard"
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  isActive("/admin/dashboard")
-                    ? "bg-accent/15 text-accent"
-                    : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
-                }`}
-              >
-                <Shield className="size-4" />
-                Admin
-              </Link>
-            )}
           </nav>
 
           {/* Right side: user menu + mobile hamburger */}
@@ -154,7 +141,7 @@ function AuthLayout() {
                 onClick={() => setUserMenuOpen((v) => !v)}
                 className="flex items-center gap-2 px-2 py-1 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
               >
-                <Avatar className="size-7">
+                <Avatar className="size-8">
                   <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? user.email ?? ""} />
                   <AvatarFallback className="text-[10px] bg-accent/20 text-accent">
                     {(displayName ?? user.email ?? "U").slice(0, 2).toUpperCase()}
@@ -170,6 +157,27 @@ function AuthLayout() {
                     <p className="text-sm font-medium truncate">{displayName ?? "User"}</p>
                     <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
                   </div>
+                  {isAdmin && (
+                    <div className="border-b border-border py-1">
+                      <p className="px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                        Admin
+                      </p>
+                      <Link
+                        to="/admin/dashboard"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                      >
+                        <Shield className="size-4" /> Dashboard
+                      </Link>
+                      <Link
+                        to="/admin/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                      >
+                        Billing & Limits
+                      </Link>
+                    </div>
+                  )}
                   <button
                     onClick={signOut}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
@@ -209,22 +217,9 @@ function AuthLayout() {
                   {it.label}
                 </Link>
               ))}
-              {isAdmin && (
-                <Link
-                  to="/admin/dashboard"
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                    isActive("/admin/dashboard")
-                      ? "bg-accent/15 text-accent"
-                      : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
-                  }`}
-                >
-                  <Shield className="size-4" />
-                  Admin
-                </Link>
-              )}
               <div className="pt-3 mt-3 border-t border-border">
                 <div className="flex items-center gap-3 px-3 mb-2">
-                  <Avatar className="size-8">
+                  <Avatar className="size-9">
                     <AvatarImage
                       src={avatarUrl ?? undefined}
                       alt={displayName ?? user.email ?? ""}
@@ -238,6 +233,25 @@ function AuthLayout() {
                     <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
+                {isAdmin && (
+                  <div className="mb-2 space-y-1">
+                    <p className="px-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                      Admin
+                    </p>
+                    <Link
+                      to="/admin/dashboard"
+                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                    >
+                      <Shield className="size-4" /> Dashboard
+                    </Link>
+                    <Link
+                      to="/admin/settings"
+                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                    >
+                      Billing & Limits
+                    </Link>
+                  </div>
+                )}
                 <button
                   onClick={signOut}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"

@@ -6,8 +6,8 @@ import { python } from "@codemirror/lang-python";
 import { javascript } from "@codemirror/lang-javascript";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
-import { codemirrorDark, codemirrorLight } from "@/components/codemirror-themes";
-import { useTheme } from "@/hooks/use-theme";
+import { editorTheme } from "@/components/codemirror-themes";
+import { EditorSettingsPopover } from "@/components/editor-settings";
 import { reviewCode } from "@/lib/codewise.functions";
 import { runCode } from "@/lib/code-exec.functions";
 import { Markdown } from "@/components/markdown";
@@ -24,6 +24,9 @@ import {
   Upload,
   RefreshCw,
   Play,
+  RotateCcw,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/review")({
@@ -55,6 +58,14 @@ function langExt(l: Lang) {
         : cpp();
 }
 
+function loadEditorSettings() {
+  try {
+    const raw = localStorage.getItem("codewise-editor-settings");
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { fontSize: 14, theme: "monokai" };
+}
+
 function Review() {
   const [lang, setLang] = useState<Lang>("python");
   const [code, setCode] = useState(DEFAULTS.python);
@@ -70,8 +81,8 @@ function Review() {
   const fn = useServerFn(reviewCode);
   const runFn = useServerFn(runCode);
   const { track } = useTelemetry();
-  const { theme } = useTheme();
-  const cmTheme = theme === "light" ? codemirrorLight : codemirrorDark;
+  const [editorSettings, setEditorSettings] = useState(loadEditorSettings);
+  const [fullscreen, setFullscreen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onLang = (l: Lang) => {
@@ -216,18 +227,39 @@ function Review() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-lg border border-border bg-card overflow-hidden">
-          <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border">
-            {LANG_LABELS[lang]}
+        <div
+          className={`rounded-lg border border-border bg-card overflow-hidden ${fullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : ""}`}
+        >
+          <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between flex-wrap gap-2">
+            <span>{LANG_LABELS[lang]}</span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCode(DEFAULTS[lang])}
+                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
+                title="Reset to default"
+              >
+                <RotateCcw className="size-3" /> Reset
+              </button>
+              <button
+                onClick={() => setFullscreen((v) => !v)}
+                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
+                title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+              >
+                {fullscreen ? <Minimize2 className="size-3" /> : <Maximize2 className="size-3" />}
+              </button>
+              <EditorSettingsPopover onChange={setEditorSettings} />
+            </div>
           </div>
-          <CodeMirror
-            value={code}
-            onChange={setCode}
-            extensions={[langExt(lang)]}
-            theme={cmTheme}
-            height="60vh"
-            basicSetup={{ lineNumbers: true, foldGutter: true }}
-          />
+          <div style={{ fontSize: `${editorSettings.fontSize}px` }}>
+            <CodeMirror
+              value={code}
+              onChange={setCode}
+              extensions={[langExt(lang)]}
+              theme={editorTheme(editorSettings.theme)}
+              height={fullscreen ? "100vh" : "60vh"}
+              basicSetup={{ lineNumbers: true, foldGutter: true }}
+            />
+          </div>
         </div>
 
         {runOutput && (

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3-force";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 
 interface TopicRow {
   slug: string;
@@ -86,6 +87,52 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { theme } = useTheme();
+  const isLight =
+    theme === "light" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: light)").matches);
+
+  const colors = useMemo(
+    () =>
+      isLight
+        ? {
+            bg: "oklch(0.97 0.008 80)",
+            circleFill: "oklch(0.93 0.008 75)",
+            edgeDefault: "oklch(0.7 0.008 75)",
+            edgeHovered: "oklch(0.55 0.16 35)",
+            edgeConnected: "oklch(0.55 0.008 70)",
+            arrowhead: "oklch(0.7 0.008 75)",
+            tooltipBg: "oklch(0.99 0.005 80)",
+            tooltipBorder: "oklch(0.85 0.008 75)",
+            tooltipTitle: "oklch(0.2 0.012 60)",
+            tooltipSub: "oklch(0.45 0.018 70)",
+            labelDim: "oklch(0.5 0.01 70)",
+            labelHover: "oklch(0.2 0.012 60)",
+            labelLinked: "oklch(0.25 0.012 60)",
+            labelDefault: "oklch(0.45 0.01 70)",
+            legendText: "oklch(0.45 0.018 70)",
+          }
+        : {
+            bg: "oklch(0.16 0.012 60)",
+            circleFill: "oklch(0.18 0.012 60)",
+            edgeDefault: "oklch(0.28 0.012 60)",
+            edgeHovered: "oklch(0.82 0.18 40)",
+            edgeConnected: "oklch(0.5 0.012 60)",
+            arrowhead: "oklch(0.3 0.012 60)",
+            tooltipBg: "oklch(0.22 0.012 60)",
+            tooltipBorder: "oklch(0.35 0.012 60)",
+            tooltipTitle: "oklch(0.94 0.018 75)",
+            tooltipSub: "oklch(0.68 0.018 70)",
+            labelDim: "oklch(0.55 0.018 70)",
+            labelHover: "oklch(0.94 0.018 75)",
+            labelLinked: "oklch(0.82 0.018 75)",
+            labelDefault: "oklch(0.55 0.018 70)",
+            legendText: "oklch(0.68 0.018 70)",
+          },
+    [isLight],
+  );
 
   const progressMap = useMemo(() => {
     const m = new Map<string, ProgressRow>();
@@ -252,8 +299,8 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden rounded-lg bg-[oklch(0.16_0.012_60)]"
-      style={{ aspectRatio: `${VB_W}/${VB_H}` }}
+      className="relative w-full overflow-hidden rounded-lg"
+      style={{ background: colors.bg, aspectRatio: `${VB_W}/${VB_H}` }}
     >
       <svg
         ref={svgRef}
@@ -295,7 +342,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
             markerHeight={5}
             orient="auto-start-reverse"
           >
-            <polygon points="0 0, 10 3.5, 0 7" fill="oklch(0.3 0.012 60)" />
+            <polygon points="0 0, 10 3.5, 0 7" fill={colors.arrowhead} />
           </marker>
         </defs>
 
@@ -316,22 +363,22 @@ export function KnowledgeGraph({ topics, progress }: Props) {
 
             if (!hoveredSlug) {
               edgeOpacity = 0.5;
-              edgeStroke = "oklch(0.28 0.012 60)";
+              edgeStroke = colors.edgeDefault;
               edgeWidth = 0.8;
               edgeFilter = undefined;
             } else if (isHovered) {
               edgeOpacity = 1;
-              edgeStroke = "oklch(0.82 0.18 40)";
+              edgeStroke = colors.edgeHovered;
               edgeWidth = 2.5;
               edgeFilter = "url(#edge-glow)";
             } else if (isConnected) {
               edgeOpacity = 0.7;
-              edgeStroke = "oklch(0.5 0.012 60)";
+              edgeStroke = colors.edgeConnected;
               edgeWidth = 1.2;
               edgeFilter = undefined;
             } else {
               edgeOpacity = 0.08;
-              edgeStroke = "oklch(0.28 0.012 60)";
+              edgeStroke = colors.edgeDefault;
               edgeWidth = 0.6;
               edgeFilter = undefined;
             }
@@ -390,7 +437,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                       ? masteryBg(node.mastery)
                       : isLinked
                         ? masteryBg(node.mastery)
-                        : "oklch(0.18 0.012 60)"
+                        : colors.circleFill
                   }
                   stroke={masteryColor(node.mastery)}
                   strokeWidth={strokeW}
@@ -422,10 +469,10 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                     className="text-[10px] font-mono"
                     fill={
                       isHovered
-                        ? "oklch(0.94 0.018 75)"
+                        ? colors.labelHover
                         : isLinked
-                          ? "oklch(0.82 0.018 75)"
-                          : "oklch(0.55 0.018 70)"
+                          ? colors.labelLinked
+                          : colors.labelDefault
                     }
                     opacity={labelOpacity}
                     style={{ transition: "opacity 200ms" }}
@@ -459,8 +506,8 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                     width={labelWidth + 20}
                     height={boxH}
                     rx={6}
-                    fill="oklch(0.22 0.012 60)"
-                    stroke="oklch(0.35 0.012 60)"
+                    fill={colors.tooltipBg}
+                    stroke={colors.tooltipBorder}
                     strokeWidth={1}
                   />
                   {lines.map((l, i) => (
@@ -470,7 +517,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                       y={ty - boxH + 24 + i * 14}
                       textAnchor="middle"
                       className={i === 0 ? "text-xs font-medium" : "text-[10px] font-mono"}
-                      fill={i === 0 ? "oklch(0.94 0.018 75)" : "oklch(0.68 0.018 70)"}
+                      fill={i === 0 ? colors.tooltipTitle : colors.tooltipSub}
                     >
                       {l}
                     </text>
