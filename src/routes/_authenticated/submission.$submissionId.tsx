@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/_authenticated/submission/$submissionId")({
   head: ({ params }) => ({
     meta: [
-      { title: "Submission Detail. CodeWise" },
+      { title: "Submission Detail | CodeWise" },
       {
         property: "og:image",
         content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
