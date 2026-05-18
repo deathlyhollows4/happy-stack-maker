@@ -11,6 +11,7 @@ import { useEffect } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -114,6 +115,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
         <script
+          defer
+          data-domain={import.meta.env.VITE_PLAUSIBLE_DOMAIN || "codewise.app"}
+          src="https://plausible.io/js/script.js"
+        />
+        <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('codewise-theme')||'dark';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('light',!d);}catch(e){}})();`,
           }}
@@ -133,6 +139,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <AnalyticsTracker />
       <Toaster />
       <Outlet />
     </QueryClientProvider>
