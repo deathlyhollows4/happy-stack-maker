@@ -4,7 +4,7 @@ export function SiteFooter() {
   return (
     <footer className="py-10 text-center space-y-3 border-t border-border/60">
       <p className="font-mono text-xs text-muted-foreground">
-        CodeWise · Built for CS students who'd rather understand than autocomplete.
+        CodeWise · AI code review for CS students.
       </p>
       <div className="flex justify-center gap-4 font-mono text-[11px] text-muted-foreground">
         <Link to="/explore" className="hover:text-foreground">

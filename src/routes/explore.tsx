@@ -124,8 +124,7 @@ function ExploreList({ posts }: { posts: BlogPost[] }) {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Blog</p>
           <h1 className="mt-4 font-display text-6xl tracking-tight md:text-7xl">Explore</h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Deep dives into CS concepts, DSA patterns, and learning strategies. Written for students
-            who'd rather understand than memorise.
+            Articles on CS concepts, DSA patterns, and learning strategies for students.
           </p>
         </div>
       </section>
@@ -146,7 +145,7 @@ function ExploreList({ posts }: { posts: BlogPost[] }) {
 
       <section className="bg-card/40">
         <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-          <h2 className="font-display text-4xl">Have a topic you'd like us to cover?</h2>
+          <h2 className="font-display text-4xl">Want a topic explained?</h2>
           <p className="mt-4 text-muted-foreground">
             We're always writing new guides. If there's a CS concept you want explained, let us
             know.

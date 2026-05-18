@@ -15,11 +15,11 @@ export const Route = createFileRoute("/s/$submissionId")({
   head: ({ params }) => ({
     meta: [
       { title: "Shared Code Review | CodeWise" },
-      { name: "description", content: "Check out this AI-powered CS code review from CodeWise." },
+      { name: "description", content: "CS code review from CodeWise, shared by a student." },
       { property: "og:title", content: "Shared CodeWise Review" },
       {
         property: "og:description",
-        content: "AI-powered pedagogical code review for CS students.",
+        content: "Code review for CS students with concept-aware feedback.",
       },
       { name: "twitter:card", content: "summary_large_image" },
       {
@@ -193,8 +193,7 @@ function SharePage() {
             <div className="mt-8 rounded-lg border border-border bg-card p-8 text-center">
               <h2 className="font-display text-2xl mb-2">Get your own review</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                CodeWise uses AI to review your code through the lens of CS concepts, helping you
-                build mastery one topic at a time.
+                CodeWise reviews your code, mapping each issue to the CS concept behind it.
               </p>
               <Link
                 to="/signup"

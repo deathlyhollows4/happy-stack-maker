@@ -41,3 +41,33 @@ This project is indexed by GitNexus as **happy-stack-maker** (1953 symbols, 3154
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+## Content Style
+
+These rules apply to ALL user-facing text in source files (routes, components, meta tags, toasts). Follow them in every session.
+
+### Never Use Em Dashes (—)
+
+Em dashes are a hallmark of AI-generated text. Replace with commas, semicolons, colons, or periods. In page titles and meta tags, use `|` instead.
+
+### Banned Words & Phrases
+
+Do not use these in site copy (landing pages, onboarding, educational content, CTAs, taglines, meta descriptions):
+
+| Category | Banned |
+|----------|--------|
+| Marketing superlatives | unlock, supercharge, lightning-fast, cutting-edge, game-changing, next-level, seamless, best-in-class, world-class, state-of-the-art |
+| AI trope metaphors | the magic of, the gateway to, the backbone of, the engine behind, the go-to, under the hood |
+| Overly specific generic phrases | the single most, the most universal, the interview staple |
+| Fluffy verbs | leverage (use "use"), empowers, elevates, transforms, revolutionizes |
+| Filler phrases | delve, firstly, secondly, moreover, furthermore, consequently, in conclusion |
+| Quirky analogies | "Like a patient TA with infinite office hours", "who'd rather understand than autocomplete" |
+| Marketing CTA patterns | "Ready to master X?", "Watch your mastery climb from X% to Y%", "Your first review is free" (these are fine in pricing context but not in educational content) |
+
+### Tone Rules
+
+- **Direct and professional.** Teaching tone, not marketing tone.
+- **No exclamation marks** except in toast notifications.
+- **Active voice.** "The function returns" not "The value is returned by".
+- **Keep AI outputs concise** (1-3 sentences per issue, 1 paragraph for summaries).
+- **No self-praise or meta-commentary** in AI-generated text.

@@ -1,4 +1,4 @@
-// Blog post type — shared between admin and public explore routes.
+// Blog post type, shared between admin and public explore routes.
 // Post content is now stored in the `blog_posts` database table.
 // Use server functions from codewise.functions.ts to read/write posts.
 

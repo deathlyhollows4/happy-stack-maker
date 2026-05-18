@@ -23,19 +23,19 @@ export const Route = createFileRoute("/learn/$slug")({
   head: ({ params }) => ({
     meta: [
       {
-        title: `${capitalize(params.slug)} DSA Guide — Learn, Practice, Master | CodeWise`,
+        title: `${capitalize(params.slug)} DSA Guide | Learn, Practice, Master | CodeWise`,
       },
       {
         name: "description",
-        content: `Master ${capitalize(params.slug)} with CodeWise. Learn core concepts, time complexity breakdowns, common patterns, MAANG interview frequency, and get AI-powered code reviews.`,
+        content: `Master ${capitalize(params.slug)} with CodeWise. Learn core concepts, time complexity breakdowns, common patterns, MAANG interview frequency, and get code review feedback.`,
       },
       {
         property: "og:title",
-        content: `${capitalize(params.slug)} DSA Guide — Learn, Practice, Master | CodeWise`,
+        content: `${capitalize(params.slug)} DSA Guide | Learn, Practice, Master | CodeWise`,
       },
       {
         property: "og:description",
-        content: `CodeWise helps CS students master ${capitalize(params.slug)} with AI-driven code reviews and personalised practice problems.`,
+        content: `CodeWise helps CS students master ${capitalize(params.slug)} with code reviews and personalised practice problems.`,
       },
       { name: "twitter:card", content: "summary_large_image" },
       {
@@ -81,7 +81,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     description:
       "Arrays store elements contiguously in memory, giving O(1) indexed access. Use for random access, fixed-size collections, and sequential data. Foundational to most DSA patterns.",
     overview:
-      "An array is the simplest and most fundamental data structure. Elements sit side-by-side in RAM, so accessing `arr[i]` takes constant time. This contiguous layout makes traversal fast but insertion and deletion slow — you must shift elements to make room or close gaps. Arrays are the building block for strings, hash tables, dynamic arrays (like Python lists), and most matrix/grid problems.",
+      "An array stores elements side-by-side in RAM, so accessing `arr[i]` takes constant time. This contiguous layout makes traversal fast but insertion and deletion slow; you must shift elements to make room or close gaps. Arrays underpin strings, hash tables, dynamic arrays (like Python lists), and most matrix/grid problems.",
     operations: [
       { name: "Access by index", time: "O(1)", space: "O(1)" },
       { name: "Linear search", time: "O(n)", space: "O(1)" },
@@ -107,7 +107,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     description:
       "Strings are immutable character arrays with language-specific APIs. Master parsing, sliding windows, palindrome checks, and pattern matching for interview success.",
     overview:
-      "Strings are sequences of characters — essentially read-only arrays with a rich standard library. Immutability means every 'modification' creates a new string, which has performance implications. String problems test your ability to manipulate character data, handle edge cases (empty strings, Unicode, case sensitivity), and apply array patterns (two-pointer, sliding window) to text.",
+      "Strings are sequences of characters, essentially read-only arrays with a rich standard library. Immutability means every 'modification' creates a new string, which has performance implications. String problems test your ability to manipulate character data, handle edge cases (empty strings, Unicode, case sensitivity), and apply array patterns (two-pointer, sliding window) to text.",
     operations: [
       { name: "Access char", time: "O(1)", space: "O(1)" },
       { name: "Length", time: "O(1)", space: "O(1)" },
@@ -125,15 +125,15 @@ const topicEducationMap: Record<string, TopicEducation> = {
     whenToUse:
       "Use string-specific techniques for text processing, pattern matching, anagram detection, palindrome checks, and problems involving character frequency or ordering.",
     whenToAvoid:
-      "Avoid treating strings as mutable arrays in languages where they are immutable (Java, Python, JS). Each concatenation in a loop is O(n^2) — use StringBuilder/StringBuffer or join() instead.",
+      "Avoid treating strings as mutable arrays in languages where they are immutable (Java, Python, JS). Each concatenation in a loop is O(n^2); use StringBuilder/StringBuffer or join() instead.",
     maangFrequency: "Very High",
     prerequisites: ["arrays"],
   },
   hashing: {
     description:
-      "Hash maps and sets give O(1) average lookup, insert, and delete. The most universal optimization tool — converts O(n^2) pair-search into O(n).",
+      "Hash maps and sets give O(1) average lookup, insert, and delete. A key optimization tool, converting O(n^2) pair-search into O(n).",
     overview:
-      "A hash map (dictionary, object, unordered_map) maps keys to values using a hash function. Under the hood, keys are hashed to an array index; collisions are handled by chaining (linked lists) or open addressing. The magic of O(1) average-time operations makes hashing the single most common optimization in interview problems. When you see 'find a pair,' 'count frequencies,' 'detect duplicates,' or 'two-sum,' think hash map first.",
+      "A hash map (dictionary, object, unordered_map) maps keys to values using a hash function. Keys are hashed to an array index; collisions are handled by chaining (linked lists) or open addressing. O(1) average-time operations make hashing one of the most common optimizations in interview problems. When you see 'find a pair,' 'count frequencies,' 'detect duplicates,' or 'two-sum,' consider a hash map first.",
     operations: [
       { name: "Insert / put", time: "O(1) avg", space: "O(1)" },
       { name: "Lookup / get", time: "O(1) avg", space: "O(1)" },
@@ -156,7 +156,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
   },
   "linked-lists": {
     description:
-      "Linked lists chain nodes via pointers. Master traversal, reversal, cycle detection, and in-place manipulation — foundational for tree and graph problems.",
+      "Linked lists chain nodes via pointers. Master traversal, reversal, cycle detection, and in-place manipulation. Foundational for tree and graph problems.",
     overview:
       "A linked list is a linear collection of nodes, each storing data and a pointer to the next node. Unlike arrays, linked lists don't need contiguous memory, so insertion and deletion at known positions are O(1). The tradeoff is O(n) access by index and extra memory for pointers. Types: singly linked, doubly linked, and circular. Linked list problems test pointer manipulation, edge cases (empty list, single node), and the ability to track multiple references simultaneously.",
     operations: [
@@ -183,7 +183,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     description:
       "LIFO (Last In, First Out) structure. Use for backtracking, expression evaluation, monotonic stacks, and undo operations.",
     overview:
-      "A stack follows the Last In, First Out principle — like a stack of plates. The last element pushed is the first popped. Stacks shine in problems requiring reversal, backtracking, bracket matching, or maintaining a 'recent history.' The monotonic stack variant (maintaining sorted order) is a powerful but subtle pattern for next-greater-element and histogram problems.",
+      "A stack follows the Last In, First Out principle, like a stack of plates. The last element pushed is the first popped. Stacks are used for reversal, backtracking, bracket matching, and maintaining a 'recent history.' The monotonic stack variant (maintaining sorted order) is an important pattern for next-greater-element and histogram problems.",
     operations: [
       { name: "Push", time: "O(1)", space: "O(1)" },
       { name: "Pop", time: "O(1)", space: "O(1)" },
@@ -206,7 +206,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     description:
       "FIFO (First In, First Out) structure. Powering BFS, sliding windows, task scheduling, and producer-consumer patterns.",
     overview:
-      "A queue follows the First In, First Out principle — like a line of people. Elements are added at the back and removed from the front. Queues are the engine behind Breadth-First Search (BFS), level-order tree traversal, and any problem involving 'processing in order of arrival.' Variants include circular queues, dequeues (double-ended), and priority queues (heaps).",
+      "A queue follows the First In, First Out principle, like a line of people. Elements are added at the back and removed from the front. Queues drive Breadth-First Search (BFS), level-order tree traversal, and any problem involving 'processing in order of arrival.' Variants include circular queues, dequeues (double-ended), and priority queues (heaps).",
     operations: [
       { name: "Enqueue / Push", time: "O(1)", space: "O(1)" },
       { name: "Dequeue / Pop", time: "O(1)", space: "O(1)" },
@@ -227,9 +227,9 @@ const topicEducationMap: Record<string, TopicEducation> = {
   },
   recursion: {
     description:
-      "A function calling itself. Master base cases, the call stack, and converting iterative thinking to recursive — prerequisite for trees, graphs, DP, and backtracking.",
+      "A function calling itself. Master base cases, the call stack, and converting iterative thinking to recursive. Prerequisite for trees, graphs, DP, and backtracking.",
     overview:
-      "Recursion is a problem-solving technique where a function calls itself on smaller subproblems. Every recursive solution has two parts: a base case (when to stop) and a recursive case (how to reduce the problem). Understanding the call stack — that each recursive call creates a new stack frame — is key to avoiding stack overflow and tracing execution. Recursion is the gateway to trees (naturally recursive), graphs (DFS), dynamic programming (top-down), and backtracking.",
+      "Recursion is a problem-solving technique where a function calls itself on smaller subproblems. Every recursive solution has two parts: a base case (when to stop) and a recursive case (how to reduce the problem). Understanding the call stack, that each recursive call creates a new stack frame, is key to avoiding stack overflow and tracing execution. Recursion is foundational for trees (naturally recursive), graphs (DFS), dynamic programming (top-down), and backtracking.",
     operations: [
       { name: "Factorial / Fibonacci", time: "O(2^n) naive", space: "O(n) stack" },
       { name: "Tree DFS traversal", time: "O(n)", space: "O(h) stack" },
@@ -241,7 +241,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
       { name: "Dynamic Programming", slug: "dp" },
     ],
     whenToUse:
-      "Use recursion when a problem naturally decomposes into identical subproblems — tree traversal, divide and conquer (merge sort, quicksort), combinatorial enumeration (backtracking), or any depth-first graph exploration.",
+      "Use recursion when a problem naturally decomposes into identical subproblems: tree traversal, divide and conquer (merge sort, quicksort), combinatorial enumeration (backtracking), or any depth-first graph exploration.",
     whenToAvoid:
       "Avoid recursion when the depth is unbounded (risk of stack overflow), when an iterative solution is equally clear and more efficient, or when tail-call optimization is not guaranteed by your language runtime.",
     maangFrequency: "High",
@@ -251,7 +251,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     description:
       "Two indices traversing a sorted structure. Covers opposite-direction pairs, fast-slow pointer, and three-way partitioning in O(n) time.",
     overview:
-      "The two-pointer technique uses two indices (or references) moving through a data structure, often in opposite directions or at different speeds. It's the go-to optimization for problems involving sorted arrays, palindrome checking, pair sums, and linked list cycle detection. The key insight: by moving pointers strategically, you can often reduce O(n^2) pair-search to O(n).",
+      "The two-pointer technique uses two indices (or references) moving through a data structure, often in opposite directions or at different speeds. It's an effective technique for sorted arrays, palindrome checking, pair sums, and linked list cycle detection. By moving pointers strategically, you can often reduce O(n^2) pair-search to O(n).",
     operations: [
       { name: "Opposite ends (sorted array pair sum)", time: "O(n)", space: "O(1)" },
       { name: "Fast & slow (cycle detection)", time: "O(n)", space: "O(1)" },
@@ -296,7 +296,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     description:
       "Divide the search space in half each iteration. Applies to sorted arrays, monotonic functions, and answer-space search in O(log n) time.",
     overview:
-      "Binary search is not just for finding elements in a sorted array. The core idea — eliminating half the search space each step — applies to any problem with a monotonic predicate. Once you recognize that 'if condition X is true at position i, it's true for all positions > i,' you can binary search the boundary. This unlocks advanced applications: finding square roots, searching in rotated arrays, capacity planning (ship packages in D days), and minimax problems.",
+      "Binary search is not just for finding elements in a sorted array. The core idea, eliminating half the search space each step, applies to any problem with a monotonic predicate. Once you recognize that 'if condition X is true at position i, it's true for all positions > i,' you can binary search the boundary. This enables advanced applications: finding square roots, searching in rotated arrays, capacity planning (ship packages in D days), and minimax problems.",
     operations: [
       { name: "Classic (sorted array search)", time: "O(log n)", space: "O(1)" },
       { name: "Lower bound / bisect_left", time: "O(log n)", space: "O(1)" },
@@ -317,9 +317,9 @@ const topicEducationMap: Record<string, TopicEducation> = {
   },
   sorting: {
     description:
-      "Arranging data to unlock efficient algorithms. Know merge sort (divide & conquer), quicksort (partitioning), and when O(n log n) is the lower bound.",
+      "Arranging data to enable efficient algorithms. Know merge sort (divide & conquer), quicksort (partitioning), and when O(n log n) is the comparison-sort lower bound.",
     overview:
-      "Sorting is often a preprocessing step that unlocks two-pointer, binary search, and greedy solutions. Understanding the tradeoffs — merge sort is stable and O(n log n) guaranteed, quicksort is in-place but O(n^2) worst-case, heapsort gives O(n log n) in-place — helps you choose the right tool. Counting sort and radix sort break the O(n log n) comparison-sort barrier for integer keys with limited range.",
+      "Sorting is often a preprocessing step that enables two-pointer, binary search, and greedy solutions. Understanding the tradeoffs: merge sort is stable and O(n log n) guaranteed, quicksort is in-place but O(n^2) worst-case, heapsort gives O(n log n) in-place, helps you choose the right tool. Counting sort and radix sort break the O(n log n) comparison-sort barrier for integer keys with limited range.",
     operations: [
       { name: "Merge Sort", time: "O(n log n)", space: "O(n)" },
       { name: "Quick Sort", time: "O(n log n) avg", space: "O(log n) stack" },
@@ -340,9 +340,9 @@ const topicEducationMap: Record<string, TopicEducation> = {
   },
   trees: {
     description:
-      "Hierarchical data with nodes and edges. Binary trees, N-ary trees, traversal (pre/in/post/level order) — the backbone of hierarchical problem modeling.",
+      "Hierarchical data with nodes and edges. Binary trees, N-ary trees, traversal (pre/in/post/level order), used widely for hierarchical problem modeling.",
     overview:
-      "A tree is a connected, acyclic graph — a hierarchical structure where each node has zero or more children and exactly one parent (except the root). Trees model hierarchies naturally: file systems, DOM, organization charts, decision trees. Binary trees (max 2 children) are the interview staple. Traversal order — preorder (root-left-right), inorder (left-root-right), postorder (left-right-root), level-order (BFS) — is the single most tested concept, along with recursion on subtrees.",
+      "A tree is a connected, acyclic graph, a hierarchical structure where each node has zero or more children and exactly one parent (except the root). Trees model hierarchies naturally: file systems, DOM, organization charts, decision trees. Binary trees (max 2 children) are a core interview topic. Traversal order: preorder (root-left-right), inorder (left-root-right), postorder (left-right-root), level-order (BFS), is the most tested concept, along with recursion on subtrees.",
     operations: [
       { name: "DFS (pre/in/post order)", time: "O(n)", space: "O(h) stack" },
       { name: "BFS / Level-order", time: "O(n)", space: "O(w) queue" },
@@ -364,9 +364,9 @@ const topicEducationMap: Record<string, TopicEducation> = {
   },
   bst: {
     description:
-      "Binary Search Tree — left < root < right. Gives O(log n) search/insert in balanced form. Underpins TreeMap, TreeSet, and database B-trees.",
+      "Binary Search Tree: left &lt; root &lt; right. Gives O(log n) search/insert in balanced form. Underpins TreeMap, TreeSet, and database B-trees.",
     overview:
-      "A Binary Search Tree enforces the ordering property: for every node, left subtree values < node value < right subtree values. This gives O(h) search, insert, and delete where h is the tree height. In a balanced BST (AVL, Red-Black), h = O(log n), giving logarithmic operations. BSTs underpin ordered maps, sorted sets, and range queries — whenever you need 'next greater element' or 'values in range [L, R]' efficiently.",
+      "A Binary Search Tree enforces the ordering property: for every node, left subtree values < node value &lt; right subtree values. This gives O(h) search, insert, and delete where h is the tree height. In a balanced BST (AVL, Red-Black), h = O(log n), giving logarithmic operations. BSTs underpin ordered maps, sorted sets, and range queries, whenever you need 'next greater element' or 'values in range [L, R]' efficiently.",
     operations: [
       { name: "Search", time: "O(h)", space: "O(1)" },
       { name: "Insert", time: "O(h)", space: "O(1)" },
@@ -435,9 +435,9 @@ const topicEducationMap: Record<string, TopicEducation> = {
   },
   dp: {
     description:
-      "Dynamic Programming — solve by breaking into overlapping subproblems. Master memoization (top-down) and tabulation (bottom-up) for optimization problems.",
+      "Dynamic Programming, solve by breaking into overlapping subproblems. Master memoization (top-down) and tabulation (bottom-up) for optimization problems.",
     overview:
-      "Dynamic Programming is not a specific algorithm but a technique: solve a problem by combining solutions to overlapping subproblems, storing results to avoid recomputation. Two approaches: top-down (memoization — recursive with cache) and bottom-up (tabulation — iterative table filling). DP applies when a problem has optimal substructure (optimal solution built from optimal sub-solutions) and overlapping subproblems. Classic problems: knapsack, LCS, edit distance, coin change, matrix chain multiplication.",
+      "Dynamic Programming is not a specific algorithm but a technique: solve a problem by combining solutions to overlapping subproblems, storing results to avoid recomputation. Two approaches: top-down (memoization, recursive with cache) and bottom-up (tabulation, iterative table filling). DP applies when a problem has optimal substructure (optimal solution built from optimal sub-solutions) and overlapping subproblems. Classic problems: knapsack, LCS, edit distance, coin change, matrix chain multiplication.",
     operations: [
       { name: "1D DP (Fibonacci, climbing stairs)", time: "O(n)", space: "O(1) opt" },
       { name: "2D DP (LCS, edit distance)", time: "O(n*m)", space: "O(n*m) → O(min(n,m))" },
@@ -460,7 +460,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     description:
       "Make the locally optimal choice at each step. Works when the problem has optimal substructure and the greedy-choice property holds.",
     overview:
-      "A greedy algorithm builds a solution incrementally, always choosing the option that looks best at the moment — never reconsidering past choices. Greedy works when the problem exhibits the greedy-choice property: a locally optimal choice leads to a globally optimal solution. Classic examples: activity selection, Huffman coding, fractional knapsack, coin change (with canonical denominations), Kruskal's and Prim's for MST. The hard part is proving that greedy is correct — many problems look greedy but require DP.",
+      "A greedy algorithm builds a solution incrementally, always choosing the option that looks best at the moment, never reconsidering past choices. Greedy works when the problem exhibits the greedy-choice property: a locally optimal choice leads to a globally optimal solution. Classic examples: activity selection, Huffman coding, fractional knapsack, coin change (with canonical denominations), Kruskal's and Prim's for MST. The hard part is proving that greedy is correct; many problems look greedy but require DP.",
     operations: [
       { name: "Activity selection", time: "O(n log n)", space: "O(1)" },
       { name: "Interval scheduling", time: "O(n log n)", space: "O(1)" },
@@ -474,7 +474,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     whenToUse:
       "Use greedy when you can prove the greedy-choice property (often by contradiction or exchange argument), when the problem asks for minimum/maximum with a clear ordering, or when it's a known greedy problem (interval scheduling, gas station, jump game).",
     whenToAvoid:
-      "Avoid greedy when it fails for counterexamples — always test with small cases. If the greedy choice can lead to a dead end that requires backtracking, it's likely a DP problem. When in doubt, code a DP solution and check if greedy matches on test cases.",
+      "Avoid greedy when it fails for counterexamples; always test with small cases. If the greedy choice can lead to a dead end that requires backtracking, it's likely a DP problem. When in doubt, code a DP solution and check if greedy matches on test cases.",
     maangFrequency: "High",
     prerequisites: ["sorting", "arrays"],
   },
@@ -503,9 +503,9 @@ const topicEducationMap: Record<string, TopicEducation> = {
   },
   "bit-manipulation": {
     description:
-      "Operate directly on binary representations. XOR tricks, bit masks, and power-of-two checks — compact, lightning-fast, and interview favorites.",
+      "Operate directly on binary representations. XOR tricks, bit masks, and power-of-two checks, useful for compact representation and common in interviews.",
     overview:
-      "Bit manipulation leverages binary representation to achieve O(1) operations that would otherwise take O(n) or O(log n). Core operations: AND (&), OR (|), XOR (^), NOT (~), left shift (<<), right shift (>>). XOR is the star: x ^ x = 0, x ^ 0 = x, and XOR is commutative/associative — enabling single-number and swap tricks. Bit masks represent sets compactly (int can hold 32 boolean flags). Useful for subsets, permissions, and state compression in DP.",
+      "Bit manipulation uses binary representation to achieve O(1) operations that would otherwise take O(n) or O(log n). Core operations: AND (&), OR (|), XOR (^), NOT (~), left shift (<<), right shift (>>). XOR is particularly useful: x ^ x = 0, x ^ 0 = x, and XOR is commutative/associative, enabling single-number and swap tricks. Bit masks represent sets compactly (int can hold 32 boolean flags). Useful for subsets, permissions, and state compression in DP.",
     operations: [
       { name: "Get i-th bit", time: "O(1)", space: "O(1)" },
       { name: "Set i-th bit", time: "O(1)", space: "O(1)" },
@@ -521,22 +521,22 @@ const topicEducationMap: Record<string, TopicEducation> = {
     whenToUse:
       "Use bit manipulation for space optimization (packing flags), XOR-based single-number detection, power-of-two checks, subset generation via bitmask (0 to 2^n), and any problem with constraints n <= 20 (hinting at 2^n bitmask DP).",
     whenToAvoid:
-      "Avoid bit manipulation when clarity matters more than micro-optimizations — readable code using booleans or sets is preferred unless performance/space is critical. Also avoid when n > 64 (bitmask outgrows integer size).",
+      "Avoid bit manipulation when clarity matters more than micro-optimizations; readable code using booleans or sets is preferred unless performance/space is critical. Also avoid when n > 64 (bitmask outgrows integer size).",
     maangFrequency: "Medium",
     prerequisites: [],
   },
   complexity: {
     description:
-      "Big-O analysis of time and space. The universal interview evaluation criterion — understand logarithmic, linearithmic, and exponential growth.",
+      "Big-O analysis of time and space. A fundamental interview evaluation criterion: understand logarithmic, linearithmic, and exponential growth.",
     overview:
       "Time and space complexity analysis is how we measure algorithm efficiency independent of hardware. Big-O notation describes the upper bound of growth rate as input size n approaches infinity. Common classes: O(1) constant, O(log n) logarithmic, O(n) linear, O(n log n) linearithmic, O(n^2) quadratic, O(2^n) exponential. Mastering complexity analysis means you can predict which solution will pass interview constraints (n=10^6 needs O(n) or O(n log n); n=20 allows O(2^n)).",
     operations: [
-      { name: "O(1) — constant", time: "Instant regardless of n", space: "Constant" },
-      { name: "O(log n) — logarithmic", time: "Binary search, balanced trees", space: "Recursion depth" },
-      { name: "O(n) — linear", time: "Single pass, two-pointer", space: "Input copy" },
-      { name: "O(n log n) — linearithmic", time: "Sorting, divide & conquer", space: "Merge sort memory" },
-      { name: "O(n^2) — quadratic", time: "Nested loops, pair-search", space: "DP table" },
-      { name: "O(2^n) — exponential", time: "Brute-force subsets", space: "Recursion tree" },
+      { name: "O(1), constant", time: "Instant regardless of n", space: "Constant" },
+      { name: "O(log n), logarithmic", time: "Binary search, balanced trees", space: "Recursion depth" },
+      { name: "O(n), linear", time: "Single pass, two-pointer", space: "Input copy" },
+      { name: "O(n log n), linearithmic", time: "Sorting, divide & conquer", space: "Merge sort memory" },
+      { name: "O(n^2), quadratic", time: "Nested loops, pair-search", space: "DP table" },
+      { name: "O(2^n), exponential", time: "Brute-force subsets", space: "Recursion tree" },
     ],
     commonPatterns: [
       { name: "Sorting", slug: "sorting" },
@@ -546,7 +546,7 @@ const topicEducationMap: Record<string, TopicEducation> = {
     whenToUse:
       "Analyze complexity for every solution. Before coding, check constraints: if n <= 10^5 and your algorithm is O(n^2), it will TLE (time limit exceeded). Use complexity analysis to choose the right algorithm before you start writing code.",
     whenToAvoid:
-      "Don't obsess over complexity when n is trivially small. Don't sacrifice code clarity for minor constant-factor gains unless profiling proves it matters. Big-O ignores constants — an O(n) algorithm with large constants can be slower than O(n^2) for small n.",
+      "Don't obsess over complexity when n is trivially small. Don't sacrifice code clarity for minor constant-factor gains unless profiling proves it matters. Big-O ignores constants; an O(n) algorithm with large constants can be slower than O(n^2) for small n.",
     maangFrequency: "Very High",
     prerequisites: [],
   },
@@ -662,7 +662,7 @@ function LearnPage() {
                     <h2 className="font-display text-2xl">Prerequisites</h2>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    These topics build the foundation for {topic.name}. Master them first for a smoother learning curve.
+                    These topics are prerequisites for {topic.name}. We recommend reviewing them first.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {edu.prerequisites.map((pre) => (
@@ -827,10 +827,9 @@ function LearnPage() {
             <section className="bg-card/40">
               <div className="max-w-3xl mx-auto px-8 py-24 text-center">
                 <Sparkles className="mx-auto size-6 text-accent" />
-                <h2 className="mt-4 font-display text-4xl">Ready to master {topic.name}?</h2>
+                <h2 className="mt-4 font-display text-4xl">Start practicing {topic.name}</h2>
                 <p className="mt-4 text-muted-foreground max-w-lg mx-auto">
-                  Your first review is free. No credit card required. Get actionable feedback that
-                  actually helps you learn.
+                  Get code review feedback focused on the CS concepts you need to strengthen.
                 </p>
                 <Link
                   to="/signup"

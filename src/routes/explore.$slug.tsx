@@ -118,8 +118,7 @@ function ExplorePostPage() {
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <h2 className="font-display text-3xl">Want feedback on your code?</h2>
           <p className="mt-3 text-muted-foreground">
-            CodeWise helps CS students master concepts through pedagogical AI code review. Your
-            first review is free.
+            CodeWise gives CS students code review feedback mapped to the concepts they need to strengthen.
           </p>
           <Link
             to="/signup"

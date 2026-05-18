@@ -46,7 +46,7 @@ function Dashboard() {
             Your workspace
           </p>
           <h1 className="mt-2 font-display text-5xl tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-2">Your CS mastery, at a glance.</p>
+          <p className="text-muted-foreground mt-2">Track your DSA topic progress.</p>
         </div>
         <Link
           to="/review"
@@ -173,7 +173,7 @@ function Dashboard() {
 
           <section className="lg:col-span-3 rounded-lg border border-border bg-card p-6 flex items-center justify-between">
             <div>
-              <h2 className="font-display text-2xl mb-1">Need a target?</h2>
+              <h2 className="font-display text-2xl mb-1">Practice</h2>
               <p className="text-sm text-muted-foreground">
                 Generate a practice problem for your weakest topic.
               </p>

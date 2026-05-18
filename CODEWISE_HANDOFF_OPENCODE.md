@@ -664,13 +664,16 @@ npm install @lovable.dev/cloud-auth-js@1.1.2 @paddle/paddle-node-sdk
 
 ### Content Style Guidelines
 
-> These rules keep the CodeWise brand voice professional and AI-agnostic.
+> **Authoritative rules live in AGENTS.md.** The rules below are a summary. AGENTS.md is read on every session and is the source of truth.
+> 
+> These rules keep the CodeWise brand voice professional and AI-agnostic. See AGENTS.md for the full banned-words list.
 
 | Rule | Why |
 |------|-----|
 | **Never use em dashes (—)** | Em dashes are the hallmark of AI-generated text. Replace with commas, semicolons, colons, or periods. In meta titles, use `|` pipe instead. |
+| **Never use banned AI-marker words** | unlock, supercharge, lightning-fast, cutting-edge, game-changing, leverage, the magic of, the gateway to, the backbone of, the engine behind, the go-to, under the hood, the single most, the interview staple, and similar. See AGENTS.md for the full list. |
 | **Avoid filler phrases** | Words like "delve", "firstly", "secondly", "moreover", "furthermore", "consequently", "in conclusion" read as AI-generated fluff. Keep writing direct and concise. |
-| **No flowery language** | Avoid poetic or overly descriptive language in AI outputs. The tone should be teaching-focused, direct, and professional — not literary. |
+| **No flowery language** | Avoid poetic or overly descriptive language in AI outputs. The tone should be teaching-focused, direct, and professional. |
 | **Use active voice** | Prefer "The function returns" over "The value is returned by the function". |
 | **Keep AI outputs focused** | AI-generated summaries, explanations, and hints should be concise (1-3 sentences for issues, 1 paragraph for summaries). No preamble, no self-praise, no meta-commentary. |
 

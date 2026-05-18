@@ -88,7 +88,7 @@ function PricingPage() {
           Simple plans. <em className="text-accent">Real</em> learning.
         </h1>
         <p className="mt-4 max-w-2xl text-muted-foreground">
-          Start free. Upgrade when you're serious about mastering the concepts behind your code.
+          Start free. Upgrade when you need more capacity.
         </p>
 
         {isActive && !subLoading && (

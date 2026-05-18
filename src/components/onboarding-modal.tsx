@@ -14,7 +14,7 @@ const STEPS = [
     icon: Code2,
     title: "Submit code for AI review",
     description:
-      "Paste any code snippet and our AI will analyze it for bugs, anti-patterns, and missed edge cases — then map every issue to the CS concept you need to strengthen.",
+      "Paste any code snippet and our AI will analyze it for bugs, anti-patterns, and missed edge cases, then map every issue to the CS concept you need to strengthen.",
     cta: "Start a review",
     ctaTo: "/review",
   },
@@ -22,13 +22,13 @@ const STEPS = [
     icon: LineChart,
     title: "See what you're missing",
     description:
-      "Every review updates your personal knowledge graph across 20 DSA topics. Watch your mastery bars fill up and spot your weak areas at a glance.",
+      "Every review updates your progress across 20 DSA topics. See which topics are strong and which need work.",
   },
   {
     icon: Sparkles,
     title: "Practice your weakest topics",
     description:
-      "Get AI-generated practice problems tailored to your biggest gaps. Solve them, resubmit, and watch your mastery climb from 30% to 90%.",
+      "Get practice problems targeted at your weakest topics. Solve them, resubmit, and track your improvement over time.",
     cta: "Go to practice",
     ctaTo: "/practice",
   },

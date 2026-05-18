@@ -51,7 +51,7 @@ function SignupPage() {
   return (
     <AuthShell
       title="Create your account"
-      subtitle="Start reviewing your code with concept-aware AI."
+      subtitle="Start reviewing your code."
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <Field label="Name" type="text" value={name} onChange={setName} autoComplete="name" />

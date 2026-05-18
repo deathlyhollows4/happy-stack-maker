@@ -175,12 +175,12 @@ function LandingPage() {
           <Feature
             icon={<GraduationCap className="h-5 w-5" />}
             title="Pedagogical, not punitive"
-            body="Reviews explain the CS principle behind every suggestion, not just the syntax fix. Like a patient TA with infinite office hours."
+            body="Reviews explain the CS principle behind every suggestion, not just the syntax fix."
           />
           <Feature
             icon={<LineChart className="h-5 w-5" />}
             title="Knowledge tracing"
-            body="Bayesian mastery score per topic across 20+ DSA concepts. Watch your weak spots shrink as you submit more code."
+            body="Bayesian mastery score per topic across 20+ DSA concepts. Tracks your progress on each topic as you submit more code."
           />
           <Feature
             icon={<Code2 className="h-5 w-5" />}

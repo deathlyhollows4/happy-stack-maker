@@ -182,7 +182,7 @@ function Review() {
             Workspace
           </p>
           <h1 className="mt-2 font-display text-5xl tracking-tight">Code Review</h1>
-          <p className="text-muted-foreground mt-2">Paste your code. Get concept-aware feedback.</p>
+          <p className="text-muted-foreground mt-2">Paste your code to get feedback mapped to CS concepts.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <input
