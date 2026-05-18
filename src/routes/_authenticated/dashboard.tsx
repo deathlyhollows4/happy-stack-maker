@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useState } from "react";
 import { getDashboard } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUpRight, Code2 } from "lucide-react";
+import { ArrowUpRight, Code2, ChevronDown } from "lucide-react";
 
 const KnowledgeGraph = lazy(() =>
   import("@/components/knowledge-graph").then((m) => ({ default: m.KnowledgeGraph })),
@@ -24,6 +24,10 @@ function Dashboard() {
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  const reviews = data?.submissions ?? [];
+  const visibleReviews = showAllReviews ? reviews : reviews.slice(0, 5);
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -57,7 +61,7 @@ function Dashboard() {
 
       {data && (
         <div className="grid lg:grid-cols-3 gap-6">
-          <Stat label="Total reviews" value={data.submissions.length} />
+          <Stat label="Total reviews" value={reviews.length} />
           <Stat label="Topics touched" value={data.progress.length} />
           <Stat
             label="Avg mastery"
@@ -71,7 +75,8 @@ function Dashboard() {
           <section className="lg:col-span-3 rounded-lg border border-border bg-card p-6 overflow-hidden">
             <h2 className="font-display text-2xl mb-1">Knowledge graph</h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Prerequisites and your mastery across 20 CS topics. Hover to inspect. Drag to pan, scroll to zoom.
+              Prerequisites and your mastery across 20 CS topics. Hover to inspect. Drag to pan,
+              scroll to zoom.
             </p>
             <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
               <KnowledgeGraph topics={data.topics} progress={data.progress} />
@@ -111,11 +116,11 @@ function Dashboard() {
 
           <section className="rounded-lg border border-border bg-card p-6">
             <h2 className="font-display text-2xl mb-4">Recent reviews</h2>
-            {data.submissions.length === 0 ? (
+            {reviews.length === 0 ? (
               <p className="text-sm text-muted-foreground">No reviews yet.</p>
             ) : (
               <ul className="space-y-3">
-                {data.submissions.map((s) => (
+                {visibleReviews.map((s) => (
                   <li
                     key={s.id}
                     className="text-sm border-b border-border last:border-0 pb-3 last:pb-0"
@@ -129,7 +134,9 @@ function Dashboard() {
                       </span>
                     </div>
                     <div className="line-clamp-2">
-                      <Markdown className="text-muted-foreground">{s.summary ?? "No summary"}</Markdown>
+                      <Markdown className="text-muted-foreground">
+                        {s.summary ?? "No summary"}
+                      </Markdown>
                     </div>
                     <Link
                       to="/submission/$submissionId"
@@ -141,6 +148,17 @@ function Dashboard() {
                   </li>
                 ))}
               </ul>
+            )}
+            {reviews.length > 5 && (
+              <button
+                onClick={() => setShowAllReviews((v) => !v)}
+                className="mt-3 w-full flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground py-2 rounded-md hover:bg-accent/5 transition-colors"
+              >
+                {showAllReviews ? `Show fewer` : `View all ${reviews.length} reviews`}
+                <ChevronDown
+                  className={`size-4 transition-transform ${showAllReviews ? "rotate-180" : ""}`}
+                />
+              </button>
             )}
           </section>
 

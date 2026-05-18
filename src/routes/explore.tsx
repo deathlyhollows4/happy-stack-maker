@@ -36,8 +36,7 @@ export const Route = createFileRoute("/explore")({
       { property: "og:title", content: "Explore | CodeWise" },
       {
         property: "og:description",
-        content:
-          "Deep dives into CS concepts, DSA patterns, and learning strategies.",
+        content: "Deep dives into CS concepts, DSA patterns, and learning strategies.",
       },
     ],
   }),
@@ -98,8 +97,7 @@ function ExploreLayout() {
 
       <footer className="border-t border-border py-10 text-center space-y-3">
         <p className="font-mono text-xs text-muted-foreground">
-          CodeWise · Built for CS students who'd rather understand than
-          autocomplete.
+          CodeWise · Built for CS students who'd rather understand than autocomplete.
         </p>
         <div className="flex justify-center gap-4 font-mono text-[11px] text-muted-foreground">
           <Link to="/explore" className="hover:text-foreground">
@@ -128,15 +126,11 @@ function ExploreList({ posts }: { posts: BlogPost[] }) {
     <main>
       <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-6 py-24">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Blog
-          </p>
-          <h1 className="mt-4 font-display text-6xl tracking-tight md:text-7xl">
-            Explore
-          </h1>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Blog</p>
+          <h1 className="mt-4 font-display text-6xl tracking-tight md:text-7xl">Explore</h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            Deep dives into CS concepts, DSA patterns, and learning strategies.
-            Written for students who'd rather understand than memorise.
+            Deep dives into CS concepts, DSA patterns, and learning strategies. Written for students
+            who'd rather understand than memorise.
           </p>
         </div>
       </section>
@@ -144,9 +138,7 @@ function ExploreList({ posts }: { posts: BlogPost[] }) {
       <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-6 py-16">
           {posts.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No posts yet. Check back soon.
-            </p>
+            <p className="text-muted-foreground text-sm">No posts yet. Check back soon.</p>
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
@@ -159,12 +151,10 @@ function ExploreList({ posts }: { posts: BlogPost[] }) {
 
       <section className="bg-card/40">
         <div className="mx-auto max-w-3xl px-6 py-24 text-center">
-          <h2 className="font-display text-4xl">
-            Have a topic you'd like us to cover?
-          </h2>
+          <h2 className="font-display text-4xl">Have a topic you'd like us to cover?</h2>
           <p className="mt-4 text-muted-foreground">
-            We're always writing new guides. If there's a CS concept you want
-            explained, let us know.
+            We're always writing new guides. If there's a CS concept you want explained, let us
+            know.
           </p>
           <Link
             to="/signup"
@@ -201,9 +191,7 @@ function PostCard({ post }: { post: BlogPost }) {
       <h2 className="font-display text-xl leading-tight group-hover:text-accent transition-colors">
         {post.title}
       </h2>
-      <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
-        {post.excerpt}
-      </p>
+      <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{post.excerpt}</p>
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Tag className="h-3 w-3 text-muted-foreground" />
         {post.tags.map((tag) => (

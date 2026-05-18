@@ -11,17 +11,7 @@ import {
   type BlogPostRow,
 } from "@/lib/codewise.functions";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Shield,
-  Loader2,
-  Plus,
-  Pencil,
-  Trash2,
-  Eye,
-  EyeOff,
-  FileText,
-  X,
-} from "lucide-react";
+import { Shield, Loader2, Plus, Pencil, Trash2, Eye, EyeOff, FileText, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/blog")({
   head: () => ({ meta: [{ title: "Blog Management | CodeWise" }] }),
@@ -196,19 +186,14 @@ function AdminBlogPage() {
             <h3 className="font-display text-xl">
               {editingId === "new" ? "New post" : "Edit post"}
             </h3>
-            <button
-              onClick={closeForm}
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <button onClick={closeForm} className="text-muted-foreground hover:text-foreground">
               <X className="size-5" />
             </button>
           </div>
           <form onSubmit={handleSave} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-mono text-muted-foreground mb-1">
-                  Slug
-                </label>
+                <label className="block text-xs font-mono text-muted-foreground mb-1">Slug</label>
                 <input
                   value={form.slug}
                   onChange={(e) => setForm({ ...form, slug: e.target.value })}
@@ -218,9 +203,7 @@ function AdminBlogPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-mono text-muted-foreground mb-1">
-                  Author
-                </label>
+                <label className="block text-xs font-mono text-muted-foreground mb-1">Author</label>
                 <input
                   value={form.author}
                   onChange={(e) => setForm({ ...form, author: e.target.value })}
@@ -229,9 +212,7 @@ function AdminBlogPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-mono text-muted-foreground mb-1">
-                Title
-              </label>
+              <label className="block text-xs font-mono text-muted-foreground mb-1">Title</label>
               <input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -240,9 +221,7 @@ function AdminBlogPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-mono text-muted-foreground mb-1">
-                Excerpt
-              </label>
+              <label className="block text-xs font-mono text-muted-foreground mb-1">Excerpt</label>
               <textarea
                 value={form.excerpt}
                 onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
@@ -277,9 +256,7 @@ function AdminBlogPage() {
                 <input
                   type="checkbox"
                   checked={form.published}
-                  onChange={(e) =>
-                    setForm({ ...form, published: e.target.checked })
-                  }
+                  onChange={(e) => setForm({ ...form, published: e.target.checked })}
                   className="rounded border-border"
                 />
                 Published (visible on /explore)

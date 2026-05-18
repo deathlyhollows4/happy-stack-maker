@@ -45,9 +45,7 @@ function BillingPage() {
       if (!r.ok) {
         toast.error(r.error);
       } else {
-        toast.success(
-          `Canceled. Access until ${new Date(r.accessUntil).toLocaleDateString()}.`,
-        );
+        toast.success(`Canceled. Access until ${new Date(r.accessUntil).toLocaleDateString()}.`);
         setConfirmCancel(false);
       }
     } finally {
@@ -65,7 +63,9 @@ function BillingPage() {
       </Link>
 
       <h1 className="font-display text-5xl tracking-tight mb-1">Billing</h1>
-      <p className="text-muted-foreground mb-10">Manage your subscription, payment method, and invoices.</p>
+      <p className="text-muted-foreground mb-10">
+        Manage your subscription, payment method, and invoices.
+      </p>
 
       {loading ? (
         <p className="text-muted-foreground">Loading subscription…</p>
@@ -141,7 +141,8 @@ function FreePlanCard() {
         </span>
       </div>
       <p className="text-sm text-muted-foreground">
-        50 code reviews / month · 25 practice problems / day · 100 code runs / day. Upgrade for 1500 reviews and 15 practice problems daily.
+        50 code reviews / month · 25 practice problems / day · 100 code runs / day. Upgrade for 1500
+        reviews and 15 practice problems daily.
       </p>
       <Link
         to="/pricing"
@@ -164,8 +165,7 @@ function PlanCard({
   const endDate = subscription.current_period_end
     ? new Date(subscription.current_period_end).toLocaleDateString()
     : null;
-  const planLabel =
-    subscription.price_id === "pro_yearly" ? "Pro (Yearly)" : "Pro (Monthly)";
+  const planLabel = subscription.price_id === "pro_yearly" ? "Pro (Yearly)" : "Pro (Monthly)";
 
   let statusBadge = (
     <span className="inline-flex items-center gap-1 rounded-sm bg-success/15 px-2 py-1 text-[11px] font-mono text-success">

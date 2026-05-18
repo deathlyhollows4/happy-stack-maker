@@ -14,7 +14,10 @@ function RefundsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-16">
-        <Link to="/" className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
+        >
           ← CodeWise
         </Link>
         <h1 className="mt-6 font-display text-4xl">Refund Policy</h1>
@@ -23,8 +26,8 @@ function RefundsPage() {
         <div className="mt-10 space-y-6 text-sm leading-relaxed text-foreground/90">
           <p>
             We offer a <strong>30-day money-back guarantee</strong>. If you're not satisfied with
-            your CodeWise purchase, you can request a full refund within 30 days of your order
-            date, no questions asked.
+            your CodeWise purchase, you can request a full refund within 30 days of your order date,
+            no questions asked.
           </p>
 
           <h2 className="font-display text-2xl">How to request a refund</h2>
@@ -35,12 +38,20 @@ function RefundsPage() {
           <ul className="ml-6 list-disc space-y-1">
             <li>
               Visit{" "}
-              <a className="underline" href="https://paddle.net" target="_blank" rel="noopener noreferrer">
+              <a
+                className="underline"
+                href="https://paddle.net"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 paddle.net
               </a>{" "}
               and enter the email address you used to purchase, then follow the prompts; or
             </li>
-            <li>Contact us through the in-app support channel and we'll forward your request to Paddle.</li>
+            <li>
+              Contact us through the in-app support channel and we'll forward your request to
+              Paddle.
+            </li>
           </ul>
 
           <h2 className="font-display text-2xl">After the 30-day period</h2>
@@ -52,7 +63,10 @@ function RefundsPage() {
           <h2 className="font-display text-2xl">Questions</h2>
           <p>
             For anything else, contact us via the in-app support channel or see our{" "}
-            <Link to="/terms" className="underline">Terms</Link>.
+            <Link to="/terms" className="underline">
+              Terms
+            </Link>
+            .
           </p>
         </div>
       </div>

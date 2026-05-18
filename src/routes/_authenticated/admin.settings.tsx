@@ -74,9 +74,7 @@ function AdminSettingsPage() {
         <div className="rounded-lg border border-border bg-card p-12 text-center">
           <Shield className="mx-auto size-8 text-muted-foreground" />
           <h2 className="mt-4 font-display text-2xl">Access denied</h2>
-          <p className="mt-2 text-muted-foreground">
-            You do not have admin privileges.
-          </p>
+          <p className="mt-2 text-muted-foreground">You do not have admin privileges.</p>
           <Link
             to="/dashboard"
             className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -141,9 +139,7 @@ function AdminSettingsPage() {
             <div className="space-y-3">
               {group.fields.map((field) => (
                 <div key={field.key} className="flex items-center gap-4">
-                  <label className="w-52 text-sm text-muted-foreground">
-                    {field.label}
-                  </label>
+                  <label className="w-52 text-sm text-muted-foreground">{field.label}</label>
                   <input
                     name={field.key}
                     type="number"
@@ -164,19 +160,15 @@ function AdminSettingsPage() {
             disabled={saving}
             className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
           >
-            {saving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
             {saving ? "Saving…" : "Save settings"}
           </button>
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          Changes take effect immediately. Limits apply on the next quota check.
-          Pricing display values are shown on the /pricing page; actual Paddle
-          prices must be updated via the Paddle dashboard or the Update Price tool.
+          Changes take effect immediately. Limits apply on the next quota check. Pricing display
+          values are shown on the /pricing page; actual Paddle prices must be updated via the Paddle
+          dashboard or the Update Price tool.
         </p>
       </form>
     </div>

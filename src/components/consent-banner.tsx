@@ -16,6 +16,7 @@ export function ConsentBanner() {
 
   useEffect(() => {
     if (!user) return;
+    if (localStorage.getItem("codewise-consent-dismissed") === "true") return;
     getUserConsent()
       .then((r: any) => {
         if (!r?.consent?.consent_given) setVisible(true);
@@ -25,6 +26,11 @@ export function ConsentBanner() {
       });
   }, [user, getUserConsent]);
 
+  const dismiss = useCallback(() => {
+    localStorage.setItem("codewise-consent-dismissed", "true");
+    setVisible(false);
+  }, []);
+
   const respond = useCallback(
     async (consent_given: boolean) => {
       setBusy(true);
@@ -33,10 +39,10 @@ export function ConsentBanner() {
       } catch {
         // best-effort; dismiss banner even if server fails
       }
-      setVisible(false);
+      dismiss();
       setBusy(false);
     },
-    [setUserConsent],
+    [setUserConsent, dismiss],
   );
 
   if (!visible) return null;
@@ -69,7 +75,7 @@ export function ConsentBanner() {
             No thanks
           </button>
           <button
-            onClick={() => setVisible(false)}
+            onClick={dismiss}
             className="p-1 text-muted-foreground hover:text-foreground"
             aria-label="Dismiss"
           >

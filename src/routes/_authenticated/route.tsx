@@ -13,6 +13,7 @@ import { useSubscription } from "@/hooks/use-subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteFooter } from "@/components/site-footer";
 import { ConsentBanner } from "@/components/consent-banner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   LayoutDashboard,
   Code2,
@@ -23,7 +24,6 @@ import {
   Menu,
   X,
   ChevronDown,
-  User,
   Settings as SettingsIcon,
   Shield,
 } from "lucide-react";
@@ -46,7 +46,7 @@ const NAV_ITEMS = [
 ] as const;
 
 function AuthLayout() {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, avatarUrl, displayName } = useAuth();
   const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const search = useRouterState({
@@ -152,10 +152,14 @@ function AuthLayout() {
             <div className="hidden md:block relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen((v) => !v)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                className="flex items-center gap-2 px-2 py-1 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
               >
-                <User className="size-4" />
-                <span className="max-w-[160px] truncate">{user.email}</span>
+                <Avatar className="size-7">
+                  <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? user.email ?? ""} />
+                  <AvatarFallback className="text-[10px] bg-accent/20 text-accent">
+                    {(displayName ?? user.email ?? "U").slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
                 <ChevronDown
                   className={`size-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
                 />
@@ -163,6 +167,7 @@ function AuthLayout() {
               {userMenuOpen && (
                 <div className="absolute right-0 top-full mt-1 w-56 rounded-md border border-border bg-popover shadow-lg z-50">
                   <div className="px-3 py-2 border-b border-border">
+                    <p className="text-sm font-medium truncate">{displayName ?? "User"}</p>
                     <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <button
@@ -218,9 +223,21 @@ function AuthLayout() {
                 </Link>
               )}
               <div className="pt-3 mt-3 border-t border-border">
-                <p className="px-3 text-xs font-mono text-muted-foreground truncate mb-2">
-                  {user.email}
-                </p>
+                <div className="flex items-center gap-3 px-3 mb-2">
+                  <Avatar className="size-8">
+                    <AvatarImage
+                      src={avatarUrl ?? undefined}
+                      alt={displayName ?? user.email ?? ""}
+                    />
+                    <AvatarFallback className="text-[10px] bg-accent/20 text-accent">
+                      {(displayName ?? user.email ?? "U").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{displayName ?? "User"}</p>
+                    <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                </div>
                 <button
                   onClick={signOut}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"

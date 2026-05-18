@@ -3,7 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminDashboard } from "@/lib/codewise.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, Users, Star, Activity, Loader2, Settings, FileText, UserCog, GraduationCap, Download, RefreshCw } from "lucide-react";
+import {
+  Shield,
+  Users,
+  Star,
+  Activity,
+  Loader2,
+  Settings,
+  FileText,
+  UserCog,
+  GraduationCap,
+  Download,
+  RefreshCw,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   head: () => ({ meta: [{ title: "Admin Dashboard | CodeWise" }] }),
@@ -67,7 +79,9 @@ function AdminDashboard() {
             <Shield className="size-3" /> Admin
           </p>
           <h1 className="mt-2 font-display text-5xl tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-2">All users, subscriptions, and usage overview.</p>
+          <p className="text-muted-foreground mt-2">
+            All users, subscriptions, and usage overview.
+          </p>
         </div>
         <Link
           to="/dashboard"
@@ -80,8 +94,16 @@ function AdminDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-10">
         <StatCard icon={<Users className="size-4" />} label="Total users" value={totals.users} />
         <StatCard icon={<Star className="size-4" />} label="Pro users" value={totals.pro_users} />
-        <StatCard icon={<Activity className="size-4" />} label="Reviews (this month)" value={totals.reviews_this_month} />
-        <StatCard icon={<Users className="size-4" />} label="Free users" value={totals.free_users} />
+        <StatCard
+          icon={<Activity className="size-4" />}
+          label="Reviews (this month)"
+          value={totals.reviews_this_month}
+        />
+        <StatCard
+          icon={<Users className="size-4" />}
+          label="Free users"
+          value={totals.free_users}
+        />
       </div>
 
       {/* Admin quick links */}
@@ -90,12 +112,42 @@ function AdminDashboard() {
           Admin tools
         </h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <QuickLink to="/admin/settings" icon={<Settings className="size-4" />} label="Site Settings" desc="Plan quotas, pricing display" />
-          <QuickLink to="/admin/blog" icon={<FileText className="size-4" />} label="Blog Posts" desc="Create & manage explore articles" />
-          <QuickLink to="/admin/seats" icon={<UserCog className="size-4" />} label="Seats" desc="Grant & revoke admin roles" />
-          <QuickLink to="/admin/curriculum" icon={<GraduationCap className="size-4" />} label="Curriculum" desc="SPPU/NPTEL topic mapping" />
-          <QuickLink to="/admin/export" icon={<Download className="size-4" />} label="Export Data" desc="Download all user data" />
-          <QuickLink to="/admin/update-price" icon={<RefreshCw className="size-4" />} label="Update Price" desc="Sync Paddle yearly price" />
+          <QuickLink
+            to="/admin/settings"
+            icon={<Settings className="size-4" />}
+            label="Site Settings"
+            desc="Plan quotas, pricing display"
+          />
+          <QuickLink
+            to="/admin/blog"
+            icon={<FileText className="size-4" />}
+            label="Blog Posts"
+            desc="Create & manage explore articles"
+          />
+          <QuickLink
+            to="/admin/seats"
+            icon={<UserCog className="size-4" />}
+            label="Seats"
+            desc="Grant & revoke admin roles"
+          />
+          <QuickLink
+            to="/admin/curriculum"
+            icon={<GraduationCap className="size-4" />}
+            label="Curriculum"
+            desc="SPPU/NPTEL topic mapping"
+          />
+          <QuickLink
+            to="/admin/export"
+            icon={<Download className="size-4" />}
+            label="Export Data"
+            desc="Download all user data"
+          />
+          <QuickLink
+            to="/admin/update-price"
+            icon={<RefreshCw className="size-4" />}
+            label="Update Price"
+            desc="Sync Paddle yearly price"
+          />
         </div>
       </div>
 
@@ -134,7 +186,10 @@ function AdminDashboard() {
             </thead>
             <tbody>
               {users.map((u: any) => (
-                <tr key={u.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors">
+                <tr
+                  key={u.id}
+                  className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors"
+                >
                   <td className="px-5 py-2.5 font-medium">{u.display_name}</td>
                   <td className="px-5 py-2.5 font-mono text-xs text-muted-foreground max-w-[180px] truncate">
                     {u.id}
@@ -161,7 +216,9 @@ function AdminDashboard() {
                       {u.subscription ?? ""}
                     </span>
                   </td>
-                  <td className="px-5 py-2.5 font-mono text-xs text-right">{u.reviews_this_month}</td>
+                  <td className="px-5 py-2.5 font-mono text-xs text-right">
+                    {u.reviews_this_month}
+                  </td>
                   <td className="px-5 py-2.5 font-mono text-xs text-right">{u.roadmaps_today}</td>
                   <td className="px-5 py-2.5 font-mono text-xs text-muted-foreground text-right">
                     {new Date(u.created_at).toLocaleDateString()}
@@ -172,24 +229,14 @@ function AdminDashboard() {
           </table>
         </div>
         {users.length === 0 && (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-            No users found.
-          </div>
+          <div className="px-5 py-8 text-center text-sm text-muted-foreground">No users found.</div>
         )}
       </div>
     </div>
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-center gap-2">

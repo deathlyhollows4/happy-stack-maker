@@ -17,7 +17,10 @@ export const Route = createFileRoute("/s/$submissionId")({
       { title: "Shared Code Review | CodeWise" },
       { name: "description", content: "Check out this AI-powered CS code review from CodeWise." },
       { property: "og:title", content: "Shared CodeWise Review" },
-      { property: "og:description", content: "AI-powered pedagogical code review for CS students." },
+      {
+        property: "og:description",
+        content: "AI-powered pedagogical code review for CS students.",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:image",

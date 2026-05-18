@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { updateDisplayName, getProfile, deleteAccount } from "@/lib/account.functions";
-import { getUserConsent, setUserConsent } from "@/lib/codewise.functions";
+import { getUserConsent, setUserConsent, updateProfileAvatar } from "@/lib/codewise.functions";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/hooks/use-theme";
 import { ArrowLeft, Save, KeyRound, Trash2, Download, CreditCard } from "lucide-react";
@@ -32,7 +33,42 @@ function SettingsPage() {
   const [savingName, setSavingName] = useState(false);
   useEffect(() => {
     if (profileData?.profile?.display_name) setName(profileData.profile.display_name);
+    if (profileData?.profile?.avatar_url) setAvatarUrl(profileData.profile.avatar_url);
   }, [profileData]);
+
+  const onAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB.");
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const uid = session.data.session?.user?.id;
+      if (!uid) throw new Error("Not authenticated");
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${uid}/${Date.now()}.${fileExt}`;
+      const { error: uploadErr } = await (supabase as any).storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+      const { data: urlData } = (supabase as any).storage.from("avatars").getPublicUrl(filePath);
+      const publicUrl = urlData?.publicUrl as string;
+      const r = await updateAvatarFn({ data: { avatar_url: publicUrl } });
+      if (r.ok) {
+        setAvatarUrl(publicUrl);
+        toast.success("Avatar updated");
+      } else {
+        toast.error(r.error);
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to upload avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const [password, setPassword] = useState("");
   const [savingPwd, setSavingPwd] = useState(false);
@@ -43,6 +79,9 @@ function SettingsPage() {
   const [savingConsent, setSavingConsent] = useState(false);
   const getConsentFn = useServerFn(getUserConsent);
   const setConsentFn = useServerFn(setUserConsent);
+  const updateAvatarFn = useServerFn(updateProfileAvatar);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -134,7 +173,28 @@ function SettingsPage() {
 
       <div className="space-y-8">
         {/* Profile */}
-        <Section title="Profile" desc="Your name as shown across the app.">
+        <Section title="Profile" desc="Your name and photo as shown across the app.">
+          <div className="flex items-start gap-4 mb-4">
+            <Avatar className="size-16">
+              <AvatarImage src={avatarUrl ?? undefined} />
+              <AvatarFallback className="text-lg bg-accent/20 text-accent">
+                {(name || "U").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <label className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent/10 cursor-pointer">
+                {uploadingAvatar ? "Uploading…" : "Change photo"}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={onAvatarUpload}
+                  disabled={uploadingAvatar}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-xs text-muted-foreground mt-1">PNG, JPEG, WebP. Max 5MB.</p>
+            </div>
+          </div>
           <div className="flex gap-2">
             <input
               value={name}

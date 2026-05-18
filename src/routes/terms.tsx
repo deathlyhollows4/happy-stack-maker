@@ -14,7 +14,10 @@ function TermsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-16">
-        <Link to="/" className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground"
+        >
           ← CodeWise
         </Link>
         <h1 className="mt-6 font-display text-4xl">Terms & Conditions</h1>
@@ -64,8 +67,14 @@ function TermsPage() {
               <li>use CodeWise for any unlawful purpose, fraud or spam;</li>
               <li>infringe anyone else's intellectual property;</li>
               <li>upload malware, probe or scrape the service, or interfere with its security;</li>
-              <li>resell, redistribute, or reverse-engineer the service or circumvent technical limits;</li>
-              <li>misuse AI outputs (e.g. generating illegal content, harassment, deepfakes, or content that violates third-party rights).</li>
+              <li>
+                resell, redistribute, or reverse-engineer the service or circumvent technical
+                limits;
+              </li>
+              <li>
+                misuse AI outputs (e.g. generating illegal content, harassment, deepfakes, or
+                content that violates third-party rights).
+              </li>
             </ul>
             <p>
               You are responsible for the code and prompts you submit, for verifying AI outputs, and
@@ -96,14 +105,23 @@ function TermsPage() {
           <section>
             <h2 className="font-display text-2xl">8. Payments, billing and refunds</h2>
             <p>
-              Our order process is conducted by our online reseller{" "}
-              <strong>Paddle.com</strong>. Paddle.com is the Merchant of Record for all our orders.
-              Paddle provides all customer service inquiries and handles returns. Payment, billing,
-              taxes, cancellation, and refund mechanics are governed by{" "}
-              <a className="underline" href="https://www.paddle.com/legal/checkout-buyer-terms" target="_blank" rel="noopener noreferrer">
+              Our order process is conducted by our online reseller <strong>Paddle.com</strong>.
+              Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer
+              service inquiries and handles returns. Payment, billing, taxes, cancellation, and
+              refund mechanics are governed by{" "}
+              <a
+                className="underline"
+                href="https://www.paddle.com/legal/checkout-buyer-terms"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Paddle's Buyer Terms
               </a>
-              . See our <Link className="underline" to="/refunds">Refund Policy</Link>.
+              . See our{" "}
+              <Link className="underline" to="/refunds">
+                Refund Policy
+              </Link>
+              .
             </p>
           </section>
 

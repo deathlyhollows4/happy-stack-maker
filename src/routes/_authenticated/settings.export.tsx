@@ -64,9 +64,7 @@ function ExportPage() {
     return (
       <div className="p-8 max-w-4xl mx-auto">
         <div className="rounded-lg border border-border bg-card p-6">
-          <p className="text-sm text-destructive">
-            Failed to load export data. Please try again.
-          </p>
+          <p className="text-sm text-destructive">Failed to load export data. Please try again.</p>
         </div>
       </div>
     );
@@ -82,7 +80,11 @@ function ExportPage() {
 
   const handleDownloadJSON = () => {
     const json = JSON.stringify(data, null, 2);
-    downloadBlob(json, `codewise-export-${new Date().toISOString().slice(0, 10)}.json`, "application/json");
+    downloadBlob(
+      json,
+      `codewise-export-${new Date().toISOString().slice(0, 10)}.json`,
+      "application/json",
+    );
   };
 
   const handleDownloadCSV = () => {
@@ -97,7 +99,9 @@ function ExportPage() {
       zipParts.push((zipParts.length ? "\n\n" : "") + "# Progress\n" + toCSV(d.progress));
     }
     if (d.practice_problems.length > 0) {
-      zipParts.push((zipParts.length ? "\n\n" : "") + "# Practice Problems\n" + toCSV(d.practice_problems));
+      zipParts.push(
+        (zipParts.length ? "\n\n" : "") + "# Practice Problems\n" + toCSV(d.practice_problems),
+      );
     }
     downloadBlob(
       zipParts.join("\n\n"),
@@ -108,9 +112,7 @@ function ExportPage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-        Settings
-      </p>
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Settings</p>
       <h1 className="mt-2 font-display text-5xl tracking-tight">Export your data</h1>
       <p className="text-muted-foreground mt-2">
         Download all your submissions, reviews, mastery progress, and practice problems.
@@ -178,7 +180,8 @@ function ExportPage() {
                   <tr key={s.id} className="border-b border-border/60 last:border-0">
                     <td className="px-5 py-2 font-mono text-xs">{s.language}</td>
                     <td className="px-5 py-2 font-mono text-xs max-w-xs truncate">
-                      {s.code.slice(0, 80)}{s.code.length > 80 ? "…" : ""}
+                      {s.code.slice(0, 80)}
+                      {s.code.length > 80 ? "…" : ""}
                     </td>
                     <td className="px-5 py-2">
                       <div className="flex flex-wrap gap-1">

@@ -116,14 +116,15 @@ function AdminExport() {
 
   const handleDownloadCSV = () => {
     const parts: string[] = [];
-    if (d.submissions.length > 0)
-      parts.push("# Submissions\n" + toCSV(d.submissions));
+    if (d.submissions.length > 0) parts.push("# Submissions\n" + toCSV(d.submissions));
     if (d.review_issues.length > 0)
       parts.push((parts.length ? "\n\n" : "") + "# Review Issues\n" + toCSV(d.review_issues));
     if (d.progress.length > 0)
       parts.push((parts.length ? "\n\n" : "") + "# Progress\n" + toCSV(d.progress));
     if (d.practice_problems.length > 0)
-      parts.push((parts.length ? "\n\n" : "") + "# Practice Problems\n" + toCSV(d.practice_problems));
+      parts.push(
+        (parts.length ? "\n\n" : "") + "# Practice Problems\n" + toCSV(d.practice_problems),
+      );
     downloadBlob(
       parts.join("\n\n"),
       `codewise-admin-export-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -154,8 +155,16 @@ function AdminExport() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-10">
         <StatCard icon={<Database className="size-4" />} label="Users" value={totalUsers} />
-        <StatCard icon={<Database className="size-4" />} label="Submissions" value={counts.submissions} />
-        <StatCard icon={<Database className="size-4" />} label="Review Issues" value={counts.issues} />
+        <StatCard
+          icon={<Database className="size-4" />}
+          label="Submissions"
+          value={counts.submissions}
+        />
+        <StatCard
+          icon={<Database className="size-4" />}
+          label="Review Issues"
+          value={counts.issues}
+        />
         <StatCard icon={<Database className="size-4" />} label="Progress" value={counts.progress} />
         <StatCard icon={<Database className="size-4" />} label="Practice" value={counts.practice} />
       </div>
@@ -202,7 +211,10 @@ function AdminExport() {
               </thead>
               <tbody>
                 {d.submissions.slice(0, 10).map((s: any) => (
-                  <tr key={s.id} className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={s.id}
+                    className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors"
+                  >
                     <td className="px-5 py-2 font-mono text-xs text-muted-foreground max-w-[120px] truncate">
                       {s.user_id}
                     </td>
@@ -238,15 +250,7 @@ function AdminExport() {
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-}) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <div className="flex items-center gap-2">

@@ -6,7 +6,8 @@ import { python } from "@codemirror/lang-python";
 import { javascript } from "@codemirror/lang-javascript";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { codemirrorDark, codemirrorLight } from "@/components/codemirror-themes";
+import { useTheme } from "@/hooks/use-theme";
 import { reviewCode } from "@/lib/codewise.functions";
 import { runCode } from "@/lib/code-exec.functions";
 import { Markdown } from "@/components/markdown";
@@ -69,6 +70,8 @@ function Review() {
   const fn = useServerFn(reviewCode);
   const runFn = useServerFn(runCode);
   const { track } = useTelemetry();
+  const { theme } = useTheme();
+  const cmTheme = theme === "light" ? codemirrorLight : codemirrorDark;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onLang = (l: Lang) => {
@@ -221,7 +224,7 @@ function Review() {
             value={code}
             onChange={setCode}
             extensions={[langExt(lang)]}
-            theme={oneDark}
+            theme={cmTheme}
             height="60vh"
             basicSetup={{ lineNumbers: true, foldGutter: true }}
           />

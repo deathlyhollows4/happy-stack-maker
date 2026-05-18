@@ -24,8 +24,7 @@ export function usePaddleCheckout() {
         customData: options.customData,
         settings: {
           displayMode: "overlay",
-          successUrl:
-            options.successUrl || `${window.location.origin}/checkout/success`,
+          successUrl: options.successUrl || `${window.location.origin}/checkout/success`,
           allowLogout: false,
           variant: "one-page",
         },

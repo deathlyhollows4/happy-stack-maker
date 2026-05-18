@@ -25,12 +25,12 @@ export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("profiles")
-      .select("id, display_name, created_at")
+      .select("id, display_name, avatar_url, created_at")
       .eq("id", userId)
       .maybeSingle();
-    return { profile: data };
+    return { profile: data as any };
   });
 
 /**

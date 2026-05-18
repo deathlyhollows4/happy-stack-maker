@@ -56,7 +56,8 @@ function UpdatePricePage() {
         </div>
 
         <p className="text-sm text-muted-foreground mb-4">
-          Updates the Paddle <code className="font-mono text-xs bg-muted px-1 rounded">pro_yearly</code> price to{" "}
+          Updates the Paddle{" "}
+          <code className="font-mono text-xs bg-muted px-1 rounded">pro_yearly</code> price to{" "}
           <strong>$199.00 USD/year</strong> in the{" "}
           <span className="font-mono text-xs bg-muted px-1 rounded">{env}</span> environment.
         </p>

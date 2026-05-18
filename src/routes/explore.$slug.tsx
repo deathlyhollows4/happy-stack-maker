@@ -90,9 +90,7 @@ function ExplorePostPage() {
             {post.title}
           </h1>
 
-          <p className="mt-4 text-sm text-muted-foreground">
-            By {post.author}
-          </p>
+          <p className="mt-4 text-sm text-muted-foreground">By {post.author}</p>
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <Tag className="h-3 w-3 text-muted-foreground" />
@@ -110,10 +108,7 @@ function ExplorePostPage() {
 
       <div className="mx-auto max-w-3xl px-6 py-12">
         {post.body.map((paragraph, i) => (
-          <p
-            key={i}
-            className="text-base leading-relaxed text-foreground/90 mb-5"
-          >
+          <p key={i} className="text-base leading-relaxed text-foreground/90 mb-5">
             {paragraph}
           </p>
         ))}
@@ -121,12 +116,10 @@ function ExplorePostPage() {
 
       <section className="border-t border-border bg-card/40">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <h2 className="font-display text-3xl">
-            Want feedback on your code?
-          </h2>
+          <h2 className="font-display text-3xl">Want feedback on your code?</h2>
           <p className="mt-3 text-muted-foreground">
-            CodeWise helps CS students master concepts through pedagogical AI
-            code review. Your first review is free.
+            CodeWise helps CS students master concepts through pedagogical AI code review. Your
+            first review is free.
           </p>
           <Link
             to="/signup"
@@ -146,12 +139,9 @@ function NotFound({ slug }: { slug: string }) {
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
         Post not found
       </p>
-      <h1 className="mt-4 font-display text-4xl">
-        This post doesn't exist
-      </h1>
+      <h1 className="mt-4 font-display text-4xl">This post doesn't exist</h1>
       <p className="mt-4 text-muted-foreground">
-        We couldn't find a blog post for "{slug}". Check out the Explore page
-        for all our articles.
+        We couldn't find a blog post for "{slug}". Check out the Explore page for all our articles.
       </p>
       <Link
         to="/explore"

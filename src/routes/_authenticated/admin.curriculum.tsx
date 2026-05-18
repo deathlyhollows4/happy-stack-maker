@@ -1,7 +1,11 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getCurriculumMappings, upsertCurriculumMapping, getDashboard } from "@/lib/codewise.functions";
+import {
+  getCurriculumMappings,
+  upsertCurriculumMapping,
+  getDashboard,
+} from "@/lib/codewise.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield, Loader2, GraduationCap, Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
@@ -247,8 +251,8 @@ function CurriculumMapping() {
           <h3 className="font-medium text-sm">About this mapping</h3>
           <p className="text-xs text-muted-foreground mt-1">
             SPPU mapping follows the SE-IT 2019 pattern and TE-IT 2019 pattern. NPTEL mappings
-            reference active NPTEL/MOOC courses. Edit any row to align topics with your institution's
-            curriculum.
+            reference active NPTEL/MOOC courses. Edit any row to align topics with your
+            institution's curriculum.
           </p>
         </div>
       </div>
@@ -264,13 +268,7 @@ function MappingCell({ value }: { value: string | null | undefined }) {
   );
 }
 
-function EditableCell({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function EditableCell({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <td className="px-2 py-1">
       <input

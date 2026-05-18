@@ -171,9 +171,7 @@ function SeatManagement() {
           </table>
         </div>
         {users.length === 0 && (
-          <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-            No users found.
-          </div>
+          <div className="px-5 py-8 text-center text-sm text-muted-foreground">No users found.</div>
         )}
       </div>
     </div>

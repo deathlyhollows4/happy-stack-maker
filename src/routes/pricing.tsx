@@ -142,7 +142,15 @@ function PricingPage() {
               disabled={loading || isActive}
               className="mt-8 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {isActive ? "You're subscribed" : loading ? "Loading…" : (<>Subscribe <ArrowRight className="h-4 w-4" /></>)}
+              {isActive ? (
+                "You're subscribed"
+              ) : loading ? (
+                "Loading…"
+              ) : (
+                <>
+                  Subscribe <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </button>
           </div>
 
@@ -154,9 +162,7 @@ function PricingPage() {
               <span className="ml-1 text-muted-foreground">/yr</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <span className="text-sm line-through text-muted-foreground/60">
-                $240
-              </span>
+              <span className="text-sm line-through text-muted-foreground/60">$240</span>
               <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
                 Save 17%
               </span>
@@ -180,11 +186,20 @@ function PricingPage() {
         </div>
 
         <p className="mt-12 text-center text-xs text-muted-foreground">
-          Payments handled by Paddle, our merchant of record. Cancel anytime, you'll keep access
-          for 7 days after cancellation. See our{" "}
-          <Link to="/terms" className="underline">Terms</Link>,{" "}
-          <Link to="/refunds" className="underline">Refund Policy</Link>, and{" "}
-          <Link to="/privacy" className="underline">Privacy Notice</Link>.
+          Payments handled by Paddle, our merchant of record. Cancel anytime, you'll keep access for
+          7 days after cancellation. See our{" "}
+          <Link to="/terms" className="underline">
+            Terms
+          </Link>
+          ,{" "}
+          <Link to="/refunds" className="underline">
+            Refund Policy
+          </Link>
+          , and{" "}
+          <Link to="/privacy" className="underline">
+            Privacy Notice
+          </Link>
+          .
         </p>
       </section>
     </div>

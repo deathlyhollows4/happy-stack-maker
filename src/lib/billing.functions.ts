@@ -24,9 +24,7 @@ async function isAdmin(userId: string): Promise<boolean> {
  */
 export const cancelSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ environment: envInput }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ environment: envInput }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const env = data.environment;
@@ -78,9 +76,7 @@ export const cancelSubscription = createServerFn({ method: "POST" })
 /** Returns a Paddle customer-portal URL for updating payment methods / invoices. */
 export const getCustomerPortalUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ environment: envInput }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ environment: envInput }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const env = data.environment;
@@ -98,10 +94,9 @@ export const getCustomerPortalUrl = createServerFn({ method: "POST" })
 
     try {
       const paddle = getPaddleClient(env);
-      const session = await paddle.customerPortalSessions.create(
-        sub.paddle_customer_id as string,
-        [sub.paddle_subscription_id as string],
-      );
+      const session = await paddle.customerPortalSessions.create(sub.paddle_customer_id as string, [
+        sub.paddle_subscription_id as string,
+      ]);
       return {
         ok: true as const,
         overviewUrl: session.urls.general.overview,
@@ -115,9 +110,7 @@ export const getCustomerPortalUrl = createServerFn({ method: "POST" })
 /** Admin: update pro_yearly Paddle price to $199/yr */
 export const updateProYearlyPrice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ environment: envInput }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ environment: envInput }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const env = data.environment;

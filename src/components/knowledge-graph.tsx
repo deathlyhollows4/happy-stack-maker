@@ -177,20 +177,17 @@ export function KnowledgeGraph({ topics, progress }: Props) {
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const getSvgPoint = useCallback(
-    (clientX: number, clientY: number) => {
-      const svg = svgRef.current;
-      if (!svg) return { x: 0, y: 0 };
-      const pt = svg.createSVGPoint();
-      pt.x = clientX;
-      pt.y = clientY;
-      const ctm = svg.getScreenCTM();
-      if (!ctm) return { x: 0, y: 0 };
-      const svgPt = pt.matrixTransform(ctm.inverse());
-      return { x: svgPt.x, y: svgPt.y };
-    },
-    [],
-  );
+  const getSvgPoint = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const svgPt = pt.matrixTransform(ctm.inverse());
+    return { x: svgPt.x, y: svgPt.y };
+  }, []);
 
   const handleWheel = useCallback(
     (e: React.WheelEvent<SVGSVGElement>) => {
@@ -253,7 +250,11 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   const hasProgress = progress.length > 0;
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-hidden rounded-lg bg-[oklch(0.16_0.012_60)]" style={{ aspectRatio: `${VB_W}/${VB_H}` }}>
+    <div
+      ref={containerRef}
+      className="relative w-full overflow-hidden rounded-lg bg-[oklch(0.16_0.012_60)]"
+      style={{ aspectRatio: `${VB_W}/${VB_H}` }}
+    >
       <svg
         ref={svgRef}
         viewBox={`0 0 ${VB_W} ${VB_H}`}
@@ -304,12 +305,9 @@ export function KnowledgeGraph({ topics, progress }: Props) {
             const tgt = simNodes.find((n) => n.slug === link.target);
             if (!src || !tgt) return null;
 
-            const isHovered =
-              hoveredSlug === link.source || hoveredSlug === link.target;
+            const isHovered = hoveredSlug === link.source || hoveredSlug === link.target;
             const isConnected =
-              hoveredSlug &&
-              connectedSlugs.has(link.source) &&
-              connectedSlugs.has(link.target);
+              hoveredSlug && connectedSlugs.has(link.source) && connectedSlugs.has(link.target);
 
             let edgeOpacity: number;
             let edgeStroke: string;
@@ -444,10 +442,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
               const hn = simNodes.find((n) => n.slug === hoveredSlug);
               if (!hn) return null;
               const labelWidth = Math.max(hn.name.length * 7, 100);
-              const tx = Math.min(
-                Math.max(hn.x, labelWidth / 2 + 8),
-                VB_W - labelWidth / 2 - 8,
-              );
+              const tx = Math.min(Math.max(hn.x, labelWidth / 2 + 8), VB_W - labelWidth / 2 - 8);
               const ty = hn.y - 50;
               const lines = [
                 hn.name,
@@ -475,11 +470,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                       y={ty - boxH + 24 + i * 14}
                       textAnchor="middle"
                       className={i === 0 ? "text-xs font-medium" : "text-[10px] font-mono"}
-                      fill={
-                        i === 0
-                          ? "oklch(0.94 0.018 75)"
-                          : "oklch(0.68 0.018 70)"
-                      }
+                      fill={i === 0 ? "oklch(0.94 0.018 75)" : "oklch(0.68 0.018 70)"}
                     >
                       {l}
                     </text>

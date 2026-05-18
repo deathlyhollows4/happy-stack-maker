@@ -3,7 +3,10 @@ import { useRouter } from "@tanstack/react-router";
 
 declare global {
   interface Window {
-    plausible: ((event: string, options?: { u?: string; props?: Record<string, unknown> }) => void) & { q?: unknown[][] };
+    plausible: ((
+      event: string,
+      options?: { u?: string; props?: Record<string, unknown> },
+    ) => void) & { q?: unknown[][] };
   }
 }
 

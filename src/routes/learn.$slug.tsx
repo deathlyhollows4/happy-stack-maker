@@ -147,7 +147,9 @@ function LearnPage() {
 
             <section className="border-b border-border bg-card/40">
               <div className="max-w-6xl mx-auto px-8 py-16">
-                <h2 className="font-display text-3xl mb-8">How CodeWise helps you master {topic.name}</h2>
+                <h2 className="font-display text-3xl mb-8">
+                  How CodeWise helps you master {topic.name}
+                </h2>
                 <div className="grid gap-6 md:grid-cols-3">
                   <BenefitCard
                     icon={<BookOpen className="size-5" />}
@@ -171,9 +173,7 @@ function LearnPage() {
             {related.length > 0 && (
               <section className="border-b border-border">
                 <div className="max-w-6xl mx-auto px-8 py-16">
-                  <h2 className="font-display text-3xl mb-8">
-                    Related {topic.category} topics
-                  </h2>
+                  <h2 className="font-display text-3xl mb-8">Related {topic.category} topics</h2>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {related.map((t) => (
                       <Link
@@ -203,12 +203,10 @@ function LearnPage() {
             <section className="bg-card/40">
               <div className="max-w-3xl mx-auto px-8 py-24 text-center">
                 <Sparkles className="mx-auto size-6 text-accent" />
-                <h2 className="mt-4 font-display text-4xl">
-                  Ready to master {topic.name}?
-                </h2>
+                <h2 className="mt-4 font-display text-4xl">Ready to master {topic.name}?</h2>
                 <p className="mt-4 text-muted-foreground max-w-lg mx-auto">
-                  Your first review is free. No credit card required. Get actionable feedback
-                  that actually helps you learn.
+                  Your first review is free. No credit card required. Get actionable feedback that
+                  actually helps you learn.
                 </p>
                 <Link
                   to="/signup"

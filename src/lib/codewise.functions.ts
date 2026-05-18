@@ -1047,6 +1047,24 @@ export const deleteBlogPost = createServerFn({ method: "POST" })
 
 // --- User Consent ---
 
+export const updateProfileAvatar = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ avatar_url: z.string().url() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { error } = await (supabaseAdmin as any)
+      .from("profiles")
+      .update({ avatar_url: data.avatar_url })
+      .eq("id", userId);
+    if (error) {
+      console.error("updateProfileAvatar failed:", error);
+      return { ok: false as const, error: "Something went wrong. Please try again." };
+    }
+    return { ok: true as const, avatar_url: data.avatar_url };
+  });
+
+// --- User Consent ---
+
 export const getUserConsent = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

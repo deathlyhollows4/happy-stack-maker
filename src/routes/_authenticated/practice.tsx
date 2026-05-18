@@ -7,7 +7,8 @@ import { python } from "@codemirror/lang-python";
 import { javascript } from "@codemirror/lang-javascript";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
-import { oneDark } from "@codemirror/theme-one-dark";
+import { codemirrorDark, codemirrorLight } from "@/components/codemirror-themes";
+import { useTheme } from "@/hooks/use-theme";
 import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { useTelemetry } from "@/hooks/use-telemetry";
@@ -23,6 +24,12 @@ export const Route = createFileRoute("/_authenticated/practice")({
 });
 
 type Lang = "python" | "javascript" | "java" | "cpp";
+const LANG_LABELS: Record<Lang, string> = {
+  python: "Python",
+  javascript: "JavaScript",
+  java: "Java",
+  cpp: "C++",
+};
 function langExt(l: Lang) {
   return l === "python"
     ? python()
@@ -45,6 +52,7 @@ function Practice() {
   });
   const [busy, setBusy] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [lang, setLang] = useState<Lang>("python");
 
   const active = data?.problems.find((p: any) => p.id === activeId) ?? null;
 
@@ -55,7 +63,7 @@ function Practice() {
   const onGen = async () => {
     setBusy(true);
     try {
-      const r = await gen({ data: { language: "python", environment: getPaddleEnvironment() } });
+      const r = await gen({ data: { language: lang, environment: getPaddleEnvironment() } });
       if (!r.ok) toast.error(r.error);
       else {
         toast.success("New problem ready");
@@ -63,7 +71,7 @@ function Practice() {
         setActiveId((r as any).problem?.id ?? null);
         track("practice_generated", {
           topic: (r as any).problem?.topic_slug ?? null,
-          language: "python",
+          language: lang,
         });
       }
     } catch (e: any) {
@@ -100,6 +108,17 @@ function Practice() {
         >
           <Sparkles className="size-4" /> {busy ? "Generating…" : "Generate a problem"}
         </button>
+        <select
+          value={lang}
+          onChange={(e) => setLang(e.target.value as Lang)}
+          className="rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
+        >
+          {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
+            <option key={l} value={l}>
+              {LANG_LABELS[l]}
+            </option>
+          ))}
+        </select>
       </div>
 
       {isLoading && (
@@ -155,6 +174,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
   const [stdin, setStdin] = useState("");
   const [running, setRunning] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [editorLang, setEditorLang] = useState<Lang>(lang);
   const [output, setOutput] = useState<{ stdout: string; stderr: string; exit: number } | null>(
     null,
   );
@@ -162,9 +182,12 @@ function ProblemWorkspace({ problem }: { problem: any }) {
   const runFn = useServerFn(runCode);
   const reviewFn = useServerFn(reviewCode);
   const { track } = useTelemetry();
+  const { theme } = useTheme();
+  const cmTheme = theme === "light" ? codemirrorLight : codemirrorDark;
 
   useEffect(() => {
     setCode(problem.starter_code || "");
+    setEditorLang(lang);
     setOutput(null);
   }, [problem.id]);
 
@@ -177,7 +200,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
     setOutput(null);
     try {
       const r = await runFn({
-        data: { code, language: lang, stdin, environment: getPaddleEnvironment() },
+        data: { code, language: editorLang, stdin, environment: getPaddleEnvironment() },
       });
       if (!r.ok) {
         toast.error(r.error);
@@ -197,7 +220,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
     setReviewing(true);
     try {
       const r = await reviewFn({
-        data: { code, language: lang, environment: getPaddleEnvironment() },
+        data: { code, language: editorLang, environment: getPaddleEnvironment() },
       });
       if (!r.ok) {
         toast.error(r.error);
@@ -206,7 +229,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
       toast.success("Review complete");
       track("practice_solved", {
         topic: problem.topic_slug ?? null,
-        language: lang,
+        language: editorLang,
       });
       nav({ to: "/submission/$submissionId", params: { submissionId: r.submissionId! } });
     } finally {
@@ -227,8 +250,21 @@ function ProblemWorkspace({ problem }: { problem: any }) {
       </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between">
-          <span>Editor · {lang}</span>
+        <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span>Editor</span>
+            <select
+              value={editorLang}
+              onChange={(e) => setEditorLang(e.target.value as Lang)}
+              className="rounded-md border border-border bg-input px-2 py-1 text-xs font-mono"
+            >
+              {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
+                <option key={l} value={l}>
+                  {LANG_LABELS[l]}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={onRun}
@@ -249,8 +285,8 @@ function ProblemWorkspace({ problem }: { problem: any }) {
         <CodeMirror
           value={code}
           onChange={setCode}
-          extensions={[langExt(lang)]}
-          theme={oneDark}
+          extensions={[langExt(editorLang)]}
+          theme={cmTheme}
           height="42vh"
           basicSetup={{ lineNumbers: true, foldGutter: true }}
         />
