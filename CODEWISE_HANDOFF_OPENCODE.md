@@ -7,8 +7,8 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 17 May 2026 (updated, sessions 25-37)                               |
-| Status                | Phase 7 complete — 24 sessions — UX improvements: Explore blog, top nav, billing, perf, free tier 50/50/100, Pro Yearly $199/yr |
+| Document date         | 18 May 2026 (updated, sessions 25-45)                             |
+| Status                | Phase 8 complete — Admin foundation, dynamic config, blog CMS, analytics, security hardening |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -28,6 +28,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 5 — Research | ✅ **DONE** | 5.1, 5.2, 5.3 | — |
 | 6 — B2B & Admin | ✅ **DONE** | 6.1, 6.2, 6.3, 6.4 | — |
 | 7 — UX Improvements | ✅ **DONE** | 7.1, 7.2, 7.3 | — |
+| 8 — Admin Controls & Analytics | ✅ **DONE** | 8.1, 8.2, 8.3, 8.4, 8.5 | — |
 
 ### Session Log
 
@@ -72,14 +73,22 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 37 | Code-run fix: bypass quota (CHECK constraint missing `code_run`), add migration, restore quota after migration applied | `code-exec.functions.ts`, `supabase/migrations/*_add_code_run_kind.sql` (new) |
 | 38 | Admin client centralization: 7 files now use `supabaseAdmin` from `client.server.ts` instead of duplicate singletons | `codewise.functions.ts`, `billing.functions.ts`, `entitlements.server.ts`, `og.$submissionId.ts`, `webhook.ts` |
 | 39 | Run button on review page: code execution + output display, Zod validation on payments.functions.ts | `review.tsx`, `payments.functions.ts` |
+| 40 | Update handoff doc: session tracker 25-39, mark completed items, update AI model ref | `CODEWISE_HANDOFF_OPENCODE.md` |
+| 41 | Revert payments.functions.ts Zod validation per request | `payments.functions.ts` |
+| 42 | Checkout success toast on landing page: detect ?checkout=success param, show Sonner toast, clean URL | `index.tsx` |
+| 43 | Phase A+B+C combined: Admin foundation (nav links, route guards, isAdmin helper), dynamic config (app_config table, getPlanQuotas from DB, Site Settings page), blog CMS (blog_posts table, CRUD server fns, Blog Posts admin page, explore routes rewired to DB) | `use-auth.ts`, `route.tsx`, 5 admin route files, `codewise.functions.ts`, `billing.functions.ts`, `entitlements.server.ts`, `code-exec.functions.ts`, `blog-posts.ts`, `explore.tsx`, `explore.$slug.tsx`, `admin.settings.tsx` (new), `admin.blog.tsx` (new), `supabase/migrations/*_app_config.sql` (new), `supabase/migrations/*_blog_posts.sql` (new) |
+| 44 | Migrations deployed, handoff doc updated, gitnexus config | `CODEWISE_HANDOFF_OPENCODE.md`, `opencode.json` |
+| 45 | Plausible analytics: script in `<head>`, AnalyticsTracker component for SPA pageviews via router.subscribe | `__root.tsx`, `analytics-tracker.tsx` (new), `.env` |
+| 46 | Lovable sync: pull security migrations (RLS hardening, curriculum_mappings table), gitnexus reindex (1807 nodes, 2902 edges), update documentation | `types.ts` (auto), `routeTree.gen.ts` (auto), 2 new migration files |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
 
 **Manual actions pending (user):**
-- Enable Google OAuth in Supabase Dashboard (Auth → Providers → Google) and create Google Cloud Console OAuth 2.0 client
+- ~~Enable Google OAuth in Supabase Dashboard~~ (done — Google OAuth now works)
 - Verify Paddle identity (Payments tab in Lovable) before accepting real payments
-- Run Supabase migrations (SQL files in `supabase/migrations/`)
+- Run new Supabase migrations: user_roles security hardening (`*1844*.sql`), curriculum_mappings table (`*1930*.sql`), app_config/RLS enable (`*1844*.sql`)
+- Add `VITE_PLAUSIBLE_DOMAIN` as Lovable Cloud secret for production analytics
 
 ---
 
@@ -123,7 +132,8 @@ Why the change: collapsing frontend + backend into TanStack Start removes a depl
 | Code editor        | CodeMirror 6 (@uiw/react-codemirror)               | Python, JavaScript, Java, C++ language packs                      |
 | Charts             | Recharts 2.15                                      | Only imported where needed (dashboard mastery bars)               |
 | Toasts             | Sonner 2.0                                         | Used for login/signup/review feedback                             |
-| Hosting            | Lovable (Cloudflare Workers)                       | Preview + published from same repo, no manual deploy              |
+| Hosting            | Lovable (Cloudflare Workers)                       | Preview + published from same repo, no manual deploy      |
+| Analytics          | Plausible                                          | Privacy-first, cookie-less, SPA pageview tracking         |
 
 ---
 
@@ -301,6 +311,59 @@ Signal rule (in `src/lib/codewise.functions.ts` -> `reviewCode`):
 
 **SQL functions (SECURITY DEFINER):** `consume_quota(p_user_id, p_kind, p_limit, p_period_key)` — atomic increment with cap check; `get_usage(p_user_id, p_kind, p_period_key)` — reads current counter. Both have `REVOKE EXECUTE ON FUNCTION FROM PUBLIC`; access granted only via service role.
 
+### 4.9 user_roles (admin role management)
+
+| Column     | Type      | Notes                                    |
+| ---------- | --------- | ---------------------------------------- |
+| id         | uuid (PK) |                                          |
+| user_id    | uuid      | FK -> auth.users                         |
+| role       | text      | CHECK (role IN ('admin'))                |
+| created_at | timestamptz |                                        |
+|            |           | UNIQUE (user_id, role)                  |
+
+**SQL function:** `has_role(p_user_id uuid, p_role text)` — SECURITY DEFINER, returns boolean. Callable by `authenticated` users (used client-side for admin nav visibility).
+
+### 4.10 app_config (dynamic configuration)
+
+| Column     | Type      | Notes                                    |
+| ---------- | --------- | ---------------------------------------- |
+| key        | text (PK) | Config key (e.g. plan_quota_free_reviews) |
+| value      | text      | Config value as string                   |
+| updated_at | timestamptz |                                        |
+
+RLS enabled. Access via `supabaseAdmin` (service role) in admin-gated server functions. Keys: `plan_quota_free_*`, `plan_quota_pro_*`, `plan_price_pro_monthly`, `plan_price_pro_yearly`.
+
+### 4.11 blog_posts (blog CMS)
+
+| Column     | Type      | Notes                                    |
+| ---------- | --------- | ---------------------------------------- |
+| id         | uuid (PK) |                                          |
+| slug       | text      | UNIQUE, URL-safe identifier              |
+| title      | text      |                                          |
+| excerpt    | text      | Card preview text                        |
+| body       | text      | JSON array of paragraph strings          |
+| tags       | text[]    |                                          |
+| author     | text      | Default "CodeWise"                       |
+| published  | boolean   | Only published posts show on /explore    |
+| created_at | timestamptz |                                        |
+| updated_at | timestamptz |                                        |
+
+RLS enabled. Public read via `supabaseAdmin` in `getAllBlogPosts`/`getBlogPostBySlug` server fns. Admin CRUD via admin-gated server fns.
+
+### 4.12 curriculum_mappings (SPPU/NPTEL alignment)
+
+| Column       | Type      | Notes                                    |
+| ------------ | --------- | ---------------------------------------- |
+| topic_slug   | text (PK) | FK-style to topics.slug                  |
+| sppu_course  | text      | SPPU course name                         |
+| sppu_module  | text      | SPPU module name                         |
+| nptel_course | text      | NPTEL course name                        |
+| nptel_module | text      | NPTEL module name                        |
+| year_semester | text     | e.g. "SE Sem 3"                          |
+| updated_at   | timestamptz |                                        |
+
+RLS enabled, no policies. Access via `supabaseAdmin` only.
+
 ---
 
 ## 5. Server functions (as deployed)
@@ -315,6 +378,14 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 | generatePractice | POST   | Picks weakest topic if none given, asks Gemini for a problem (title + prompt + starter_code), inserts into practice_problems. Now quota-gated via `consumeQuota`.               |
 | listPractice     | GET    | Last 20 practice problems for the current user.                                                                                                                                 |
 | getEntitlements  | GET    | (in `codewise.functions.ts`) Returns plan, status, pastDue, quotas, and usage counters for the billing UI.                                                                      |
+| getAppConfig     | GET    | Admin-gated. Returns all app_config key-value pairs. Used by admin.settings.tsx.                                                                                                |
+| setAppConfig     | POST   | Admin-gated. Upserts config entries. Invalidates quota cache via `refreshPlanQuotas()`.                                                                                        |
+| getAllBlogPosts     | GET | Public. Returns all published blog posts from `blog_posts` table. Used by explore.tsx.                                                                                         |
+| getBlogPostBySlug   | POST | Public. Returns a single published post by slug. Used by explore.$slug.tsx.                                                                                                    |
+| listAllBlogPostsAdmin | GET | Admin-gated. Returns all blog posts (including drafts). Used by admin.blog.tsx.                                                                                                |
+| createBlogPost    | POST   | Admin-gated. Inserts a new blog post.                                                                                                                                          |
+| updateBlogPost    | POST   | Admin-gated. Updates an existing blog post by ID.                                                                                                                              |
+| deleteBlogPost    | POST   | Admin-gated. Deletes a blog post by ID.                                                                                                                                        |
 
 **Billing functions** (`src/lib/billing.functions.ts`):
 
@@ -349,6 +420,11 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 - Free tier limits: 50 reviews/month, 25 problems/day, 100 code runs/day
 - Pro Yearly pricing: $199/yr with ~~$240~~ strikethrough + Save 17% badge
 - Paddle price update admin tool: /admin/update-price
+- Admin foundation: Admin nav link (visible only to admin users), beforeLoad route guards on all 5 admin routes, shared isAdmin() helper, has_role RPC for client-side admin detection
+- Dynamic config: app_config DB table, getPlanQuotas() reads from DB with module-level cache, admin.settings.tsx page with editable free/pro limits and pricing display
+- Blog CMS: blog_posts DB table, full CRUD server functions, admin.blog.tsx management page (create/edit/delete/publish toggle), explore routes rewired to DB
+- Plausible analytics: script in RootShell head, AnalyticsTracker component for SPA pageview tracking on route changes
+- Security hardening: Lovable applied RLS on app_config/blog_posts, revoked sensitive SECURITY DEFINER function execute from non-service roles, dropped self-referential user_roles policies
 
 Previously listed gaps now completed:
 - ~~Billing page UI~~ → Done: /billing with plan card, upgrade CTA, usage copy
@@ -356,9 +432,14 @@ Previously listed gaps now completed:
 
 ### 6.2 Not yet built (remaining polish items)
 
-- Google OAuth + Apple sign-in (currently email/password only — requires Google Cloud Console setup)
-- `?checkout=success` toast on landing page after Paddle checkout completes
-- Analytics (Plausible or PostHog) — currently nothing wired
+- ~~`?checkout=success` toast on landing page after Paddle checkout completes~~ → Done: Session 42
+- ~~Admin navigation and route guards~~ → Done: Session 43 (Admin link in nav, beforeLoad guards on all 5 admin routes)
+- ~~Dynamic configuration (quota limits, pricing display)~~ → Done: Session 43 (app_config DB table, admin.settings.tsx)
+- ~~Blog CMS (replace hardcoded blog-posts.ts)~~ → Done: Session 43 (blog_posts DB table, admin.blog.tsx, explore routes rewired)
+- ~~Plausible Analytics~~ → Done: Session 45 (script + SPA pageview tracker)
+- ~~Security hardening~~ → Done: Session 46 by Lovable (RLS on new tables, revoke sensitive function execute, curriculum_mappings table)
+- Google OAuth + Apple sign-in → Done by Lovable (Google sign-in now works)
+- Analytics dashboard (Plausible account setup for viewing data)
 - User study scaffolding for the ICNDIA paper (consent flow, anonymized telemetry)
 
 Previously listed gaps now completed:
@@ -544,6 +625,8 @@ These files are auto-generated by Lovable Cloud and should never be edited by op
 - `src/integrations/lovable/index.ts` — Lovable's OAuth bridge to Supabase; deleting it breaks Google sign-in
 - `src/routeTree.gen.ts`
 - `.env` (Lovable may overwrite; add new vars carefully)
+- `supabase/migrations/20260518001844_*` — Lovable security hardening migration (RLS, revoke execute)
+- `supabase/migrations/20260518001930_*` — Lovable curriculum_mappings table migration
 
 ---
 
@@ -828,7 +911,7 @@ Generated 16 May 2026 for handoff from Lovable to opencode. Treat sections 2 (cu
 
 ## 14. GitNexus Quick Reference for CodeWise
 
-The codebase is indexed as **happy-stack-maker** (1,700 nodes, 2,727 edges, 48 clusters, 60 execution flows). Use these queries to navigate safely.
+The codebase is indexed as **happy-stack-maker** (1,807 nodes, 2,902 edges, 49 clusters, 61 execution flows). Use these queries to navigate safely.
 
 ### 14.1 Before any edit — always run
 
