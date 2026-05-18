@@ -25,6 +25,7 @@ import {
   X,
   ChevronDown,
   Settings as SettingsIcon,
+  Shield,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -161,6 +162,15 @@ function AuthLayout() {
                   >
                     <SettingsIcon className="size-4" /> Settings
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin/dashboard"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                    >
+                      <Shield className="size-4" /> Admin
+                    </Link>
+                  )}
                   <Link
                     to="/billing"
                     onClick={() => setUserMenuOpen(false)}
@@ -230,6 +240,14 @@ function AuthLayout() {
                 >
                   <SettingsIcon className="size-4" /> Settings
                 </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin/dashboard"
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                  >
+                    <Shield className="size-4" /> Admin
+                  </Link>
+                )}
                 <Link
                   to="/billing"
                   className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
