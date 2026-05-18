@@ -7,8 +7,8 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 18 May 2026 (updated, sessions 25-45)                             |
-| Status                | Phase 8 complete — Admin foundation, dynamic config, blog CMS, analytics, security hardening |
+| Document date         | 18 May 2026 (updated, sessions 25-49)                             |
+| Status                | Phase 8 complete + UX polish — consent flow, telemetry, editor themes, avatar, light mode |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -80,6 +80,9 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 44 | Migrations deployed, handoff doc updated, gitnexus config | `CODEWISE_HANDOFF_OPENCODE.md`, `opencode.json` |
 | 45 | Plausible analytics: script in `<head>`, AnalyticsTracker component for SPA pageviews via router.subscribe | `__root.tsx`, `analytics-tracker.tsx` (new), `.env` |
 | 46 | Lovable sync: pull security migrations (RLS hardening, curriculum_mappings table), gitnexus reindex (1807 nodes, 2902 edges), update documentation | `types.ts` (auto), `routeTree.gen.ts` (auto), 2 new migration files |
+| 47 | User study scaffolding: consent banner (localStorage once-only), user_consent table + RLS, research_events table with indexes, getUserConsent/setUserConsent/recordResearchEvent/exportResearchData server fns, ConsentBanner + useTelemetry components, /admin/research route with stats + CSV/JSON export, research disclosure in Privacy, consent toggle in Settings | `consent-banner.tsx` (new), `use-telemetry.ts` (new), `admin.research.tsx` (new), `codewise.functions.ts`, `route.tsx`, `review.tsx`, `practice.tsx`, `settings.tsx`, `privacy.tsx`, `supabase/migrations/*_user_consent.sql` (new), `supabase/migrations/*_research_events.sql` (new) |
+| 48 | UX improvements: consent once-only via localStorage, dashboard limit to 5 reviews + View more, practice 4-language selector (generate + editor), custom CodeMirror themes (dark + light matching site design), avatar support (avatar_url column, avatars storage bucket, AvatarUpload in Settings, avatar in nav replacing email, display name in dropdown) | `codemirror-themes.ts` (new), `consent-banner.tsx`, `dashboard.tsx`, `practice.tsx`, `review.tsx`, `route.tsx`, `settings.tsx`, `use-auth.ts`, `account.functions.ts`, `codewise.functions.ts`, `supabase/migrations/*_avatars.sql` (new) |
+| 49 | UX polish: admin links moved to user dropdown (Dashboard + Billing & Limits), avatar size +14%, editor settings popover (Font Size 12-22px + 12 themes: Monokai/Github/Tomorrow/Kuroir/Twilight/Dracula/Xcode/TextMate/Solarized Dark/Solarized Light/Terminal/Eclipse), reset code + fullscreen buttons on editor, knowledge-graph light mode (20+ color swaps) | `editor-settings.tsx` (new), `codemirror-themes.ts`, `knowledge-graph.tsx`, `route.tsx`, `review.tsx`, `practice.tsx` |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -87,8 +90,9 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 **Manual actions pending (user):**
 - ~~Enable Google OAuth in Supabase Dashboard~~ (done — Google OAuth now works)
 - Verify Paddle identity (Payments tab in Lovable) before accepting real payments
-- Run new Supabase migrations: user_roles security hardening (`*1844*.sql`), curriculum_mappings table (`*1930*.sql`), app_config/RLS enable (`*1844*.sql`)
+- Run new Supabase migrations: user_consent (`*0002*.sql`), research_events (`*0003*.sql`), avatars (`*0004*.sql` — adds avatar_url column + avatars storage bucket + RLS)
 - Add `VITE_PLAUSIBLE_DOMAIN` as Lovable Cloud secret for production analytics
+- Create `avatars` storage bucket in Supabase Dashboard if the SQL migration doesn't auto-create it (set public = true, 5MB limit, allowed MIME: image/png,image/jpeg,image/webp,image/gif)
 
 ---
 
@@ -364,6 +368,33 @@ RLS enabled. Public read via `supabaseAdmin` in `getAllBlogPosts`/`getBlogPostBy
 
 RLS enabled, no policies. Access via `supabaseAdmin` only.
 
+### 4.13 user_consent (research opt-in)
+
+| Column        | Type        | Notes                                    |
+| ------------- | ----------- | ---------------------------------------- |
+| user_id       | uuid (PK)   | References auth.users(id)                |
+| consent_given | boolean     | Default false. User opts in via banner or Settings. |
+| consented_at  | timestamptz | When consent was set                     |
+| consent_version | text      | "1.0"                                    |
+
+RLS: users can read own row. Writes via supabaseAdmin.
+
+### 4.14 research_events (anonymized telemetry)
+
+| Column     | Type      | Notes                                    |
+| ---------- | --------- | ---------------------------------------- |
+| id         | uuid (PK) | gen_random_uuid()                        |
+| user_id    | uuid      | References auth.users(id)                |
+| event_type | text      | review_submitted, practice_generated, practice_solved |
+| payload    | jsonb     | { language, concept_count, issue_count, topic, severity } |
+| created_at | timestamptz |                                        |
+
+Indexes on user_id, event_type, created_at. No direct user access — all via supabaseAdmin.
+
+### 4.15 profiles.avatar_url (new column)
+
+Added via `20260518000004_avatars.sql`. Nullable text. Set by `updateProfileAvatar` server fn after client uploads to `avatars` storage bucket.
+
 ---
 
 ## 5. Server functions (as deployed)
@@ -386,6 +417,11 @@ All live in `src/lib/codewise.functions.ts`. Every function is guarded by `requi
 | createBlogPost    | POST   | Admin-gated. Inserts a new blog post.                                                                                                                                          |
 | updateBlogPost    | POST   | Admin-gated. Updates an existing blog post by ID.                                                                                                                              |
 | deleteBlogPost    | POST   | Admin-gated. Deletes a blog post by ID.                                                                                                                                        |
+| getUserConsent    | GET    | Returns current user's consent record (consent_given, consented_at, consent_version). Used by consent banner + settings.                                                       |
+| setUserConsent    | POST   | Upserts consent record via supabaseAdmin. Triggered by consent banner Yes/No or Settings toggle.                                                                              |
+| recordResearchEvent | POST | Checks consent, inserts into research_events via supabaseAdmin. Best-effort, returns recorded:false on error. Fire-and-forget from client.                                    |
+| exportResearchData | GET  | Admin-gated. Returns anonymized event counts (event_type, language, severity, concept_count breakdowns) + event list (type + timestamp only, no user data).                    |
+| updateProfileAvatar | POST | Updates profiles.avatar_url via supabaseAdmin. Called after client-side Supabase Storage upload completes.                                                                    |
 
 **Billing functions** (`src/lib/billing.functions.ts`):
 
@@ -438,9 +474,20 @@ Previously listed gaps now completed:
 - ~~Blog CMS (replace hardcoded blog-posts.ts)~~ → Done: Session 43 (blog_posts DB table, admin.blog.tsx, explore routes rewired)
 - ~~Plausible Analytics~~ → Done: Session 45 (script + SPA pageview tracker)
 - ~~Security hardening~~ → Done: Session 46 by Lovable (RLS on new tables, revoke sensitive function execute, curriculum_mappings table)
-- Google OAuth + Apple sign-in → Done by Lovable (Google sign-in now works)
-- Analytics dashboard (Plausible account setup for viewing data)
-- User study scaffolding for the ICNDIA paper (consent flow, anonymized telemetry)
+- ~~Google OAuth + Apple sign-in~~ → Done by Lovable (Google sign-in now works)
+- ~~User study scaffolding for ICNDIA paper~~ → Done: Session 47 (consent banner + telemetry + research data export)
+- ~~Consent banner once-only~~ → Done: Session 48 (localStorage dismissed flag)
+- ~~Dashboard view-more for reviews~~ → Done: Session 48 (5 visible + toggle)
+- ~~Practice page language selector~~ → Done: Session 48 (4-language dropdown for generate + editor)
+- ~~CodeMirror dark/light themes~~ → Done: Session 48 (custom warm dark + light matching site design)
+- ~~Admin links in user dropdown~~ → Done: Session 49 (Dashboard + Billing & Limits above Sign out)
+- ~~Editor settings (font size + 12 themes)~~ → Done: Session 49 (12px-22px, Monokai/Github/Tomorrow/Kuroir/Twilight/Dracula/Xcode/TextMate/Solarized/solarized-light/Terminal/Eclipse)
+- ~~Reset code + fullscreen buttons~~ → Done: Session 49
+- ~~Knowledge graph light mode~~ → Done: Session 49 (20+ color swaps responsive to theme)
+- ~~Avatar/profile photo in nav~~ → Done: Session 48 (avatar_url column, avatars bucket, upload in Settings, initials fallback, display name in dropdown)
+- Avatar migration not yet run (manual): `supabase/migrations/20260518000004_avatars.sql`
+- Analytics dashboard (Plausible account setup for viewing data) — manual
+- ICT paper submission (target April 2027)
 
 Previously listed gaps now completed:
 - ~~Stripe payment~~ → Done: Paddle via Lovable Gateway
@@ -911,7 +958,7 @@ Generated 16 May 2026 for handoff from Lovable to opencode. Treat sections 2 (cu
 
 ## 14. GitNexus Quick Reference for CodeWise
 
-The codebase is indexed as **happy-stack-maker** (1,807 nodes, 2,902 edges, 49 clusters, 61 execution flows). Use these queries to navigate safely.
+The codebase is indexed as **happy-stack-maker** (1,946 nodes, 3,145 edges, 54 clusters, 76 execution flows). Use these queries to navigate safely.
 
 ### 14.1 Before any edit — always run
 
