@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { javascript } from "@codemirror/lang-javascript";
@@ -18,8 +19,13 @@ import { toast } from "sonner";
 import { Sparkles, ArrowLeft, Play, Send, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const practiceSearchSchema = z.object({
+  topic: z.string().optional(),
+});
+
 export const Route = createFileRoute("/_authenticated/practice")({
   head: () => ({ meta: [{ title: "Practice | CodeWise" }] }),
+  validateSearch: (search) => practiceSearchSchema.catch({}).parse(search),
   component: Practice,
 });
 
@@ -40,10 +46,41 @@ function langExt(l: Lang) {
         : cpp();
 }
 
+type TopicSlug = string;
+interface TopicMeta {
+  slug: TopicSlug;
+  name: string;
+  category: string;
+}
+const TOPIC_LIST: TopicMeta[] = [
+  { slug: "arrays", name: "Arrays", category: "Data Structures" },
+  { slug: "strings", name: "Strings", category: "Data Structures" },
+  { slug: "hashing", name: "Hashing", category: "Data Structures" },
+  { slug: "linked-lists", name: "Linked Lists", category: "Data Structures" },
+  { slug: "stacks", name: "Stacks", category: "Data Structures" },
+  { slug: "queues", name: "Queues", category: "Data Structures" },
+  { slug: "trees", name: "Trees", category: "Data Structures" },
+  { slug: "bst", name: "BST", category: "Data Structures" },
+  { slug: "heaps", name: "Heaps", category: "Data Structures" },
+  { slug: "graphs", name: "Graphs", category: "Data Structures" },
+  { slug: "two-pointers", name: "Two Pointers", category: "Algorithms" },
+  { slug: "sliding-window", name: "Sliding Window", category: "Algorithms" },
+  { slug: "binary-search", name: "Binary Search", category: "Algorithms" },
+  { slug: "sorting", name: "Sorting", category: "Algorithms" },
+  { slug: "recursion", name: "Recursion", category: "Algorithms" },
+  { slug: "backtracking", name: "Backtracking", category: "Algorithms" },
+  { slug: "dp", name: "Dynamic Programming", category: "Algorithms" },
+  { slug: "greedy", name: "Greedy", category: "Algorithms" },
+  { slug: "bit-manipulation", name: "Bit Manipulation", category: "Algorithms" },
+  { slug: "complexity", name: "Complexity Analysis", category: "Fundamentals" },
+];
+const TOPIC_CATEGORIES = [...new Set(TOPIC_LIST.map((t) => t.category))];
+
 function Practice() {
   const gen = useServerFn(generatePractice);
   const list = useServerFn(listPractice);
   const { track } = useTelemetry();
+  const search = Route.useSearch();
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["practice"],
     queryFn: () => list(),
@@ -53,6 +90,9 @@ function Practice() {
   const [busy, setBusy] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("python");
+  const [topicSlug, setTopicSlug] = useState<string | null>(
+    search.topic && TOPIC_LIST.some((t) => t.slug === search.topic) ? search.topic : null,
+  );
 
   const active = data?.problems.find((p: any) => p.id === activeId) ?? null;
 
@@ -63,7 +103,9 @@ function Practice() {
   const onGen = async () => {
     setBusy(true);
     try {
-      const r = await gen({ data: { language: lang, environment: getPaddleEnvironment() } });
+      const r = await gen({
+        data: { language: lang, topicSlug, environment: getPaddleEnvironment() },
+      });
       if (!r.ok) toast.error(r.error);
       else {
         toast.success("New problem ready");
@@ -98,7 +140,9 @@ function Practice() {
           </p>
           <h1 className="mt-2 font-display text-5xl tracking-tight">Practice</h1>
           <p className="text-muted-foreground mt-2">
-            Auto-generated problems targeting your weakest topic.
+            {topicSlug
+              ? `Generating problems for ${TOPIC_LIST.find((t) => t.slug === topicSlug)?.name ?? topicSlug}.`
+              : "Auto-generated problems targeting your weakest topic."}
           </p>
         </div>
         <button
@@ -108,6 +152,22 @@ function Practice() {
         >
           <Sparkles className="size-4" /> {busy ? "Generating…" : "Generate a problem"}
         </button>
+        <select
+          value={topicSlug ?? ""}
+          onChange={(e) => setTopicSlug(e.target.value || null)}
+          className="rounded-md border border-border bg-input px-3 py-2 text-sm"
+        >
+          <option value="">Weakest Topic (auto)</option>
+          {TOPIC_CATEGORIES.map((cat) => (
+            <optgroup key={cat} label={cat}>
+              {TOPIC_LIST.filter((t) => t.category === cat).map((t) => (
+                <option key={t.slug} value={t.slug}>
+                  {t.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
         <select
           value={lang}
           onChange={(e) => setLang(e.target.value as Lang)}

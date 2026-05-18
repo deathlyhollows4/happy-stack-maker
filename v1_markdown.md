@@ -1,6 +1,10 @@
 # CodeWise v1: Core Feature Architecture
 
 > Two highest-leverage features. SRS solves the core retention problem (maximizing LTV). The Free Widget acts as a zero-CAC acquisition engine.
+>
+> **Next session:** Start with FSRS (Section 1) — migrate `progress` table + integrate `updateFSRS` into `reviewCode`. Then Widget (Section 2) — separate Cloudflare Worker + token bucket + embed.js.
+>
+> **When ready, say "next session" and opencode reads this file + CODEWISE_HANDOFF_OPENCODE.md to know what to build.**
 
 ---
 

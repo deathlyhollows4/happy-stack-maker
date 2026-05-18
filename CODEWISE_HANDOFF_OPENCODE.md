@@ -7,8 +7,8 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 18 May 2026 (updated, sessions 25-50)                             |
-| Status                | Phase 8 complete + UX polish — consent flow, telemetry, editor themes, avatar, light mode |
+| Document date         | 19 May 2026 (updated, sessions 51-57)                          |
+| Status                | Phase 9 in progress — info, design & nav polish (5/7 sessions done)        |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -97,9 +97,8 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
 
 **Manual actions pending (user):**
-- ~~Enable Google OAuth in Supabase Dashboard~~ (done — Google OAuth now works)
 - Verify Paddle identity (Payments tab in Lovable) before accepting real payments
-- Run new Supabase migrations: user_consent (`*0002*.sql`), research_events (`*0003*.sql`), avatars (`*0004*.sql` — adds avatar_url column + avatars storage bucket + RLS)
+- Run Supabase migrations not yet applied: `20260518000002_user_consent.sql`, `20260518000003_research_events.sql`, `20260518000004_avatars.sql`
 - Add `VITE_PLAUSIBLE_DOMAIN` as Lovable Cloud secret for production analytics
 - Create `avatars` storage bucket in Supabase Dashboard if the SQL migration doesn't auto-create it (set public = true, 5MB limit, allowed MIME: image/png,image/jpeg,image/webp,image/gif)
 
@@ -117,7 +116,7 @@ The original document described a Next.js + Python FastAPI + Prisma + DeepSeek s
 | AI provider        | DeepSeek API              | Lovable AI Gateway → openai/gpt-5-mini   |
 | Hosting (frontend) | Lovable Pro               | Lovable (Cloudflare Workers via vite-plugin)         |
 | Hosting (backend)  | Railway / VPS for FastAPI | Same Worker — no separate backend                    |
-| Auth               | OAuth (Google, GitHub)    | Supabase Auth — email + password only (no OAuth yet) |
+| Auth               | OAuth (Google, GitHub)    | Supabase Auth — email + password + Google OAuth    |
 | Payments           | Stripe / Razorpay         | Paddle (merchant of record, via Lovable Gateway)     |
 | Editor             | CodeMirror 6              | CodeMirror 6 (kept as planned)                       |
 | Knowledge tracing  | Full BKT model in Python  | BKT-lite update inside reviewCode server fn          |
@@ -167,7 +166,7 @@ src/
 │   ├── terms.tsx                  # Terms & Conditions (Paddle requirement)
 │   ├── refunds.tsx                # Refund Policy (Paddle requirement)
 │   ├── privacy.tsx                # Privacy Notice (Paddle requirement)
-  │   ├── learn.$slug.tsx            # Per-topic SEO landing page (public)
+  │   ├── learn.$slug.tsx            # Educational topic page: concept overview, operations table, patterns, MAANG frequency, prerequisites, when-to-use/avoid
   │   ├── s.$submissionId.tsx        # Share-a-review public page
   │   ├── auth/
   │   │   └── callback.tsx           # OAuth post-redirect handler
@@ -489,12 +488,11 @@ Previously listed gaps now completed:
 | 9.2 | Legal page nav: auth-aware header on terms/refunds/privacy | ✅ Done: Session 52 |
 | 9.3 | Topic education content: static TopicEducation objects embedded in learn.$slug.tsx | ✅ Done: Session 53 |
 | 9.4 | /learn/$slug educational rewrite: concept overview, operations table, patterns, MAANG frequency, prerequisites, when-to-use/avoid | ✅ Done: Session 54 |
-| 9.5 | Topic selection dropdown on /practice + URL param support | ⬜ |
+| 9.5 | Topic selection dropdown on /practice + URL param support | ⬜ Next session |
 | 9.6 | First-run onboarding modal on empty dashboard | ⬜ |
 | 9.7 | Navigation audit: cross-page link verification, mobile parity | ✅ Done: Sessions 51-52 |
 
-**Manual actions for Phase 9:**
-- Run `supabase/migrations/*_topic_education.sql` and `supabase/migrations/*_topic_descriptions.sql` in Supabase Dashboard
+**No manual actions needed for remaining Phase 9 items.**
 
 Previously listed gaps now completed:
 - ~~Stripe payment~~ → Done: Paddle via Lovable Gateway
@@ -516,115 +514,38 @@ Previously listed gaps now completed:
 
 ---
 
-## 7. Recommended next steps for opencode
+## 7. Next session: Phase 9 remaining items
 
-Suggested order, smallest risk first. Each step includes what opencode can do directly and what actions require manual user intervention.
+Two features left to build. Order: smallest first.
 
-### Step 1: Google OAuth + Password Reset
+### 7.1 Topic selection on /practice (Session 55)
 
-**opencode can do:**
-
-- Edit `src/integrations/supabase/auth-middleware.ts` to accept OAuth tokens
-- Create `src/routes/auth/callback.tsx` (OAuth redirect handler)
-- Add `src/routes/forgot-password.tsx` and `src/routes/reset-password.tsx`
-- Wire react-hook-form + zod forms for password reset
-- Update signup.tsx to include OAuth buttons
-
-**Manual user action required:**
-
-- Enable Google OAuth provider in Supabase dashboard (Authentication > Providers)
-- Create Google Cloud Console OAuth client with redirect URI
-
-### Step 2: Freemium Quota System
+**What:** Add a topic dropdown next to the language selector. Default is "Weakest Topic (auto)" — same behavior as today. User can explicitly pick any of the 20 topics. The `/learn/$slug` page's "Practice This Topic" button links to `/practice?topic=arrays`.
 
 **opencode can do:**
+- Read `src/routes/_authenticated/practice.tsx` to understand current generate flow
+- Add a `<Select>` dropdown component listing all 20 topics grouped by category
+- Pass `topic_slug` to `generatePractice()` when explicitly selected
+- Support `?topic=arrays` URL search param in `beforeLoad`
+- Wire the `/learn/$slug` page CTA to link `/practice?topic={slug}`
 
-- Create a `user_quotas` migration in `supabase/migrations/`
-- Edit `reviewCode` in `codewise.functions.ts` to check quota before calling AI
-- Add quota tracking to dashboards (remaining reviews this month)
-- Show upgrade CTA when free tier is exhausted
-- Add `reviewCount` or `quotaUsed` column (or compute from submissions.created_at)
+### 7.2 First-run onboarding modal (Session 56)
 
-**Manual user action required:**
-
-- Run migration via Supabase CLI or dashboard
-
-### Step 3: Stripe Checkout + Webhook
+**What:** On first dashboard load (0 submissions), show a 3-step dialog using shadcn `<Dialog />`. Steps: 1) Submit your first code for AI review → link to `/review`, 2) Review feedback showing which CS concepts you're weak on, 3) Practice your weakest topic → link to `/practice`. Dismissed via localStorage flag (same pattern as consent banner). "Skip tour" button.
 
 **opencode can do:**
+- Create `src/components/onboarding-modal.tsx` with shadcn Dialog + 3 steps
+- Import and render on `dashboard.tsx` when `submissions.length === 0`
+- Use `localStorage.getItem('onboarding_dismissed')` to gate display
+- Wire "Skip tour" and "×" close to set localStorage flag
 
-- Create `src/routes/api/public/stripe-webhook.ts` (server route)
-- Create a `subscriptions` table migration
-- Create `src/routes/settings/billing.tsx` (manage plan UI)
-- Add a `pricing` page at `/pricing`
-- Wire Stripe SDK for Checkout Session creation
+### 7.3 Future: FSRS + Widget (see v1_markdown.md)
 
-**Manual user action required:**
+The `v1_markdown.md` file contains complete architecture specs for the two highest-leverage features:
+- **FSRS Spaced Repetition Scheduler**: AI-graded DSR model replacing manual SM-2, with TypeScript implementation ready to integrate into `codewise.functions.ts`
+- **Embeddable Free Code Review Widget**: Cloudflare Workers edge-computed token bucket, curiosity gap conversion UI, postMessage auto-resize iframe
 
-- Set up Stripe Products & Prices in Stripe dashboard
-- Add STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET to `.env` (and Lovable secrets)
-- Configure webhook endpoint URL in Stripe dashboard
-
-### Step 4: Submission Detail Page
-
-**opencode can do:**
-
-- Create `src/routes/_authenticated/review.$submissionId.tsx`
-- Use existing `getSubmission` server fn
-- Render code + issues side-by-side (split layout)
-- Add click-through from dashboard recent reviews list
-
-**No manual action required.** Purely frontend + existing API.
-
-### Step 5: Knowledge Graph Visualization
-
-**opencode can do:**
-
-- Add a small d3-force or Recharts treemap component on dashboard
-- Model prerequisite chains from the 20 topics (define edges: arrays->two-pointers, recursion->dp, etc.)
-- Color nodes by user's mastery level from the progress table
-- Make it a reusable `<KnowledgeGraph />` component in `src/components/`
-
-**No manual action required.** Data already exists; purely frontend.
-
-### Step 6: Share-a-Review Viral Loop
-
-**opencode can do:**
-
-- Create `src/routes/s.$submissionId.tsx` (public route, no auth)
-- Generate OG metadata via TanStack Start `head()` (title, description, image)
-- Create `src/routes/api/public/og.$submissionId.png.tsx` server route that renders an SVG/PNG card
-- Add "Share Results" button on submission detail page
-- Generate a share URL with review score + topic summary
-
-**No manual action required.** Purely code.
-
-### Step 7: Per-Topic SEO Landing Pages
-
-**opencode can do:**
-
-- Create `src/routes/learn.$slug.tsx` with SSR
-- Pull topic description + name from Supabase topics table
-- Generate unique `<title>` and `<meta name="description">` per slug
-- List related topics, show sample concepts
-- Render a static "Try CodeWise" CTA
-
-**No manual action required.** Data comes from topics table.
-
-### Step 8: Eval Harness for Research
-
-**opencode can do:**
-
-- Create `scripts/eval.ts` (Node script)
-- Import a labelled corpus (CSV of code + expected concepts)
-- Replay each sample through `reviewCode` server fn (or call the API route directly)
-- Compute precision/recall on concept_slug detection
-- Output confusion matrix as JSON
-
-**Manual user action required:**
-
-- Source a labelled CS1/CS2 buggy-code dataset
-- Add the corpus CSV to `scripts/corpus/`
+These are spec'd at ~490 lines. Start there after Phase 9 completes.
 
 ---
 

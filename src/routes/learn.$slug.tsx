@@ -637,7 +637,8 @@ function LearnPage() {
                 )}
                 <div className="mt-8 flex flex-wrap items-center gap-4">
                   <Link
-                    to="/signup"
+                    to="/practice"
+                    search={{ topic: slug }}
                     className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
                   >
                     <Sparkles className="size-4" /> Practice {topic.name} with CodeWise

@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { getDashboard } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OnboardingModal } from "@/components/onboarding-modal";
 import { ArrowUpRight, Code2, ChevronDown } from "lucide-react";
 
 const KnowledgeGraph = lazy(() =>
@@ -25,9 +26,17 @@ function Dashboard() {
     gcTime: 30 * 60 * 1000,
   });
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const reviews = data?.submissions ?? [];
   const visibleReviews = showAllReviews ? reviews : reviews.slice(0, 5);
+
+  useEffect(() => {
+    if (!data) return;
+    if (reviews.length > 0) return;
+    if (localStorage.getItem("onboarding_dismissed") === "true") return;
+    setShowOnboarding(true);
+  }, [data, reviews.length]);
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -178,6 +187,8 @@ function Dashboard() {
           </section>
         </div>
       )}
+
+      <OnboardingModal open={showOnboarding} onDismiss={() => setShowOnboarding(false)} />
     </div>
   );
 }
