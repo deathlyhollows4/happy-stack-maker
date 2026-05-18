@@ -798,7 +798,7 @@ export const upsertCurriculumMapping = createServerFn({ method: "POST" })
 
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
 
-    const { error } = await supabaseAdmin.from("curriculum_mappings").upsert(
+    const { error } = await (supabaseAdmin as any).from("curriculum_mappings").upsert(
       {
         topic_slug: data.topic_slug,
         sppu_course: data.sppu_course ?? null,
