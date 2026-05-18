@@ -7,8 +7,8 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 19 May 2026 (updated, sessions 51-57)                          |
-| Status                | Phase 9 in progress — info, design & nav polish (5/7 sessions done)        |
+| Document date         | 19 May 2026 (updated, sessions 51-58)                          |
+| Status                | Phase 9 complete — info, design & nav polish. Next: FSRS + Widget (v1)     |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -29,7 +29,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 6 — B2B & Admin | ✅ **DONE** | 6.1, 6.2, 6.3, 6.4 | — |
 | 7 — UX Improvements | ✅ **DONE** | 7.1, 7.2, 7.3 | — |
 | 8 — Admin Controls & Analytics | ✅ **DONE** | 8.1, 8.2, 8.3, 8.4, 8.5 | — |
-| 9 — Info, Design & Nav Polish | 🟡 **IN PROGRESS** | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7 | — |
+| 9 — Info, Design & Nav Polish | ✅ **DONE** | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7 | — |
 
 ### Session Log
 
@@ -89,9 +89,10 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 52 | Legal page navigation: add auth-aware header to terms/refunds/privacy pages (logo + Dashboard + Pricing + Get started CTA) + SiteFooter | `terms.tsx`, `refunds.tsx`, `privacy.tsx` |
 | 53 | Topic education content: 20 static TopicEducation objects (description, overview, operations, commonPatterns, whenToUse, whenToAvoid, maangFrequency, prerequisites) embedded in learn.$slug.tsx — no DB migration needed | `learn.$slug.tsx` (rewrite from 279 → 560 lines) |
 | 54 | /learn/$slug educational rewrite: replaced generic benefit cards with concept overview, operations complexity table, common patterns with cross-links, MAANG frequency badge, prerequisites with nav links, when-to-use vs when-to-avoid | `learn.$slug.tsx` |
-| 55 | Topic selection in practice: dropdown to choose topic instead of auto-weakest; URL param support `/practice?topic=arrays`; "Practice This Topic" links from learn pages | `practice.tsx` |
-| 56 | First-run onboarding modal: 3-step dialog on empty dashboard, localStorage dismissed flag, "Skip tour" button | `dashboard.tsx`, `onboarding-modal.tsx` (new) |
-| 57 | Navigation audit: verify all cross-page links, ensure SiteFooter on all pages, mobile hamburger parity with desktop nav | `site-footer.tsx` (verify, no major changes expected) |
+| 55 | Topic selection in practice: 20-topic grouped dropdown (Data Structures/Algorithms/Fundamentals), `?topic=` URL param via validateSearch, pass topicSlug to generatePractice, dynamic description text | `practice.tsx` |
+| 56 | First-run onboarding modal: 3-step shadcn Dialog (review → gaps → practice), localStorage `onboarding_dismissed` flag, "Skip tour" + "×" dismiss, triggers on dashboard when submissions.length === 0 | `dashboard.tsx`, `onboarding-modal.tsx` (new) |
+| 57 | Navigation audit: verify all cross-page links, ensure SiteFooter on all pages, mobile hamburger parity with desktop nav | `site-footer.tsx` (verified, no changes needed) |
+| 58 | Playwright E2E: live deployment test of landing, learn, login, dashboard, practice (with/without ?topic=), review, pricing — 0 console errors, all features working | — |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -480,7 +481,7 @@ Previously listed gaps now completed:
 - Analytics dashboard (Plausible account setup for viewing data) — manual
 - ICT paper submission (target April 2027)
 
-### 6.3 Phase 9 — Info, Design & Navigation (IN PROGRESS)
+### 6.3 Phase 9 — Info, Design & Navigation (DONE)
 
 | Sess. | Task | Status |
 |-------|------|--------|
@@ -488,11 +489,11 @@ Previously listed gaps now completed:
 | 9.2 | Legal page nav: auth-aware header on terms/refunds/privacy | ✅ Done: Session 52 |
 | 9.3 | Topic education content: static TopicEducation objects embedded in learn.$slug.tsx | ✅ Done: Session 53 |
 | 9.4 | /learn/$slug educational rewrite: concept overview, operations table, patterns, MAANG frequency, prerequisites, when-to-use/avoid | ✅ Done: Session 54 |
-| 9.5 | Topic selection dropdown on /practice + URL param support | ⬜ Next session |
-| 9.6 | First-run onboarding modal on empty dashboard | ⬜ |
+| 9.5 | Topic selection dropdown on /practice + URL param support | ✅ Done: Session 55 (build) + 58 (verify) |
+| 9.6 | First-run onboarding modal on empty dashboard | ✅ Done: Session 56 (build) + 58 (verify) |
 | 9.7 | Navigation audit: cross-page link verification, mobile parity | ✅ Done: Sessions 51-52 |
 
-**No manual actions needed for remaining Phase 9 items.**
+All Phase 9 items built, deployed, and Playwright-verified against live deployment. Zero errors.
 
 Previously listed gaps now completed:
 - ~~Stripe payment~~ → Done: Paddle via Lovable Gateway
@@ -514,38 +515,41 @@ Previously listed gaps now completed:
 
 ---
 
-## 7. Next session: Phase 9 remaining items
+## 7. Next session: FSRS Spaced Repetition (v1 features)
 
-Two features left to build. Order: smallest first.
+Phase 9 is complete. The next session should start on the two highest-leverage v1 features from `v1_markdown.md`. Start with FSRS (smallest, highest impact).
 
-### 7.1 Topic selection on /practice (Session 55)
+### 7.1 FSRS: Spaced Repetition Scheduler (est. 2 sessions)
 
-**What:** Add a topic dropdown next to the language selector. Default is "Weakest Topic (auto)" — same behavior as today. User can explicitly pick any of the 20 topics. The `/learn/$slug` page's "Practice This Topic" button links to `/practice?topic=arrays`.
+**What:** Replace the current BKT-lite mastery model with a full FSRS (Free Spaced Repetition Scheduler) algorithm. The `reviewCode` server fn already grades code quality — pipe that grade into FSRS to auto-schedule topic reviews on the optimal interval.
 
-**opencode can do:**
-- Read `src/routes/_authenticated/practice.tsx` to understand current generate flow
-- Add a `<Select>` dropdown component listing all 20 topics grouped by category
-- Pass `topic_slug` to `generatePractice()` when explicitly selected
-- Support `?topic=arrays` URL search param in `beforeLoad`
-- Wire the `/learn/$slug` page CTA to link `/practice?topic={slug}`
+**Session SRS-1 — Migration + `updateFSRS` server fn:**
+- Write `supabase/migrations/20260519_fsrs_columns.sql`: add `stability`, `difficulty`, `retrievability`, `next_review_date` columns to `progress` table
+- Add `computeFSRSGrade()`, `updateFSRS()` functions in `src/lib/codewise.functions.ts`
+- Integrate into `reviewCode`: after inserting review_issues, call `updateFSRS(userId, conceptSlug, grade)` for each detected topic slug
+- FSRS weights: `[0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.8, 0.7, 1.5, 0.1]`
+- Auto-grade logic (from existing review_issues): `errors >= 2 → 1`, `errors === 1 || warnings >= 3 → 2`, `warnings >= 1 → 3`, `else → 4`
 
-### 7.2 First-run onboarding modal (Session 56)
+**Session SRS-2 — `getDueReviews` + `<ReviewQueue />` component:**
+- New server fn: `getDueReviews` — returns topics where `next_review_date <= now()`, sorted by urgency
+- New component: `src/components/review-queue.tsx` — renders on dashboard below knowledge graph
+- Urgency-coded cards (red=overdue, amber=<24h, green=healthy) with retrievability %, difficulty stars
+- CTA "Solve a problem" → `/practice?topic={slug}`
+- Empty state: "All topics mastered. Check back in X days."
 
-**What:** On first dashboard load (0 submissions), show a 3-step dialog using shadcn `<Dialog />`. Steps: 1) Submit your first code for AI review → link to `/review`, 2) Review feedback showing which CS concepts you're weak on, 3) Practice your weakest topic → link to `/practice`. Dismissed via localStorage flag (same pattern as consent banner). "Skip tour" button.
+### 7.2 Widget: Embeddable Free Code Review (est. 4 sessions, after FSRS)
 
-**opencode can do:**
-- Create `src/components/onboarding-modal.tsx` with shadcn Dialog + 3 steps
-- Import and render on `dashboard.tsx` when `submissions.length === 0`
-- Use `localStorage.getItem('onboarding_dismissed')` to gate display
-- Wire "Skip tour" and "×" close to set localStorage flag
+See `v1_markdown.md` Section 2 for full architecture:
+- Separate Cloudflare Worker at `widget.codewise.ai`
+- Token bucket rate limiter (3 free reviews / 8 hour refill, IP-fingerprinted via SHA-256 + KV)
+- Curiosity gap conversion UI (unlocked: summary + concepts + O(n) hint; locked: full issues + alternative approach)
+- `embed.js` with shadow DOM + postMessage auto-resize iframe
+- Shared AI review logic extracted into `src/lib/ai-review.ts`
 
-### 7.3 Future: FSRS + Widget (see v1_markdown.md)
+### 7.3 Manual actions needed before starting
 
-The `v1_markdown.md` file contains complete architecture specs for the two highest-leverage features:
-- **FSRS Spaced Repetition Scheduler**: AI-graded DSR model replacing manual SM-2, with TypeScript implementation ready to integrate into `codewise.functions.ts`
-- **Embeddable Free Code Review Widget**: Cloudflare Workers edge-computed token bucket, curiosity gap conversion UI, postMessage auto-resize iframe
-
-These are spec'd at ~490 lines. Start there after Phase 9 completes.
+- Run migration `20260519_fsrs_columns.sql` in Supabase Dashboard after creating it
+- Ensure `LOVABLE_API_KEY` is configured (should be already — was working in Phase 9)
 
 ---
 
