@@ -10,6 +10,7 @@ import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
+import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ function langExt(l: Lang) {
 function Practice() {
   const gen = useServerFn(generatePractice);
   const list = useServerFn(listPractice);
+  const { track } = useTelemetry();
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["practice"],
     queryFn: () => list(),
@@ -59,6 +61,10 @@ function Practice() {
         toast.success("New problem ready");
         await refetch();
         setActiveId((r as any).problem?.id ?? null);
+        track("practice_generated", {
+          topic: (r as any).problem?.topic_slug ?? null,
+          language: "python",
+        });
       }
     } catch (e: any) {
       console.error("generatePractice failed:", e);
@@ -155,6 +161,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
 
   const runFn = useServerFn(runCode);
   const reviewFn = useServerFn(reviewCode);
+  const { track } = useTelemetry();
 
   useEffect(() => {
     setCode(problem.starter_code || "");
@@ -169,7 +176,9 @@ function ProblemWorkspace({ problem }: { problem: any }) {
     setRunning(true);
     setOutput(null);
     try {
-      const r = await runFn({ data: { code, language: lang, stdin, environment: getPaddleEnvironment() } });
+      const r = await runFn({
+        data: { code, language: lang, stdin, environment: getPaddleEnvironment() },
+      });
       if (!r.ok) {
         toast.error(r.error);
         return;
@@ -187,12 +196,18 @@ function ProblemWorkspace({ problem }: { problem: any }) {
   const onSubmit = async () => {
     setReviewing(true);
     try {
-      const r = await reviewFn({ data: { code, language: lang, environment: getPaddleEnvironment() } });
+      const r = await reviewFn({
+        data: { code, language: lang, environment: getPaddleEnvironment() },
+      });
       if (!r.ok) {
         toast.error(r.error);
         return;
       }
       toast.success("Review complete");
+      track("practice_solved", {
+        topic: problem.topic_slug ?? null,
+        language: lang,
+      });
       nav({ to: "/submission/$submissionId", params: { submissionId: r.submissionId! } });
     } finally {
       setReviewing(false);
@@ -208,9 +223,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
             {problem.topic_slug}
           </span>
         )}
-        <Markdown className="text-muted-foreground mt-4">
-          {problem.prompt}
-        </Markdown>
+        <Markdown className="text-muted-foreground mt-4">{problem.prompt}</Markdown>
       </div>
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">

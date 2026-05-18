@@ -10,6 +10,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { reviewCode } from "@/lib/codewise.functions";
 import { runCode } from "@/lib/code-exec.functions";
 import { Markdown } from "@/components/markdown";
+import { useTelemetry } from "@/hooks/use-telemetry";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
 import {
@@ -60,9 +61,14 @@ function Review() {
   const [result, setResult] = useState<Awaited<ReturnType<typeof reviewCode>> | null>(null);
   const [exception, setException] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [runOutput, setRunOutput] = useState<{ stdout: string; stderr: string; exit: number } | null>(null);
+  const [runOutput, setRunOutput] = useState<{
+    stdout: string;
+    stderr: string;
+    exit: number;
+  } | null>(null);
   const fn = useServerFn(reviewCode);
   const runFn = useServerFn(runCode);
+  const { track } = useTelemetry();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onLang = (l: Lang) => {
@@ -107,6 +113,13 @@ function Review() {
     try {
       const r = await fn({ data: { code, language: lang, environment: getPaddleEnvironment() } });
       setResult(r);
+      if (r.ok) {
+        track("review_submitted", {
+          language: lang,
+          concept_count: r.concepts?.length ?? 0,
+          issue_count: r.issues?.length ?? 0,
+        });
+      }
       if (!r.ok) toast.error(r.error);
       else toast.success("Review complete");
     } catch (e: any) {
@@ -123,7 +136,9 @@ function Review() {
     setRunning(true);
     setRunOutput(null);
     try {
-      const r = await runFn({ data: { code, language: lang, stdin: "", environment: getPaddleEnvironment() } });
+      const r = await runFn({
+        data: { code, language: lang, stdin: "", environment: getPaddleEnvironment() },
+      });
       if (!r.ok) {
         toast.error(r.error);
         return;
@@ -214,15 +229,23 @@ function Review() {
 
         {runOutput && (
           <div className="rounded-lg border border-border bg-card p-4">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">Output</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+              Output
+            </p>
             {runOutput.stdout && (
-              <pre className="text-sm text-foreground/90 whitespace-pre-wrap font-mono">{runOutput.stdout}</pre>
+              <pre className="text-sm text-foreground/90 whitespace-pre-wrap font-mono">
+                {runOutput.stdout}
+              </pre>
             )}
             {runOutput.stderr && (
-              <pre className="text-sm text-destructive whitespace-pre-wrap font-mono mt-1">{runOutput.stderr}</pre>
+              <pre className="text-sm text-destructive whitespace-pre-wrap font-mono mt-1">
+                {runOutput.stderr}
+              </pre>
             )}
             {!runOutput.stdout && !runOutput.stderr && (
-              <p className="text-sm text-muted-foreground">Program exited with code {runOutput.exit}.</p>
+              <p className="text-sm text-muted-foreground">
+                Program exited with code {runOutput.exit}.
+              </p>
             )}
           </div>
         )}

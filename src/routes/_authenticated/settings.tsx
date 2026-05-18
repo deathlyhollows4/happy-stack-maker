@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { updateDisplayName, getProfile, deleteAccount } from "@/lib/account.functions";
+import { getUserConsent, setUserConsent } from "@/lib/codewise.functions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/hooks/use-theme";
 import { ArrowLeft, Save, KeyRound, Trash2, Download, CreditCard } from "lucide-react";
@@ -38,7 +39,32 @@ function SettingsPage() {
 
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState("");
+  const [consentGiven, setConsentGiven] = useState<boolean | null>(null);
+  const [savingConsent, setSavingConsent] = useState(false);
+  const getConsentFn = useServerFn(getUserConsent);
+  const setConsentFn = useServerFn(setUserConsent);
   const { theme } = useTheme();
+
+  useEffect(() => {
+    getConsentFn()
+      .then((r: any) => setConsentGiven(r?.consent?.consent_given ?? null))
+      .catch(() => setConsentGiven(null));
+  }, [getConsentFn]);
+
+  const toggleConsent = async (given: boolean) => {
+    setSavingConsent(true);
+    try {
+      const r = await setConsentFn({ data: { consent_given: given } });
+      if (r.ok) {
+        setConsentGiven(given);
+        toast.success(given ? "Research consent enabled" : "Research consent disabled");
+      } else toast.error(r.error);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setSavingConsent(false);
+    }
+  };
 
   const saveName = async () => {
     if (!name.trim()) return;
@@ -175,6 +201,47 @@ function SettingsPage() {
               <CreditCard className="size-4" /> Billing
             </Link>
           </div>
+        </Section>
+
+        {/* Research consent */}
+        <Section
+          title="Research"
+          desc="CodeWise is part of an academic study. Allow anonymous usage data collection to support research in AI-assisted CS education."
+        >
+          {consentGiven === null ? (
+            <p className="text-sm text-muted-foreground animate-pulse">Loading…</p>
+          ) : (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => toggleConsent(true)}
+                disabled={savingConsent}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+                  consentGiven
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border text-muted-foreground hover:bg-accent/10"
+                } disabled:opacity-50`}
+              >
+                {consentGiven ? "Enabled" : "Disabled"}
+              </button>
+              {consentGiven ? (
+                <button
+                  onClick={() => toggleConsent(false)}
+                  disabled={savingConsent}
+                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 disabled:opacity-50"
+                >
+                  Opt out
+                </button>
+              ) : (
+                <button
+                  onClick={() => toggleConsent(true)}
+                  disabled={savingConsent}
+                  className="text-sm text-accent hover:underline underline-offset-4 disabled:opacity-50"
+                >
+                  Opt in
+                </button>
+              )}
+            </div>
+          )}
         </Section>
 
         {/* Danger */}

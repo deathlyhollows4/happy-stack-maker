@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/hooks/use-subscription";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteFooter } from "@/components/site-footer";
+import { ConsentBanner } from "@/components/consent-banner";
 import {
   LayoutDashboard,
   Code2,
@@ -74,10 +75,7 @@ function AuthLayout() {
   useEffect(() => {
     if (!userMenuOpen) return;
     const handler = (e: MouseEvent) => {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(e.target as Node)
-      ) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
     };
@@ -102,8 +100,7 @@ function AuthLayout() {
     nav({ to: "/" });
   };
 
-  const isActive = (to: string) =>
-    path === to || path.startsWith(to + "/");
+  const isActive = (to: string) => path === to || path.startsWith(to + "/");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -160,17 +157,13 @@ function AuthLayout() {
                 <User className="size-4" />
                 <span className="max-w-[160px] truncate">{user.email}</span>
                 <ChevronDown
-                  className={`size-3 transition-transform ${
-                    userMenuOpen ? "rotate-180" : ""
-                  }`}
+                  className={`size-3 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
                 />
               </button>
               {userMenuOpen && (
                 <div className="absolute right-0 top-full mt-1 w-56 rounded-md border border-border bg-popover shadow-lg z-50">
                   <div className="px-3 py-2 border-b border-border">
-                    <p className="text-xs font-mono text-muted-foreground truncate">
-                      {user.email}
-                    </p>
+                    <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <button
                     onClick={signOut}
@@ -188,11 +181,7 @@ function AuthLayout() {
               className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
               aria-label="Toggle menu"
             >
-              {mobileOpen ? (
-                <X className="size-5" />
-              ) : (
-                <Menu className="size-5" />
-              )}
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
           </div>
         </div>
@@ -251,14 +240,14 @@ function AuthLayout() {
             <AlertTriangle className="size-4 text-warning" />
             Your last payment failed. Update your card to keep Pro access.
           </span>
-          <Link
-            to="/billing"
-            className="font-medium underline underline-offset-4"
-          >
+          <Link to="/billing" className="font-medium underline underline-offset-4">
             Fix billing →
           </Link>
         </div>
       )}
+
+      {/* Research consent banner */}
+      <ConsentBanner />
 
       {/* Main content */}
       <main className="flex-1">

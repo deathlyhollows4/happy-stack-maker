@@ -14,9 +14,7 @@ import {
 } from "@/lib/entitlements.server";
 import type { PaddleEnv } from "@/lib/paddle.server";
 
-const envInput = z
-  .enum(["sandbox", "live"])
-  .default("sandbox") as z.ZodType<PaddleEnv>;
+const envInput = z.enum(["sandbox", "live"]).default("sandbox") as z.ZodType<PaddleEnv>;
 
 function extractJson(raw: string): string {
   const trimmed = raw.trim();
@@ -50,11 +48,13 @@ const ReviewIssueSchema = z.object({
   is_correct_pattern: z.boolean().optional(),
 });
 
-const ReviewResponseSchema = z.object({
-  summary: z.string().min(1).max(2000),
-  concepts: z.array(z.string()).max(20).default([]),
-  issues: z.array(ReviewIssueSchema).max(25).default([]),
-}).passthrough();
+const ReviewResponseSchema = z
+  .object({
+    summary: z.string().min(1).max(2000),
+    concepts: z.array(z.string()).max(20).default([]),
+    issues: z.array(ReviewIssueSchema).max(25).default([]),
+  })
+  .passthrough();
 
 const VALID_TOPIC_SLUGS = new Set([
   "arrays",
@@ -180,7 +180,10 @@ export const reviewCode = createServerFn({ method: "POST" })
           ok: false as const,
           error: "AI credits exhausted. Add credits in Lovable settings.",
         };
-      return { ok: false as const, error: `AI service error (${aiRes.status}). ${text.slice(0, 300)}` };
+      return {
+        ok: false as const,
+        error: `AI service error (${aiRes.status}). ${text.slice(0, 300)}`,
+      };
     }
 
     const aiJson = await aiRes.json();
@@ -195,7 +198,14 @@ export const reviewCode = createServerFn({ method: "POST" })
         parsed = ReviewResponseSchema.parse(JSON.parse(extractJson(content)));
         break;
       } catch (parseErr) {
-        console.error("reviewCode parse attempt", attempt, "failed:", parseErr, "content preview:", content.slice(0, 200));
+        console.error(
+          "reviewCode parse attempt",
+          attempt,
+          "failed:",
+          parseErr,
+          "content preview:",
+          content.slice(0, 200),
+        );
         if (attempt < maxAttempts) {
           const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
@@ -222,7 +232,10 @@ export const reviewCode = createServerFn({ method: "POST" })
       }
     }
     if (!parsed) {
-      return { ok: false as const, error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}` };
+      return {
+        ok: false as const,
+        error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}`,
+      };
     }
 
     // persist submission
@@ -359,7 +372,11 @@ export const getTopicBySlug = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const supabase = supabaseAdmin;
     const [{ data: topic }, { data: related }] = await Promise.all([
-      supabase.from("topics").select("slug, name, category, description").eq("slug", data.slug).maybeSingle(),
+      supabase
+        .from("topics")
+        .select("slug, name, category, description")
+        .eq("slug", data.slug)
+        .maybeSingle(),
       supabase.from("topics").select("slug, name, category, description"),
     ]);
     const sameCategory = (related ?? []).filter(
@@ -459,7 +476,14 @@ export const generatePractice = createServerFn({ method: "POST" })
           .parse(JSON.parse(extractJson(content)));
         break;
       } catch (parseErr) {
-        console.error("generatePractice parse attempt", attempt, "failed:", parseErr, "content preview:", content.slice(0, 200));
+        console.error(
+          "generatePractice parse attempt",
+          attempt,
+          "failed:",
+          parseErr,
+          "content preview:",
+          content.slice(0, 200),
+        );
         if (attempt < maxAttempts) {
           const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
@@ -489,7 +513,10 @@ export const generatePractice = createServerFn({ method: "POST" })
       }
     }
     if (!parsed) {
-      return { ok: false as const, error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}` };
+      return {
+        ok: false as const,
+        error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}`,
+      };
     }
 
     const { data: row, error } = await supabase
@@ -524,9 +551,7 @@ export const listPractice = createServerFn({ method: "GET" })
 
 export const getEntitlements = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ environment: envInput }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ environment: envInput }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { plan, status, pastDue } = await getUserPlan(userId, data.environment);
@@ -603,7 +628,10 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     const mk = monthKey(now);
 
     const [profilesRes, subsRes, usageRes] = await Promise.all([
-      admin.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+      admin
+        .from("profiles")
+        .select("id, display_name, created_at")
+        .order("created_at", { ascending: false }),
       admin.from("subscriptions").select("user_id, status, current_period_end, environment"),
       admin.from("usage_counters").select("user_id, kind, count").eq("period_key", mk),
     ]);
@@ -616,15 +644,26 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     for (const s of subs) {
       const existing = subByUser.get(s.user_id);
       if (!existing || (s.status === "active" && existing.status !== "active")) {
-        subByUser.set(s.user_id, { status: s.status as string, end: s.current_period_end as string | null });
+        subByUser.set(s.user_id, {
+          status: s.status as string,
+          end: s.current_period_end as string | null,
+        });
       }
     }
 
     const reviewCountByUser = new Map<string, number>();
     const roadmapCountByUser = new Map<string, number>();
     for (const u of usage) {
-      if (u.kind === "review") reviewCountByUser.set(u.user_id, (reviewCountByUser.get(u.user_id) ?? 0) + (u.count as number));
-      else if (u.kind === "roadmap") roadmapCountByUser.set(u.user_id, (roadmapCountByUser.get(u.user_id) ?? 0) + (u.count as number));
+      if (u.kind === "review")
+        reviewCountByUser.set(
+          u.user_id,
+          (reviewCountByUser.get(u.user_id) ?? 0) + (u.count as number),
+        );
+      else if (u.kind === "roadmap")
+        roadmapCountByUser.set(
+          u.user_id,
+          (roadmapCountByUser.get(u.user_id) ?? 0) + (u.count as number),
+        );
     }
 
     let totalReviews = 0;
@@ -633,10 +672,10 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       const s = subByUser.get(p.id);
       const endMs = s?.end ? new Date(s.end).getTime() : null;
       const inPeriod = endMs === null || endMs > now.getTime();
-      const isPro = !!s && (
-        (["active", "trialing", "past_due"].includes(s.status) && inPeriod) ||
-        (s.status === "canceled" && endMs !== null && endMs > now.getTime())
-      );
+      const isPro =
+        !!s &&
+        ((["active", "trialing", "past_due"].includes(s.status) && inPeriod) ||
+          (s.status === "canceled" && endMs !== null && endMs > now.getTime()));
 
       const reviews = reviewCountByUser.get(p.id) ?? 0;
       const roadmaps = roadmapCountByUser.get(p.id) ?? 0;
@@ -674,7 +713,10 @@ export const getAdminSeats = createServerFn({ method: "GET" })
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", users: [] };
 
     const [profilesRes, rolesRes] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, created_at")
+        .order("created_at", { ascending: false }),
       supabaseAdmin.from("user_roles").select("user_id, role"),
     ]);
 
@@ -703,10 +745,9 @@ export const grantAdminRole = createServerFn({ method: "POST" })
 
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
 
-    const { error } = await supabaseAdmin.from("user_roles").upsert(
-      { user_id: data.targetUserId, role: "admin" },
-      { onConflict: "user_id,role" },
-    );
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: data.targetUserId, role: "admin" }, { onConflict: "user_id,role" });
     if (error) {
       console.error("grantAdminRole failed:", error);
       return { ok: false as const, error: "Failed to grant admin role." };
@@ -742,10 +783,21 @@ export const exportAllUserData = createServerFn({ method: "GET" })
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", data: null };
 
     const [submissionsRes, issuesRes, progressRes, practiceRes] = await Promise.all([
-      supabaseAdmin.from("submissions").select("id, user_id, language, code, summary, concepts, created_at").order("created_at", { ascending: false }),
-      supabaseAdmin.from("review_issues").select("id, submission_id, user_id, line, severity, concept_slug, title, explanation, fix_hint"),
-      supabaseAdmin.from("progress").select("user_id, topic_slug, mastery, attempts, last_reviewed"),
-      supabaseAdmin.from("practice_problems").select("id, user_id, topic_slug, title, prompt, starter_code, language, created_at"),
+      supabaseAdmin
+        .from("submissions")
+        .select("id, user_id, language, code, summary, concepts, created_at")
+        .order("created_at", { ascending: false }),
+      supabaseAdmin
+        .from("review_issues")
+        .select(
+          "id, submission_id, user_id, line, severity, concept_slug, title, explanation, fix_hint",
+        ),
+      supabaseAdmin
+        .from("progress")
+        .select("user_id, topic_slug, mastery, attempts, last_reviewed"),
+      supabaseAdmin
+        .from("practice_problems")
+        .select("id, user_id, topic_slug, title, prompt, starter_code, language, created_at"),
     ]);
 
     return {
@@ -769,15 +821,16 @@ export type CurriculumMapping = {
   year_semester: string | null;
 };
 
-export const getCurriculumMappings = createServerFn({ method: "GET" })
-  .handler(async (): Promise<{ mappings: CurriculumMapping[] }> => {
+export const getCurriculumMappings = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ mappings: CurriculumMapping[] }> => {
     const admin = supabaseAdmin as any;
     const { data } = await admin
       .from("curriculum_mappings")
       .select("topic_slug, sppu_course, sppu_module, nptel_course, nptel_module, year_semester")
       .order("topic_slug");
     return { mappings: (data ?? []) as CurriculumMapping[] };
-  });
+  },
+);
 
 export const upsertCurriculumMapping = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -837,16 +890,20 @@ export const getAppConfig = createServerFn({ method: "GET" })
 export const setAppConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ entries: z.array(z.object({ key: z.string().min(1), value: z.string() })) }).parse(input),
+    z
+      .object({ entries: z.array(z.object({ key: z.string().min(1), value: z.string() })) })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
     for (const entry of data.entries) {
-      await supabaseAdmin.from("app_config").upsert(
-        { key: entry.key, value: entry.value, updated_at: new Date().toISOString() },
-        { onConflict: "key" },
-      );
+      await supabaseAdmin
+        .from("app_config")
+        .upsert(
+          { key: entry.key, value: entry.value, updated_at: new Date().toISOString() },
+          { onConflict: "key" },
+        );
     }
     refreshPlanQuotas();
     return { ok: true as const };
@@ -867,15 +924,14 @@ export type BlogPostRow = {
   updated_at: string;
 };
 
-export const getAllBlogPosts = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data } = await supabaseAdmin
-      .from("blog_posts")
-      .select("*")
-      .eq("published", true)
-      .order("created_at", { ascending: false });
-    return data as BlogPostRow[] ?? [];
-  });
+export const getAllBlogPosts = createServerFn({ method: "GET" }).handler(async () => {
+  const { data } = await supabaseAdmin
+    .from("blog_posts")
+    .select("*")
+    .eq("published", true)
+    .order("created_at", { ascending: false });
+  return (data as BlogPostRow[]) ?? [];
+});
 
 export const getBlogPostBySlug = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ slug: z.string() }).parse(input))
@@ -893,7 +949,8 @@ export const listAllBlogPostsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", posts: [] as BlogPostRow[] };
+    if (!(await isAdmin(userId)))
+      return { ok: false as const, error: "Forbidden", posts: [] as BlogPostRow[] };
     const { data } = await supabaseAdmin
       .from("blog_posts")
       .select("*")
@@ -904,15 +961,17 @@ export const listAllBlogPostsAdmin = createServerFn({ method: "GET" })
 export const createBlogPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      slug: z.string().min(1).max(200),
-      title: z.string().min(1).max(500),
-      excerpt: z.string().default(""),
-      body: z.string().default("[]"),
-      tags: z.array(z.string()).default([]),
-      author: z.string().default("CodeWise"),
-      published: z.boolean().default(false),
-    }).parse(input),
+    z
+      .object({
+        slug: z.string().min(1).max(200),
+        title: z.string().min(1).max(500),
+        excerpt: z.string().default(""),
+        body: z.string().default("[]"),
+        tags: z.array(z.string()).default([]),
+        author: z.string().default("CodeWise"),
+        published: z.boolean().default(false),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
@@ -936,30 +995,35 @@ export const createBlogPost = createServerFn({ method: "POST" })
 export const updateBlogPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({
-      id: z.string().uuid(),
-      slug: z.string().min(1).max(200),
-      title: z.string().min(1).max(500),
-      excerpt: z.string().default(""),
-      body: z.string().default("[]"),
-      tags: z.array(z.string()).default([]),
-      author: z.string().default("CodeWise"),
-      published: z.boolean().default(false),
-    }).parse(input),
+    z
+      .object({
+        id: z.string().uuid(),
+        slug: z.string().min(1).max(200),
+        title: z.string().min(1).max(500),
+        excerpt: z.string().default(""),
+        body: z.string().default("[]"),
+        tags: z.array(z.string()).default([]),
+        author: z.string().default("CodeWise"),
+        published: z.boolean().default(false),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
-    const { error } = await supabaseAdmin.from("blog_posts").update({
-      slug: data.slug,
-      title: data.title,
-      excerpt: data.excerpt,
-      body: data.body,
-      tags: data.tags,
-      author: data.author,
-      published: data.published,
-      updated_at: new Date().toISOString(),
-    }).eq("id", data.id);
+    const { error } = await supabaseAdmin
+      .from("blog_posts")
+      .update({
+        slug: data.slug,
+        title: data.title,
+        excerpt: data.excerpt,
+        body: data.body,
+        tags: data.tags,
+        author: data.author,
+        published: data.published,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
     if (error) {
       console.error("updateBlogPost failed:", error);
       return { ok: false as const, error: error.message };
@@ -969,9 +1033,7 @@ export const updateBlogPost = createServerFn({ method: "POST" })
 
 export const deleteBlogPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({ id: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
@@ -981,4 +1043,133 @@ export const deleteBlogPost = createServerFn({ method: "POST" })
       return { ok: false as const, error: error.message };
     }
     return { ok: true as const };
+  });
+
+// --- User Consent ---
+
+export const getUserConsent = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data } = await (supabase as any)
+      .from("user_consent")
+      .select("consent_given, consented_at, consent_version")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return { consent: (data as any) ?? null };
+  });
+
+export const setUserConsent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ consent_given: z.boolean() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { error } = await (supabaseAdmin as any).from("user_consent").upsert(
+      {
+        user_id: userId,
+        consent_given: data.consent_given,
+        consented_at: new Date().toISOString(),
+        consent_version: "1.0",
+      },
+      { onConflict: "user_id" },
+    );
+    if (error) {
+      console.error("setUserConsent failed:", error);
+      return { ok: false as const, error: "Something went wrong. Please try again." };
+    }
+    return { ok: true as const };
+  });
+
+// --- Research Telemetry ---
+
+export const recordResearchEvent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        event_type: z.string().min(1).max(100),
+        payload: z.record(z.unknown()).default({}),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+
+    try {
+      const { data: consentRow } = await (supabaseAdmin as any)
+        .from("user_consent")
+        .select("consent_given")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!consentRow?.consent_given) return { ok: true as const, recorded: false };
+
+      const { error } = await (supabaseAdmin as any).from("research_events").insert({
+        user_id: userId,
+        event_type: data.event_type,
+        payload: data.payload as Record<string, unknown>,
+      });
+      if (error) {
+        console.error("recordResearchEvent insert failed:", error.message);
+        return { ok: true as const, recorded: false };
+      }
+      return { ok: true as const, recorded: true };
+    } catch (err: any) {
+      console.error("recordResearchEvent failed:", err?.message ?? err);
+      return { ok: true as const, recorded: false };
+    }
+  });
+
+// --- Research Data Export (admin-gated, anonymized) ---
+
+export const exportResearchData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    if (!(await isAdmin(userId)))
+      return {
+        ok: false as const,
+        error: "Forbidden",
+      } as const;
+
+    const { data: events } = await (supabaseAdmin as any)
+      .from("research_events")
+      .select("event_type, payload, created_at")
+      .order("created_at", { ascending: false });
+
+    const rows = events as { event_type: string; payload: any; created_at: string }[] | null;
+    const safeRows = rows ?? [];
+
+    const eventCounts: Record<string, number> = {};
+    const langBreakdown: Record<string, number> = {};
+    const conceptDist: Record<string, number> = {};
+    const severityDist: Record<string, number> = {};
+
+    for (const row of safeRows) {
+      eventCounts[row.event_type] = (eventCounts[row.event_type] ?? 0) + 1;
+      const p = row.payload ?? {};
+      if (typeof p.language === "string") {
+        langBreakdown[p.language] = (langBreakdown[p.language] ?? 0) + 1;
+      }
+      if (p.concept_count != null) {
+        const cnt = Number(p.concept_count);
+        conceptDist[String(cnt)] = (conceptDist[String(cnt)] ?? 0) + 1;
+      }
+      if (typeof p.severity === "string") {
+        severityDist[p.severity] = (severityDist[p.severity] ?? 0) + 1;
+      }
+    }
+
+    return {
+      ok: true as const,
+      total_events: safeRows.length,
+      event_counts: eventCounts,
+      language_breakdown: langBreakdown,
+      concept_distribution: conceptDist,
+      severity_distribution: severityDist,
+      events: safeRows.map((r) => ({
+        event_type: r.event_type,
+        created_at: r.created_at,
+      })),
+    };
   });
