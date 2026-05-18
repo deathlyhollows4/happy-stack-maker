@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, GraduationCap, LineChart, Code2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +21,8 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const [hasSession, setHasSession] = useState(false);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
@@ -28,6 +31,12 @@ function LandingPage() {
       url.searchParams.delete("checkout");
       window.history.replaceState({}, "", url.toString());
     }
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setHasSession(!!data.session);
+    });
   }, []);
 
   return (
@@ -41,7 +50,7 @@ function LandingPage() {
             </span>
           </Link>
           <nav className="flex items-center gap-6 text-sm">
-            <Link to="/login" className="text-muted-foreground hover:text-foreground">
+            <Link to={hasSession ? "/dashboard" : "/login"} className="text-muted-foreground hover:text-foreground">
               Dashboard
             </Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground">

@@ -1,8 +1,10 @@
+import { useState, useEffect } from "react";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Clock, Tag, ArrowRight, Loader2 } from "lucide-react";
 import { getAllBlogPosts, type BlogPostRow } from "@/lib/codewise.functions";
+import { supabase } from "@/integrations/supabase/client";
 import type { BlogPost } from "@/lib/blog-posts";
 
 function toBlogPost(row: BlogPostRow): BlogPost {
@@ -47,6 +49,13 @@ function ExploreLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const isList = path === "/explore";
   const fn = useServerFn(getAllBlogPosts);
+  const [hasSession, setHasSession] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setHasSession(!!data.session);
+    });
+  }, []);
   const { data: rows } = useQuery({
     queryKey: ["blogPosts"],
     queryFn: () => fn(),
@@ -65,6 +74,12 @@ function ExploreLayout() {
             </span>
           </Link>
           <nav className="flex items-center gap-6 text-sm">
+            <Link
+              to={hasSession ? "/dashboard" : "/login"}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Dashboard
+            </Link>
             <Link
               to="/pricing"
               className="text-muted-foreground hover:text-foreground transition-colors"
