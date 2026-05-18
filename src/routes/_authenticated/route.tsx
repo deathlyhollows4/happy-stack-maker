@@ -25,7 +25,6 @@ import {
   X,
   ChevronDown,
   Settings as SettingsIcon,
-  Shield,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -41,8 +40,6 @@ const NAV_ITEMS = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/review", icon: Code2, label: "Review" },
   { to: "/practice", icon: Sparkles, label: "Practice" },
-  { to: "/billing", icon: CreditCard, label: "Billing" },
-  { to: "/settings", icon: SettingsIcon, label: "Settings" },
 ] as const;
 
 function AuthLayout() {
@@ -157,27 +154,21 @@ function AuthLayout() {
                     <p className="text-sm font-medium truncate">{displayName ?? "User"}</p>
                     <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
                   </div>
-                  {isAdmin && (
-                    <div className="border-b border-border py-1">
-                      <p className="px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                        Admin
-                      </p>
-                      <Link
-                        to="/admin/dashboard"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                      >
-                        <Shield className="size-4" /> Dashboard
-                      </Link>
-                      <Link
-                        to="/admin/settings"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                      >
-                        Billing & Limits
-                      </Link>
-                    </div>
-                  )}
+                  <Link
+                    to="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                  >
+                    <SettingsIcon className="size-4" /> Settings
+                  </Link>
+                  <Link
+                    to="/billing"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                  >
+                    <CreditCard className="size-4" /> Billing
+                  </Link>
+                  <div className="border-t border-border" />
                   <button
                     onClick={signOut}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
@@ -233,25 +224,18 @@ function AuthLayout() {
                     <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
-                {isAdmin && (
-                  <div className="mb-2 space-y-1">
-                    <p className="px-3 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                      Admin
-                    </p>
-                    <Link
-                      to="/admin/dashboard"
-                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                    >
-                      <Shield className="size-4" /> Dashboard
-                    </Link>
-                    <Link
-                      to="/admin/settings"
-                      className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
-                    >
-                      Billing & Limits
-                    </Link>
-                  </div>
-                )}
+                <Link
+                  to="/settings"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                >
+                  <SettingsIcon className="size-4" /> Settings
+                </Link>
+                <Link
+                  to="/billing"
+                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                >
+                  <CreditCard className="size-4" /> Billing
+                </Link>
                 <button
                   onClick={signOut}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
