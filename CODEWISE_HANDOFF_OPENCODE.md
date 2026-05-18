@@ -7,7 +7,7 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 18 May 2026 (updated, sessions 25-49)                             |
+| Document date         | 18 May 2026 (updated, sessions 25-50)                             |
 | Status                | Phase 8 complete + UX polish — consent flow, telemetry, editor themes, avatar, light mode |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
@@ -83,6 +83,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 47 | User study scaffolding: consent banner (localStorage once-only), user_consent table + RLS, research_events table with indexes, getUserConsent/setUserConsent/recordResearchEvent/exportResearchData server fns, ConsentBanner + useTelemetry components, /admin/research route with stats + CSV/JSON export, research disclosure in Privacy, consent toggle in Settings | `consent-banner.tsx` (new), `use-telemetry.ts` (new), `admin.research.tsx` (new), `codewise.functions.ts`, `route.tsx`, `review.tsx`, `practice.tsx`, `settings.tsx`, `privacy.tsx`, `supabase/migrations/*_user_consent.sql` (new), `supabase/migrations/*_research_events.sql` (new) |
 | 48 | UX improvements: consent once-only via localStorage, dashboard limit to 5 reviews + View more, practice 4-language selector (generate + editor), custom CodeMirror themes (dark + light matching site design), avatar support (avatar_url column, avatars storage bucket, AvatarUpload in Settings, avatar in nav replacing email, display name in dropdown) | `codemirror-themes.ts` (new), `consent-banner.tsx`, `dashboard.tsx`, `practice.tsx`, `review.tsx`, `route.tsx`, `settings.tsx`, `use-auth.ts`, `account.functions.ts`, `codewise.functions.ts`, `supabase/migrations/*_avatars.sql` (new) |
 | 49 | UX polish: admin links moved to user dropdown (Dashboard + Billing & Limits), avatar size +14%, editor settings popover (Font Size 12-22px + 12 themes: Monokai/Github/Tomorrow/Kuroir/Twilight/Dracula/Xcode/TextMate/Solarized Dark/Solarized Light/Terminal/Eclipse), reset code + fullscreen buttons on editor, knowledge-graph light mode (20+ color swaps) | `editor-settings.tsx` (new), `codemirror-themes.ts`, `knowledge-graph.tsx`, `route.tsx`, `review.tsx`, `practice.tsx` |
+| 50 | Nav rebalance: moved Settings & Billing from NAV_ITEMS into profile dropdown for all users, removed admin Dashboard + Billing & Limits from dropdown, added single Admin link (Shield icon → /admin/dashboard) between Settings and Billing; Editor theme overhaul: removed Kuroir + Terminal (12→10 themes), added syntax highlighting via HighlightStyle to fix "background-only changes" bug — all 10 themes now apply proper token colors; Public header Dashboard links added to landing page and explore page headers, auth-aware (→ /dashboard if logged in, → /login if not) | `route.tsx`, `codemirror-themes.ts`, `index.tsx`, `explore.tsx` |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -480,8 +481,8 @@ Previously listed gaps now completed:
 - ~~Dashboard view-more for reviews~~ → Done: Session 48 (5 visible + toggle)
 - ~~Practice page language selector~~ → Done: Session 48 (4-language dropdown for generate + editor)
 - ~~CodeMirror dark/light themes~~ → Done: Session 48 (custom warm dark + light matching site design)
-- ~~Admin links in user dropdown~~ → Done: Session 49 (Dashboard + Billing & Limits above Sign out)
-- ~~Editor settings (font size + 12 themes)~~ → Done: Session 49 (12px-22px, Monokai/Github/Tomorrow/Kuroir/Twilight/Dracula/Xcode/TextMate/Solarized/solarized-light/Terminal/Eclipse)
+- ~~Admin links in user dropdown~~ → Done: Session 49, revised Session 50 (Dashboard removed, single Admin link to /admin/dashboard between Settings and Billing)
+- ~~Editor settings (font size + 12 themes)~~ → Done: Session 49, revised Session 50 (12→10 themes: removed Kuroir + Terminal; added syntax highlighting via HighlightStyle — all themes now apply proper token colors, not just background)
 - ~~Reset code + fullscreen buttons~~ → Done: Session 49
 - ~~Knowledge graph light mode~~ → Done: Session 49 (20+ color swaps responsive to theme)
 - ~~Avatar/profile photo in nav~~ → Done: Session 48 (avatar_url column, avatars bucket, upload in Settings, initials fallback, display name in dropdown)
