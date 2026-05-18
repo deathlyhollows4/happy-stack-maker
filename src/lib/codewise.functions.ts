@@ -762,7 +762,7 @@ export const exportAllUserData = createServerFn({ method: "GET" })
 
 export const getCurriculumMappings = createServerFn({ method: "GET" })
   .handler(async () => {
-    const admin = supabaseAdmin;
+    const admin = supabaseAdmin as any;
     const { data } = await admin
       .from("curriculum_mappings")
       .select("topic_slug, sppu_course, sppu_module, nptel_course, nptel_module, year_semester")
