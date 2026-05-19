@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, lazy, useState, useEffect } from "react";
-import { getDashboard } from "@/lib/codewise.functions";
+import { getDashboard, seedFSRSTestData } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingModal } from "@/components/onboarding-modal";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const fn = useServerFn(getDashboard);
+  const seedFn = useServerFn(seedFSRSTestData);
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: () => fn(),
@@ -55,6 +56,12 @@ function Dashboard() {
         >
           <Code2 className="size-4" /> New review
         </Link>
+        <button
+          onClick={() => seedFn()}
+          className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs text-muted-foreground hover:bg-card transition"
+        >
+          Seed
+        </button>
       </div>
 
       {isLoading && (
