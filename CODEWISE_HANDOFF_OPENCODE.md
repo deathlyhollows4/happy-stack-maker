@@ -7,8 +7,8 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 19 May 2026 (updated, sessions 51-58)                          |
-| Status                | Phase 9 complete — info, design & nav polish. Next: FSRS + Widget (v1)     |
+| Document date         | 19 May 2026 (updated, sessions 51-60)                          |
+| Status                | Phase 9 complete — info, design & nav polish. FSRS + ReviewQueue built (SRS-1, SRS-2). Next: Widget (v1). |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -30,6 +30,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 7 — UX Improvements | ✅ **DONE** | 7.1, 7.2, 7.3 | — |
 | 8 — Admin Controls & Analytics | ✅ **DONE** | 8.1, 8.2, 8.3, 8.4, 8.5 | — |
 | 9 — Info, Design & Nav Polish | ✅ **DONE** | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7 | — |
+| SRS — Spaced Repetition | ✅ **DONE** | SRS-1, SRS-2 | — |
 
 ### Session Log
 
@@ -93,6 +94,8 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 56 | First-run onboarding modal: 3-step shadcn Dialog (review → gaps → practice), localStorage `onboarding_dismissed` flag, "Skip tour" + "×" dismiss, triggers on dashboard when submissions.length === 0 | `dashboard.tsx`, `onboarding-modal.tsx` (new) |
 | 57 | Navigation audit: verify all cross-page links, ensure SiteFooter on all pages, mobile hamburger parity with desktop nav | `site-footer.tsx` (verified, no changes needed) |
 | 58 | Playwright E2E: live deployment test of landing, learn, login, dashboard, practice (with/without ?topic=), review, pricing — 0 console errors, all features working | — |
+| 59 | Content cleanup: em-dash purge (all source files, 0 remaining), AI-sounding text rewrite across 14 files (learn topics, landing, onboarding, footer, dash), Content Style rules added to AGENTS.md | 14 files across `src/`, `AGENTS.md`, `CODEWISE_HANDOFF_OPENCODE.md` |
+| 60 | FSRS: migration + `updateFSRS()`/`computeFSRSGrade()` in `codewise.functions.ts`, replaced BKT-lite with FSRS in `reviewCode`, added `getDueReviews` server fn, `<ReviewQueue />` component on dashboard | `codewise.functions.ts`, `supabase/migrations/20260519000000_fsrs_columns.sql` (new), `review-queue.tsx` (new), `dashboard.tsx` |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -478,8 +481,10 @@ Previously listed gaps now completed:
 ### 6.2 Not yet built (remaining polish items)
 
 - Avatar migration not yet run (manual): `supabase/migrations/20260518000004_avatars.sql`
+- FSRS migration not yet run (manual): `supabase/migrations/20260519000000_fsrs_columns.sql`
 - Analytics dashboard (Plausible account setup for viewing data) — manual
 - ICT paper submission (target April 2027)
+- Widget (Embeddable Free Code Review) — see v1_markdown.md Section 2
 
 ### 6.3 Phase 9 — Info, Design & Navigation (DONE)
 
@@ -515,27 +520,27 @@ Previously listed gaps now completed:
 
 ---
 
-## 7. Next session: FSRS Spaced Repetition (v1 features)
+## 7. Next session: Widget (Embeddable Free Code Review)
 
-Phase 9 is complete. The next session should start on the two highest-leverage v1 features from `v1_markdown.md`. Start with FSRS (smallest, highest impact).
+FSRS is complete. The next session should start on the Widget from `v1_markdown.md` Section 2.
 
-### 7.1 FSRS: Spaced Repetition Scheduler (est. 2 sessions)
+### 7.1 FSRS: Spaced Repetition Scheduler ✅ **DONE**
 
-**What:** Replace the current BKT-lite mastery model with a full FSRS (Free Spaced Repetition Scheduler) algorithm. The `reviewCode` server fn already grades code quality — pipe that grade into FSRS to auto-schedule topic reviews on the optimal interval.
+**What:** Replaced the BKT-lite mastery model with a full FSRS (Free Spaced Repetition Scheduler) algorithm. The `reviewCode` server fn now auto-grades submissions and feeds into FSRS for optimal review scheduling.
 
-**Session SRS-1 — Migration + `updateFSRS` server fn:**
-- Write `supabase/migrations/20260519_fsrs_columns.sql`: add `stability`, `difficulty`, `retrievability`, `next_review_date` columns to `progress` table
-- Add `computeFSRSGrade()`, `updateFSRS()` functions in `src/lib/codewise.functions.ts`
-- Integrate into `reviewCode`: after inserting review_issues, call `updateFSRS(userId, conceptSlug, grade)` for each detected topic slug
+**Session SRS-1 — Migration + `updateFSRS` server fn:** ✅ Done
+- Wrote `supabase/migrations/20260519000000_fsrs_columns.sql`: added `stability`, `difficulty`, `retrievability`, `next_review_date` columns to `progress` table
+- Added `computeFSRSGrade()`, `updateFSRS()` functions in `src/lib/codewise.functions.ts`
+- Integrated into `reviewCode`: after inserting review_issues, calls `updateFSRS(userId, conceptSlug, grade)` for each detected topic slug
 - FSRS weights: `[0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.8, 0.7, 1.5, 0.1]`
 - Auto-grade logic (from existing review_issues): `errors >= 2 → 1`, `errors === 1 || warnings >= 3 → 2`, `warnings >= 1 → 3`, `else → 4`
 
-**Session SRS-2 — `getDueReviews` + `<ReviewQueue />` component:**
+**Session SRS-2 — `getDueReviews` + `<ReviewQueue />` component:** ✅ Done
 - New server fn: `getDueReviews` — returns topics where `next_review_date <= now()`, sorted by urgency
 - New component: `src/components/review-queue.tsx` — renders on dashboard below knowledge graph
 - Urgency-coded cards (red=overdue, amber=<24h, green=healthy) with retrievability %, difficulty stars
 - CTA "Solve a problem" → `/practice?topic={slug}`
-- Empty state: "All topics mastered. Check back in X days."
+- Empty state: "All topics mastered. Check back soon."
 
 ### 7.2 Widget: Embeddable Free Code Review (est. 4 sessions, after FSRS)
 

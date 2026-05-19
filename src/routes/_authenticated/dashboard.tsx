@@ -6,6 +6,7 @@ import { getDashboard } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingModal } from "@/components/onboarding-modal";
+import { ReviewQueue } from "@/components/review-queue";
 import { ArrowUpRight, Code2, ChevronDown } from "lucide-react";
 
 const KnowledgeGraph = lazy(() =>
@@ -90,6 +91,10 @@ function Dashboard() {
             <Suspense fallback={<Skeleton className="h-[400px] w-full rounded-lg" />}>
               <KnowledgeGraph topics={data.topics} progress={data.progress} />
             </Suspense>
+          </section>
+
+          <section className="lg:col-span-3">
+            <ReviewQueue topics={data.topics} />
           </section>
 
           <section className="lg:col-span-2 rounded-lg border border-border bg-card p-6">

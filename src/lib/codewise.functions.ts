@@ -119,6 +119,83 @@ Required JSON format:
   ]
 }`;
 
+const FSRS_WEIGHTS = [0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.8, 0.7, 1.5, 0.1];
+
+function computeFSRSGrade(
+  issues: { severity: string; title: string }[],
+): 1 | 2 | 3 | 4 {
+  const errors = issues.filter((i) => i.severity === "error");
+  const warnings = issues.filter((i) => i.severity === "warning");
+
+  if (
+    errors.length >= 2 ||
+    issues.some(
+      (i) =>
+        i.title.toLowerCase().includes("syntax") ||
+        i.title.toLowerCase().includes("incorrect") ||
+        i.title.toLowerCase().includes("wrong"),
+    )
+  )
+    return 1;
+
+  if (errors.length === 1 || warnings.length >= 3) return 2;
+  if (warnings.length >= 1) return 3;
+  return 4;
+}
+
+async function updateFSRS(
+  userId: string,
+  topicSlug: string,
+  grade: 1 | 2 | 3 | 4,
+): Promise<void> {
+  const { data: row } = await supabaseAdmin
+    .from("progress")
+    .select("stability, difficulty, retrievability, attempts")
+    .eq("user_id", userId)
+    .eq("topic_slug", topicSlug)
+    .single();
+
+  const D = row?.difficulty ?? 5.0;
+  const S = row?.stability ?? 2.5;
+  const R = row?.retrievability ?? 0.9;
+  const w = FSRS_WEIGHTS;
+
+  const newDifficulty = Math.max(1, Math.min(10, D - w[2] * (grade - 3)));
+
+  let newStability: number;
+  if (grade === 1) {
+    newStability = Math.max(0.1, S * 0.5);
+  } else {
+    newStability =
+      S *
+      (1 +
+        w[3] *
+          Math.pow(newDifficulty, -w[4]) *
+          Math.pow(S, -w[5]) *
+          (Math.exp(1 - R) - 1));
+    newStability = Math.max(0.1, newStability);
+  }
+
+  const newR = grade === 1 ? 0 : 0.9;
+  const intervalDays = 9 * newStability * (1 / 0.9 - 1);
+  const nextReview = new Date(Date.now() + intervalDays * 86400000);
+
+  await supabaseAdmin.from("progress").upsert(
+    {
+      user_id: userId,
+      topic_slug: topicSlug,
+      stability: newStability,
+      difficulty: newDifficulty,
+      retrievability: newR,
+      next_review_date: nextReview.toISOString(),
+      mastery: grade >= 3 ? 0.9 : grade === 2 ? 0.6 : 0.3,
+      attempts: (row?.attempts ?? 0) + 1,
+      last_reviewed: new Date().toISOString(),
+    },
+    { onConflict: "user_id,topic_slug" },
+  );
+}
+
 export const reviewCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -272,44 +349,11 @@ export const reviewCode = createServerFn({ method: "POST" })
       if (issuesErr) console.error("review_issues insert failed:", issuesErr);
     }
 
-    // update mastery (BKT-lite): per touched concept, compute correctness signal
-    // correctness = 1 - (errors+warnings affecting concept) / max(1, totalIssuesForConcept)
+    // FSRS: auto-grade from review issues and update spaced repetition state per concept
     const concepts = parsed.concepts.filter((c) => VALID_TOPIC_SLUGS.has(c));
     if (concepts.length > 0) {
-      const issuesByConcept = new Map<string, { bad: number; good: number }>();
-      for (const slug of concepts) issuesByConcept.set(slug, { bad: 0, good: 0 });
-      for (const issue of parsed.issues) {
-        const s = issue.concept_slug;
-        if (!s || !issuesByConcept.has(s)) continue;
-        if (issue.is_correct_pattern) issuesByConcept.get(s)!.good += 1;
-        else if (issue.severity !== "info") issuesByConcept.get(s)!.bad += 1;
-      }
-
-      const { data: existing } = await supabase
-        .from("progress")
-        .select("topic_slug, mastery, attempts")
-        .in("topic_slug", concepts);
-
-      const existingMap = new Map(existing?.map((r) => [r.topic_slug, r]) ?? []);
-      const alpha = 0.35;
-
-      const upserts = concepts.map((slug) => {
-        const cur = existingMap.get(slug);
-        const prior = cur?.mastery ?? 0.3;
-        const { bad, good } = issuesByConcept.get(slug) ?? { bad: 0, good: 0 };
-        // signal in [0..1]: bad pushes toward 0, good toward 1, neutral toward 0.7
-        const signal = bad > 0 ? Math.max(0, 0.5 - 0.15 * bad) : good > 0 ? 0.95 : 0.7;
-        const mastery = Math.min(1, Math.max(0, prior + alpha * (signal - prior)));
-        return {
-          user_id: userId,
-          topic_slug: slug,
-          mastery,
-          attempts: (cur?.attempts ?? 0) + 1,
-          last_reviewed: new Date().toISOString(),
-        };
-      });
-
-      await supabase.from("progress").upsert(upserts, { onConflict: "user_id,topic_slug" });
+      const grade = computeFSRSGrade(parsed.issues);
+      await Promise.all(concepts.map((slug) => updateFSRS(userId, slug, grade)));
     }
 
     return {
@@ -319,6 +363,19 @@ export const reviewCode = createServerFn({ method: "POST" })
       concepts,
       issues: parsed.issues,
     };
+  });
+
+export const getDueReviews = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { data } = await supabaseAdmin
+      .from("progress")
+      .select("topic_slug, retrievability, next_review_date, difficulty, stability")
+      .eq("user_id", userId)
+      .lte("next_review_date", new Date().toISOString())
+      .order("next_review_date", { ascending: true });
+    return data ?? [];
   });
 
 export const getDashboard = createServerFn({ method: "GET" })
@@ -333,7 +390,7 @@ export const getDashboard = createServerFn({ method: "GET" })
         .limit(10),
       supabase
         .from("progress")
-        .select("topic_slug, mastery, attempts, last_reviewed")
+        .select("topic_slug, mastery, attempts, last_reviewed, retrievability, next_review_date, difficulty, stability")
         .eq("user_id", userId),
       supabase.from("topics").select("slug, name, category"),
     ]);
