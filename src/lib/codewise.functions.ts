@@ -1250,7 +1250,6 @@ export const exportResearchData = createServerFn({ method: "GET" })
   });
 
 export const seedFSRSTestData = createServerFn({ method: "GET" })
-  .validator(z.void())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
