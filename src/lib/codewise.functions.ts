@@ -1275,5 +1275,5 @@ export const seedFSRSTestData = createServerFn({ method: "POST" })
       last_reviewed: now.toISOString(),
     }));
     await supabaseAdmin.from("progress").upsert(upserts, { onConflict: "user_id,topic_slug" });
-    return rows.length;
+    return { seeded: rows.length };
   });
