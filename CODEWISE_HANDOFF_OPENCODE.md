@@ -7,8 +7,8 @@
 | Project Lead          | Vidhan Tomar — BE IT, Army Institute of Technology, Pune               |
 | Built on              | Lovable (preview project)                                              |
 | Handoff target        | **opencode** (CLI assistant)                                           |
-| Document date         | 19 May 2026 (updated, sessions 51-60)                          |
-| Status                | Phase 9 complete — info, design & nav polish. FSRS + ReviewQueue built (SRS-1, SRS-2). Next: Widget (v1). |
+| Document date         | 19 May 2026 (updated, sessions 51-61)                          |
+| Status                | Phase 9 + FSRS complete. ReviewQueue live with seed data. Next: Widget (v1). |
 | Original target conf. | IEEE ICNDIA-2027 (April 2027 submission)                               |
 
 This document supersedes the original 9-day plan. The stack diverged from the initial Next.js + FastAPI design — what is actually running today is a single TanStack Start app on Lovable Cloud (Supabase + Cloudflare Workers + Lovable AI Gateway). Use this as the source of truth when continuing development with opencode.
@@ -96,6 +96,7 @@ This document supersedes the original 9-day plan. The stack diverged from the in
 | 58 | Playwright E2E: live deployment test of landing, learn, login, dashboard, practice (with/without ?topic=), review, pricing — 0 console errors, all features working | — |
 | 59 | Content cleanup: em-dash purge (all source files, 0 remaining), AI-sounding text rewrite across 14 files (learn topics, landing, onboarding, footer, dash), Content Style rules added to AGENTS.md | 14 files across `src/`, `AGENTS.md`, `CODEWISE_HANDOFF_OPENCODE.md` |
 | 60 | FSRS: migration + `updateFSRS()`/`computeFSRSGrade()` in `codewise.functions.ts`, replaced BKT-lite with FSRS in `reviewCode`, added `getDueReviews` server fn, `<ReviewQueue />` component on dashboard | `codewise.functions.ts`, `supabase/migrations/20260519000000_fsrs_columns.sql` (new), `review-queue.tsx` (new), `dashboard.tsx` |
+| 61 | FSRS seed data: `seedFSRSTestData` dev fn, tested ReviewQueue with 7 topics at varied urgency (Arrays -36h, Hashing -12h, Strings -2h overdue; Recursion +3h, Graphs +8h, DP +20h, Two-Pointers +72h upcoming). GitNexus reindex (2038 nodes). Temp seed button removed after testing. | `codewise.functions.ts`, `dashboard.tsx`, `AGENTS.md` |
 
 **Credentials:** `vidhantomar17082004@gmail.com` / `Jaatdevta@123`
 **Paddle test card:** `4242 4242 4242 4242`, CVC `123`, any future expiry
@@ -478,10 +479,8 @@ Previously listed gaps now completed:
 - ~~Billing page UI~~ → Done: /billing with plan card, upgrade CTA, usage copy
 - ~~Blog "Explore"~~ → Done: /explore + /explore/$slug with 5 posts
 
-### 6.2 Not yet built (remaining polish items)
+### 6.2 Not yet built (remaining)
 
-- Avatar migration not yet run (manual): `supabase/migrations/20260518000004_avatars.sql`
-- FSRS migration not yet run (manual): `supabase/migrations/20260519000000_fsrs_columns.sql`
 - Analytics dashboard (Plausible account setup for viewing data) — manual
 - ICT paper submission (target April 2027)
 - Widget (Embeddable Free Code Review) — see v1_markdown.md Section 2
