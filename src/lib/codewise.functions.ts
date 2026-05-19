@@ -1250,6 +1250,7 @@ export const exportResearchData = createServerFn({ method: "GET" })
   });
 
 export const seedFSRSTestData = createServerFn({ method: "GET" })
+  .validator(z.void())
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
@@ -1274,6 +1275,7 @@ export const seedFSRSTestData = createServerFn({ method: "GET" })
       attempts: 5 + Math.floor(Math.random() * 20),
       last_reviewed: now.toISOString(),
     }));
-    await supabaseAdmin.from("progress").upsert(upserts, { onConflict: "user_id,topic_slug" });
-    return { seeded: rows.length };
+    const { error } = await supabaseAdmin.from("progress").upsert(upserts, { onConflict: "user_id,topic_slug" });
+    if (error) console.error("seedFSRS failed:", error);
+    return { seeded: upserts.length, error: error?.message ?? null };
   });
