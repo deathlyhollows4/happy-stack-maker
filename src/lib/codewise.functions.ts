@@ -1249,7 +1249,7 @@ export const exportResearchData = createServerFn({ method: "GET" })
     };
   });
 
-export const seedFSRSTestData = createServerFn({ method: "POST" })
+export const seedFSRSTestData = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
