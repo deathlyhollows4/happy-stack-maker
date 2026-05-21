@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /settings
+Disallow: /billing
+Disallow: /review
+Disallow: /practice
+Disallow: /submission/
+
+Sitemap: https://happy-stack-maker.lovable.app/sitemap.xml
