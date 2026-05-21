@@ -7,8 +7,14 @@ export const Route = createFileRoute("/refunds")({
   head: () => ({
     meta: [
       { title: "Refund Policy | CodeWise" },
-      { name: "description", content: "CodeWise 30-day money-back refund policy." },
+      {
+        name: "description",
+        content:
+          "CodeWise offers a 30-day money-back refund on Pro subscriptions. Read the full refund policy and how to request one.",
+      },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/refunds" },
     ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/refunds" }],
   }),
   component: RefundsPage,
 });

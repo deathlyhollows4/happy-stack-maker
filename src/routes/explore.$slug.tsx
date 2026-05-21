@@ -25,16 +25,46 @@ function toBlogPost(row: BlogPostRow): BlogPost {
 }
 
 export const Route = createFileRoute("/explore/$slug")({
-  head: () => ({
-    meta: [
-      { title: "Post | CodeWise Explore" },
-      {
-        name: "description",
-        content: "Read this post on CodeWise Explore.",
-      },
-      { property: "og:type", content: "article" },
-    ],
-  }),
+  loader: async ({ params }) => {
+    const post = await getBlogPostBySlug({ data: { slug: params.slug } });
+    return { post };
+  },
+  head: ({ params, loaderData }) => {
+    const post = loaderData?.post;
+    const title = post ? `${post.title} | CodeWise Explore` : "Post | CodeWise Explore";
+    const description =
+      post?.excerpt && post.excerpt.length > 0
+        ? post.excerpt
+        : "Read this post on CodeWise Explore, deep dives into CS concepts and DSA patterns.";
+    const url = `https://happy-stack-maker.lovable.app/explore/${params.slug}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: post
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Article",
+                headline: post.title,
+                description,
+                author: { "@type": "Person", name: post.author },
+                datePublished: post.created_at,
+                url,
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   component: ExplorePostPage,
 });
 

@@ -77,23 +77,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "CodeWise" },
-      { name: "description", content: "AI code reviewer for CS students." },
+      {
+        name: "description",
+        content:
+          "CodeWise gives CS students AI code reviews mapped to DSA concepts, tracks topic mastery, and generates practice problems at your level.",
+      },
       { name: "author", content: "CodeWise" },
       { property: "og:title", content: "CodeWise" },
-      { property: "og:description", content: "AI code reviewer for CS students." },
+      {
+        property: "og:description",
+        content:
+          "CodeWise gives CS students AI code reviews mapped to DSA concepts, tracks topic mastery, and generates practice problems at your level.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "CodeWise" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "CodeWise" },
-      { name: "twitter:description", content: "AI code reviewer for CS students." },
       {
-        property: "og:image",
+        name: "twitter:description",
         content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/adc9ff80-fe78-4803-922b-7efbcc14cf41",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/adc9ff80-fe78-4803-922b-7efbcc14cf41",
+          "CodeWise gives CS students AI code reviews mapped to DSA concepts, tracks topic mastery, and generates practice problems at your level.",
       },
     ],
     links: [

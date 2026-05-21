@@ -1,12 +1,22 @@
 import { SiteFooter } from "@/components/site-footer";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/auth-helpers";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in | CodeWise" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in | CodeWise" },
+      {
+        name: "description",
+        content: "Sign in to CodeWise to continue reviewing your code and tracking DSA mastery.",
+      },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/login" },
+    ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/login" }],
+  }),
   component: LoginPage,
 });
 
@@ -156,10 +166,14 @@ export function Field({
   onChange: (v: string) => void;
   autoComplete?: string;
 }) {
+  const id = useId();
   return (
-    <label className="block">
-      <span className="block text-sm font-medium mb-1.5">{label}</span>
+    <div className="block">
+      <label htmlFor={id} className="block text-sm font-medium mb-1.5">
+        {label}
+      </label>
       <input
+        id={id}
         type={type}
         required
         autoComplete={autoComplete}
@@ -167,6 +181,6 @@ export function Field({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       />
-    </label>
+    </div>
   );
 }

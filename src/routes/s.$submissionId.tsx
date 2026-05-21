@@ -12,26 +12,34 @@ import { Markdown } from "@/components/markdown";
 import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/s/$submissionId")({
-  head: ({ params }) => ({
-    meta: [
-      { title: "Shared Code Review | CodeWise" },
-      { name: "description", content: "CS code review from CodeWise, shared by a student." },
-      { property: "og:title", content: "Shared CodeWise Review" },
-      {
-        property: "og:description",
-        content: "Code review for CS students with concept-aware feedback.",
-      },
-      { name: "twitter:card", content: "summary_large_image" },
-      {
-        property: "og:image",
-        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
-      },
-      {
-        name: "twitter:image",
-        content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
-      },
-    ],
-  }),
+  head: ({ params }) => {
+    const shortId = params.submissionId.slice(0, 8);
+    const title = `Shared code review ${shortId} | CodeWise`;
+    const ogTitle = `Code review ${shortId} on CodeWise`;
+    const url = `https://happy-stack-maker.lovable.app/s/${params.submissionId}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: "CS code review from CodeWise, shared by a student." },
+        { property: "og:title", content: ogTitle },
+        {
+          property: "og:description",
+          content: "Code review for CS students with concept-aware feedback.",
+        },
+        { property: "og:url", content: url },
+        { name: "twitter:card", content: "summary_large_image" },
+        {
+          property: "og:image",
+          content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
+        },
+        {
+          name: "twitter:image",
+          content: `https://happy-stack-maker.lovable.app/api/public/og/${params.submissionId}`,
+        },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: SharePage,
 });
 

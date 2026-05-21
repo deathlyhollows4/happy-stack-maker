@@ -7,8 +7,14 @@ export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
       { title: "Terms & Conditions | CodeWise" },
-      { name: "description", content: "CodeWise terms and conditions of service." },
+      {
+        name: "description",
+        content:
+          "CodeWise terms and conditions of service, covering acceptable use, subscriptions, refunds, and account responsibilities.",
+      },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/terms" },
     ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/terms" }],
   }),
   component: TermsPage,
 });
