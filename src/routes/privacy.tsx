@@ -7,8 +7,14 @@ export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
       { title: "Privacy Notice | CodeWise" },
-      { name: "description", content: "How CodeWise collects, uses, and shares personal data." },
+      {
+        name: "description",
+        content:
+          "How CodeWise collects, uses, and shares personal data from CS students and account holders, with options to export or delete your data.",
+      },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/privacy" },
     ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/privacy" }],
   }),
   component: PrivacyPage,
 });
