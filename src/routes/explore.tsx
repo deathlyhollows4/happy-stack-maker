@@ -41,7 +41,9 @@ export const Route = createFileRoute("/explore")({
         property: "og:description",
         content: "Deep dives into CS concepts, DSA patterns, and learning strategies.",
       },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/explore" },
     ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/explore" }],
   }),
   component: ExploreLayout,
 });
