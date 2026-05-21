@@ -198,7 +198,12 @@ function Review() {
           >
             <Upload className="size-4" /> Upload file
           </button>
+          <label htmlFor="review-language" className="sr-only">
+            Programming language
+          </label>
           <select
+            id="review-language"
+            aria-label="Programming language"
             value={lang}
             onChange={(e) => onLang(e.target.value as Lang)}
             className="rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
