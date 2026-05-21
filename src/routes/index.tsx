@@ -94,7 +94,9 @@ function LandingPage() {
         </div>
       </header>
 
+      <main>
       <section className="border-b border-border/60">
+
         <div className="mx-auto max-w-6xl px-6 py-24">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             For CS students preparing for placements
