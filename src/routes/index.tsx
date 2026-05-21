@@ -231,6 +231,7 @@ function LandingPage() {
           </Link>
         </div>
       </section>
+      </main>
 
       <SiteFooter />
     </div>
