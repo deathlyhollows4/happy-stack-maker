@@ -6,7 +6,18 @@ import { AuthShell, Field } from "./login";
 import { signInWithGoogleSignUp } from "@/lib/auth-helpers";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account | CodeWise" }] }),
+  head: () => ({
+    meta: [
+      { title: "Create account | CodeWise" },
+      {
+        name: "description",
+        content:
+          "Create a free CodeWise account to get AI code reviews, track DSA topic mastery, and generate practice problems at your level.",
+      },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/signup" },
+    ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/signup" }],
+  }),
   component: SignupPage,
 });
 
