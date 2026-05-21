@@ -320,14 +320,14 @@ function Review() {
           {result?.ok && (
             <div className="space-y-5">
               <div>
-                <h3 className="font-display text-2xl mb-2">Summary</h3>
+                <h2 className="font-display text-2xl mb-2">Summary</h2>
                 <Markdown className="text-muted-foreground">{result.summary}</Markdown>
               </div>
               {result.concepts.length > 0 && (
                 <div>
-                  <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+                  <h3 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
                     Concepts touched
-                  </h4>
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {result.concepts.map((c) => (
                       <span
@@ -341,9 +341,9 @@ function Review() {
                 </div>
               )}
               <div>
-                <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+                <h3 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
                   Issues ({result.issues.length})
-                </h4>
+                </h3>
                 {result.issues.length === 0 ? (
                   <p className="text-sm text-success flex items-center gap-2">
                     <CheckCircle2 className="size-4" /> No issues found. Nice work.
