@@ -257,9 +257,10 @@ export const reviewCode = createServerFn({ method: "POST" })
           ok: false as const,
           error: "AI credits exhausted. Add credits in Lovable settings.",
         };
+      console.error("AI gateway error", aiRes.status, text.slice(0, 500));
       return {
         ok: false as const,
-        error: `AI service error (${aiRes.status}). ${text.slice(0, 300)}`,
+        error: "AI service is temporarily unavailable. Please try again.",
       };
     }
 
@@ -309,9 +310,10 @@ export const reviewCode = createServerFn({ method: "POST" })
       }
     }
     if (!parsed) {
+      console.error("reviewCode: malformed AI output after 3 attempts. Raw preview:", content.slice(0, 500));
       return {
         ok: false as const,
-        error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}`,
+        error: "AI returned an unexpected response. Please try again.",
       };
     }
 
@@ -570,9 +572,10 @@ export const generatePractice = createServerFn({ method: "POST" })
       }
     }
     if (!parsed) {
+      console.error("generatePracticeProblem: malformed AI output after 3 attempts. Raw preview:", content.slice(0, 500));
       return {
         ok: false as const,
-        error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}`,
+        error: "AI returned an unexpected response. Please try again.",
       };
     }
 
