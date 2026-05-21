@@ -83,6 +83,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "CodeWise gives CS students AI code reviews mapped to DSA concepts, tracks topic mastery, and generates practice problems at your level.",
       },
       { name: "author", content: "CodeWise" },
+      {
+        name: "google-site-verification",
+        content: "21ucHjhS6Y3bWnvQ0hvAQYffMyJnbanRw7qmbYlbRlE",
+      },
       { property: "og:title", content: "CodeWise" },
       {
         property: "og:description",
