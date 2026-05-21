@@ -12,10 +12,34 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Unlike Copilot, CodeWise diagnoses the CS concepts you haven't mastered. Pedagogical multi-language reviews with knowledge tracing across DSA topics.",
+          "CodeWise diagnoses the CS concepts you haven't mastered. Pedagogical multi-language code reviews with knowledge tracing across DSA topics.",
       },
       { property: "og:title", content: "CodeWise. AI code reviewer for CS students" },
-      { property: "og:description", content: "Pedagogical AI code review with knowledge tracing." },
+      {
+        property: "og:description",
+        content:
+          "CodeWise diagnoses the CS concepts you haven't mastered. Pedagogical multi-language code reviews with knowledge tracing across DSA topics.",
+      },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "CodeWise",
+          url: "https://happy-stack-maker.lovable.app/",
+          description:
+            "AI code reviews for CS students mapped to DSA concepts, with topic mastery tracking and practice problems.",
+          publisher: {
+            "@type": "Organization",
+            name: "CodeWise",
+            url: "https://happy-stack-maker.lovable.app/",
+          },
+        }),
+      },
     ],
   }),
   component: LandingPage,
