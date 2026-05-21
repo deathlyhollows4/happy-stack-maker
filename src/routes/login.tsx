@@ -6,7 +6,17 @@ import { toast } from "sonner";
 import { signInWithGoogle } from "@/lib/auth-helpers";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in | CodeWise" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in | CodeWise" },
+      {
+        name: "description",
+        content: "Sign in to CodeWise to continue reviewing your code and tracking DSA mastery.",
+      },
+      { property: "og:url", content: "https://happy-stack-maker.lovable.app/login" },
+    ],
+    links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/login" }],
+  }),
   component: LoginPage,
 });
 
