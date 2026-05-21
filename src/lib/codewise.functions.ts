@@ -257,9 +257,10 @@ export const reviewCode = createServerFn({ method: "POST" })
           ok: false as const,
           error: "AI credits exhausted. Add credits in Lovable settings.",
         };
+      console.error("AI gateway error", aiRes.status, text.slice(0, 500));
       return {
         ok: false as const,
-        error: `AI service error (${aiRes.status}). ${text.slice(0, 300)}`,
+        error: "AI service is temporarily unavailable. Please try again.",
       };
     }
 
