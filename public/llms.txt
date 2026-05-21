@@ -1,0 +1,17 @@
+# CodeWise
+
+> AI code reviewer for CS students. CodeWise diagnoses the CS concepts you haven't mastered, traces topic mastery across DSA topics, and generates practice problems at your skill level.
+
+## Pages
+
+- [Home](/): What CodeWise does and how it differs from generic code assistants.
+- [Pricing](/pricing): Free tier and Pro plan limits.
+- [Explore](/explore): Articles on CS concepts, DSA patterns, and learning strategies.
+- [Terms](/terms): Terms and conditions of service.
+- [Privacy](/privacy): Privacy notice covering data collection and user rights.
+- [Refunds](/refunds): Refund policy for Pro subscriptions.
+
+## Optional
+
+- [Sign in](/login): Account sign-in.
+- [Create account](/signup): Sign up for a free account.
