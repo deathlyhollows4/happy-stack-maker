@@ -310,9 +310,10 @@ export const reviewCode = createServerFn({ method: "POST" })
       }
     }
     if (!parsed) {
+      console.error("reviewCode: malformed AI output after 3 attempts. Raw preview:", content.slice(0, 500));
       return {
         ok: false as const,
-        error: `AI returned malformed output after 3 attempts. Raw: ${content.slice(0, 400)}`,
+        error: "AI returned an unexpected response. Please try again.",
       };
     }
 
