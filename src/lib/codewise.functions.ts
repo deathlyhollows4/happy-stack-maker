@@ -13,10 +13,17 @@ import {
   refreshPlanQuotas,
 } from "@/lib/entitlements.server";
 import type { PaddleEnv } from "@/lib/paddle.server";
+import {
+  LANGS,
+  ReviewIssueSchema,
+  ReviewResponseSchema,
+  VALID_TOPIC_SLUGS,
+  SYSTEM_PROMPT,
+} from "@/lib/review.constants";
 
 const envInput = z.enum(["sandbox", "live"]).default("sandbox") as z.ZodType<PaddleEnv>;
 
-function extractJson(raw: string): string {
+export function extractJson(raw: string): string {
   const trimmed = raw.trim();
   const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fence?.[1]) return fence[1].trim();
@@ -36,92 +43,9 @@ async function isAdmin(userId: string): Promise<boolean> {
   return !!data;
 }
 
-const LANGS = ["python", "javascript", "java", "cpp"] as const;
-
-const ReviewIssueSchema = z.object({
-  line: z.number().int().nullable().optional(),
-  severity: z.enum(["error", "warning", "info"]).default("info"),
-  concept_slug: z.string().nullable().optional(),
-  title: z.string().min(1).max(200),
-  explanation: z.string().min(1).max(2000),
-  fix_hint: z.string().max(2000).nullable().optional(),
-  is_correct_pattern: z.boolean().optional(),
-});
-
-const ReviewResponseSchema = z
-  .object({
-    summary: z.string().min(1).max(2000),
-    concepts: z.array(z.string()).max(20).default([]),
-    issues: z.array(ReviewIssueSchema).max(25).default([]),
-  })
-  .passthrough();
-
-const VALID_TOPIC_SLUGS = new Set([
-  "arrays",
-  "strings",
-  "hashing",
-  "linked-lists",
-  "stacks",
-  "queues",
-  "recursion",
-  "two-pointers",
-  "sliding-window",
-  "binary-search",
-  "sorting",
-  "trees",
-  "bst",
-  "heaps",
-  "graphs",
-  "dp",
-  "greedy",
-  "backtracking",
-  "bit-manipulation",
-  "complexity",
-]);
-
-const SYSTEM_PROMPT = `You are CodeWise, an AI code reviewer for computer-science students.
-Your job is NOT to write production-quality code. Your job is to diagnose the
-underlying CS concept the student does not yet fully understand, and explain it
-in a teaching tone: concise, encouraging, and concrete.
-Do NOT use em dashes, filler phrases (e.g. "delve", "firstly", "moreover"), markdown headers, or flowery language. Keep explanations direct and professional.
-
-For every issue you raise:
-- explain WHY it's an issue in terms of the underlying CS concept
-- map it to ONE concept_slug from this list (use null if no good match):
-  arrays, strings, hashing, linked-lists, stacks, queues, recursion,
-  two-pointers, sliding-window, binary-search, sorting, trees, bst,
-  heaps, graphs, dp, greedy, backtracking, bit-manipulation, complexity
-- give a concrete fix_hint (no full rewrites, guide them)
-- severity: "error" = breaks correctness, "warning" = correctness/efficiency risk, "info" = style/clarity
-
-If the code is good, return ZERO issues with severity error/warning, but you MAY
-add 1-2 "info" items describing what concept the student DID demonstrate well,
-with is_correct_pattern: true.
-
-The "concepts" array lists all topic slugs touched by this code (correct or not),
-used for mastery tracking. Pick 1-5 slugs from the list above.
-
-Return ONLY JSON matching this exact schema. No markdown, no prose outside JSON.
-
-Required JSON format:
-{
-  "summary": "one paragraph review summary",
-  "concepts": ["arrays", "hashing"],
-  "issues": [
-    {
-      "line": 3,
-      "severity": "warning",
-      "concept_slug": "complexity",
-      "title": "Brief issue title",
-      "explanation": "Why this is an issue explained in CS concept terms",
-      "fix_hint": "How to fix (guide them, no full rewrite)"
-    }
-  ]
-}`;
-
 const FSRS_WEIGHTS = [0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.8, 0.7, 1.5, 0.1];
 
-function computeFSRSGrade(
+export function computeFSRSGrade(
   issues: { severity: string; title: string }[],
 ): 1 | 2 | 3 | 4 {
   const errors = issues.filter((i) => i.severity === "error");
@@ -150,15 +74,21 @@ async function updateFSRS(
 ): Promise<void> {
   const { data: row } = await supabaseAdmin
     .from("progress")
-    .select("stability, difficulty, retrievability, attempts")
+    .select("stability, difficulty, retrievability, last_reviewed, attempts")
     .eq("user_id", userId)
     .eq("topic_slug", topicSlug)
     .single();
 
+  const w = FSRS_WEIGHTS;
+
   const D = row?.difficulty ?? 5.0;
   const S = row?.stability ?? 2.5;
-  const R = row?.retrievability ?? 0.9;
-  const w = FSRS_WEIGHTS;
+
+  // Compute actual retrieval probability from elapsed time since last review
+  const now = Date.now();
+  const lastReviewMs = row?.last_reviewed ? new Date(row.last_reviewed).getTime() : now;
+  const elapsedDays = Math.max(0, (now - lastReviewMs) / 86400000);
+  const currentR = row ? (1 + elapsedDays / (9 * Math.max(0.1, S))) ** (-1) : 0.9;
 
   const newDifficulty = Math.max(1, Math.min(10, D - w[2] * (grade - 3)));
 
@@ -172,12 +102,14 @@ async function updateFSRS(
         w[3] *
           Math.pow(newDifficulty, -w[4]) *
           Math.pow(S, -w[5]) *
-          (Math.exp(1 - R) - 1));
+          (Math.exp(1 - currentR) - 1));
     newStability = Math.max(0.1, newStability);
   }
 
-  const newR = grade === 1 ? 0 : 0.9;
-  const intervalDays = 9 * newStability * (1 / 0.9 - 1);
+  // Proper interval: stability = days until R drops to 90%
+  const intervalDays = Math.max(1, Math.round(newStability));
+  // Track actual retrievability after interval
+  const newR = grade === 1 ? 0 : (1 + intervalDays / (9 * Math.max(0.1, newStability))) ** (-1);
   const nextReview = new Date(Date.now() + intervalDays * 86400000);
 
   await supabaseAdmin.from("progress").upsert(
@@ -351,11 +283,19 @@ export const reviewCode = createServerFn({ method: "POST" })
       if (issuesErr) console.error("review_issues insert failed:", issuesErr);
     }
 
-    // FSRS: auto-grade from review issues and update spaced repetition state per concept
+    // FSRS: auto-grade from review issues per concept
     const concepts = parsed.concepts.filter((c) => VALID_TOPIC_SLUGS.has(c));
     if (concepts.length > 0) {
-      const grade = computeFSRSGrade(parsed.issues);
-      await Promise.all(concepts.map((slug) => updateFSRS(userId, slug, grade)));
+      await Promise.all(
+        concepts.map((slug) => {
+          // Filter issues matching this concept (null concept_slug = "general" issue counts toward all)
+          const conceptIssues = parsed.issues.filter(
+            (i) => i.concept_slug === slug || i.concept_slug === null
+          );
+          const grade = computeFSRSGrade(conceptIssues);
+          return updateFSRS(userId, slug, grade);
+        })
+      );
     }
 
     return {
