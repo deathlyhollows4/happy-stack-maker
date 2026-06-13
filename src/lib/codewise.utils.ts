@@ -27,7 +27,7 @@ export async function isAdmin(userId: string): Promise<boolean> {
 export const FSRS_WEIGHTS = [0.4, 0.6, 2.4, 5.8, 4.9, 0.9, 0.8, 0.7, 1.5, 0.1];
 
 export function computeFSRSGrade(
-  issues: { severity: string }[],
+  issues: { severity: string; [key: string]: unknown }[],
 ): 1 | 2 | 3 | 4 {
   const errors = issues.filter((i) => i.severity === "error");
   const warnings = issues.filter((i) => i.severity === "warning");
