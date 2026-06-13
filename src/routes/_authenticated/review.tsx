@@ -141,23 +141,23 @@ function Review() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+        className="inline-flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground hover:text-foreground mb-4"
       >
         <ArrowLeft className="size-3.5" /> Back to Dashboard
       </Link>
 
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-6 md:mb-8 gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Workspace
           </p>
-          <h1 className="mt-2 font-display text-5xl tracking-tight">Code Review</h1>
-          <p className="text-muted-foreground mt-2">Paste your code to get feedback mapped to CS concepts.</p>
+          <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Code Review</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-2">Paste your code to get feedback mapped to CS concepts.</p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
           <input
             ref={fileInputRef}
             type="file"
@@ -167,9 +167,9 @@ function Review() {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent/10"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-1.5 md:py-2 text-xs md:text-sm hover:bg-accent/10"
           >
-            <Upload className="size-4" /> Upload file
+            <Upload className="size-3.5 md:size-4" /> Upload file
           </button>
           <label htmlFor="review-language" className="sr-only">
             Programming language
@@ -179,7 +179,7 @@ function Review() {
             aria-label="Programming language"
             value={lang}
             onChange={(e) => onLang(e.target.value as Lang)}
-            className="rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
+            className="rounded-md border border-border bg-input px-3 py-1.5 md:py-2 text-xs md:text-sm font-mono"
           >
             {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
               <option key={l} value={l}>
@@ -190,21 +190,23 @@ function Review() {
           <button
             onClick={submit}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 md:gap-2 rounded-md bg-primary px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
           >
-            <Sparkles className="size-4" /> {busy ? "Reviewing…" : "Review my code"}
+            <Sparkles className="size-3.5 md:size-4" />
+            <span className="sm:hidden">{busy ? "Reviewing..." : "Review"}</span>
+            <span className="hidden sm:inline">{busy ? "Reviewing..." : "Review my code"}</span>
           </button>
           <button
             onClick={onRun}
             disabled={running}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm hover:bg-accent/10 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border px-3 py-1.5 md:py-2 text-xs md:text-sm hover:bg-accent/10 disabled:opacity-50"
           >
-            <Play className="size-4" /> {running ? "Running…" : "Run"}
+            <Play className="size-3.5 md:size-4" /> {running ? "Running..." : "Run"}
           </button>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
         <div
           className={`rounded-lg border border-border bg-card overflow-hidden ${fullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : ""}`}
         >
@@ -235,7 +237,7 @@ function Review() {
               onChange={setCode}
               extensions={[langExt(lang)]}
               theme={editorTheme(editorSettings.theme)}
-              height={fullscreen ? "100vh" : "60vh"}
+              height={fullscreen ? "100vh" : "clamp(40vh, 60vw, 60vh)"}
               basicSetup={{ lineNumbers: true, foldGutter: true }}
             />
             </ErrorBoundary>
@@ -243,7 +245,7 @@ function Review() {
         </div>
 
         {runOutput && (
-          <div className="rounded-lg border border-border bg-card p-4">
+          <div className="rounded-lg border border-border bg-card p-3 md:p-4">
             <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
               Output
             </p>
@@ -265,7 +267,7 @@ function Review() {
           </div>
         )}
 
-        <div className="rounded-lg border border-border bg-card p-6 min-h-[60vh] overflow-auto">
+        <div className="rounded-lg border border-border bg-card p-4 md:p-6 min-h-[40vh] md:min-h-[60vh] overflow-auto">
           {!result && !busy && !exception && (
             <p className="text-sm text-muted-foreground">Your review will appear here.</p>
           )}
@@ -296,7 +298,7 @@ function Review() {
             <ErrorBoundary>
             <div className="space-y-5">
               <div>
-                <h2 className="font-display text-2xl mb-2">Summary</h2>
+                <h2 className="font-display text-xl md:text-2xl mb-2">Summary</h2>
                 <Markdown className="text-muted-foreground">{result.summary}</Markdown>
               </div>
               {result.concepts.length > 0 && (
@@ -370,7 +372,7 @@ function IssueCard({ issue }: { issue: any }) {
         ? "text-warning"
         : "text-accent";
   return (
-    <li className="rounded-md border border-border p-4">
+    <li className="rounded-md border border-border p-3 md:p-4">
       <div className="flex items-start gap-3">
         <Icon className={`size-4 mt-0.5 ${color}`} />
         <div className="flex-1 min-w-0">

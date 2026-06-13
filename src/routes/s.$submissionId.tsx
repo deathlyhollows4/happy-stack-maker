@@ -58,7 +58,7 @@ function SharePage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-3 md:py-4 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2">
             <span className="font-display text-lg tracking-tight">CodeWise</span>
             <span className="text-[10px] font-mono uppercase tracking-widest text-accent bg-accent/15 px-1.5 py-0.5 rounded-sm">
@@ -67,20 +67,20 @@ function SharePage() {
           </Link>
           <Link
             to="/signup"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+            className="inline-flex items-center gap-1.5 md:gap-2 rounded-md bg-primary px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
           >
-            <Sparkles className="size-4" /> Try CodeWise
+            <Sparkles className="size-3.5 md:size-4" /> Try CodeWise
           </Link>
         </div>
       </header>
 
-      <main className="p-8 max-w-7xl mx-auto">
-        <div className="mb-8">
+      <main className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="mb-6 md:mb-8">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Shared review
           </p>
-          <h1 className="mt-2 font-display text-5xl tracking-tight">Code Review</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Code Review</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-2">
             {submission
               ? `${LANG_LABELS[lang]} · ${new Date(submission.created_at).toLocaleDateString()}`
               : "Loading…"}
@@ -88,20 +88,20 @@ function SharePage() {
         </div>
 
         {isLoading && (
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="rounded-lg border border-border bg-card min-h-[60vh] animate-pulse" />
-            <div className="rounded-lg border border-border bg-card p-6 min-h-[60vh] animate-pulse" />
+          <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+            <div className="rounded-lg border border-border bg-card min-h-[40vh] md:min-h-[60vh] animate-pulse" />
+            <div className="rounded-lg border border-border bg-card p-4 md:p-6 min-h-[40vh] md:min-h-[60vh] animate-pulse" />
           </div>
         )}
 
         {error && (
-          <div className="rounded-lg border border-border bg-card p-6">
+          <div className="rounded-lg border border-border bg-card p-4 md:p-6">
             <p className="text-sm text-destructive">Failed to load this review.</p>
           </div>
         )}
 
         {!isLoading && !error && !submission && (
-          <div className="rounded-lg border border-border bg-card p-12 text-center">
+          <div className="rounded-lg border border-border bg-card p-6 md:p-12 text-center">
             <p className="text-lg font-medium mb-2">Review not found</p>
             <p className="text-sm text-muted-foreground mb-6">
               This submission may have been deleted or the link is incorrect.
@@ -117,7 +117,7 @@ function SharePage() {
 
         {!isLoading && !error && submission && (
           <>
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
               <div className="rounded-lg border border-border bg-card overflow-hidden">
                 <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border">
                   {LANG_LABELS[lang]}
@@ -126,16 +126,16 @@ function SharePage() {
                   value={submission.code}
                   extensions={[langExt(lang)]}
                   theme={oneDark}
-                  height="60vh"
+                  height="clamp(40vh, 60vw, 60vh)"
                   editable={false}
                   basicSetup={{ lineNumbers: true, foldGutter: true }}
                 />
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-6 min-h-[60vh] overflow-auto">
+              <div className="rounded-lg border border-border bg-card p-4 md:p-6 min-h-[40vh] md:min-h-[60vh] overflow-auto">
                 <div className="space-y-5">
                   <div>
-                    <h3 className="font-display text-2xl mb-2">Summary</h3>
+                    <h3 className="font-display text-xl md:text-2xl mb-2">Summary</h3>
                     <Markdown className="text-muted-foreground">
                       {submission.summary ?? "No summary available."}
                     </Markdown>
@@ -182,16 +182,16 @@ function SharePage() {
               </div>
             </div>
 
-            <div className="mt-8 rounded-lg border border-border bg-card p-8 text-center">
-              <h2 className="font-display text-2xl mb-2">Get your own review</h2>
+            <div className="mt-6 md:mt-8 rounded-lg border border-border bg-card p-4 md:p-8 text-center">
+              <h2 className="font-display text-xl md:text-2xl mb-2">Get your own review</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
                 CodeWise reviews your code, mapping each issue to the CS concept behind it.
               </p>
               <Link
                 to="/signup"
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+                className="inline-flex items-center justify-center gap-1.5 md:gap-2 rounded-md bg-primary px-4 md:px-6 py-2 md:py-3 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
               >
-                <Sparkles className="size-4" /> Start reviewing for free
+                <Sparkles className="size-3.5 md:size-4" /> Start reviewing for free
               </Link>
             </div>
           </>
@@ -211,7 +211,7 @@ function IssueCard({ issue }: { issue: any }) {
       ? "border-amber-500/20 bg-amber-50/10 text-amber-500"
       : "border-emerald-500/20 bg-emerald-50/10 text-emerald-500";
   return (
-    <li className={`rounded-md border p-4 ${tone}`}>
+    <li className={`rounded-md border p-3 md:p-4 ${tone}`}>
       <div className="flex items-start gap-3">
         <Icon className="size-4 mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">

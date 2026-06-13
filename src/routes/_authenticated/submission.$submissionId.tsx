@@ -62,20 +62,20 @@ function SubmissionDetail() {
   const lang = (submission?.language as Lang) ?? "python";
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-6 md:mb-8 gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Workspace
           </p>
-          <h1 className="mt-2 font-display text-5xl tracking-tight">Submission Detail</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Submission Detail</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-2">
             {submission
               ? `${LANG_LABELS[lang]} - ${new Date(submission.created_at).toLocaleDateString()}`
               : "Viewing your code and review results."}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
           <button
             type="button"
             onClick={() => {
@@ -85,23 +85,23 @@ function SubmissionDetail() {
                 () => toast.error("Failed to copy link"),
               );
             }}
-            className="inline-flex items-center gap-2 rounded-md bg-accent/15 text-accent px-4 py-2 text-sm font-medium hover:bg-accent/25 transition"
+            className="inline-flex items-center justify-center gap-1.5 md:gap-2 rounded-md bg-accent/15 text-accent px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium hover:bg-accent/25 transition"
           >
-            <Share2 className="size-4" /> Share Results
+            <Share2 className="size-3.5 md:size-4" /> Share Results
           </button>
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-card transition"
+            className="inline-flex items-center justify-center gap-1.5 md:gap-2 rounded-md border border-border px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-foreground hover:bg-card transition"
           >
-            <ArrowLeft className="size-4" /> Back to Dashboard
+            <ArrowLeft className="size-3.5 md:size-4" /> Back to Dashboard
           </Link>
         </div>
       </div>
 
       {isLoading && (
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Skeleton className="rounded-lg min-h-[60vh]" />
-          <Skeleton className="rounded-lg min-h-[60vh]" />
+        <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+          <Skeleton className="rounded-lg min-h-[40vh] md:min-h-[60vh]" />
+          <Skeleton className="rounded-lg min-h-[40vh] md:min-h-[60vh]" />
         </div>
       )}
 
@@ -118,7 +118,7 @@ function SubmissionDetail() {
       )}
 
       {!isLoading && !error && submission && (
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
           <div className="rounded-lg border border-border bg-card overflow-hidden">
             <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border">
               {LANG_LABELS[lang]}
@@ -127,16 +127,16 @@ function SubmissionDetail() {
               value={submission.code}
               extensions={[langExt(lang)]}
               theme={oneDark}
-              height="60vh"
+              height="clamp(40vh, 60vw, 60vh)"
               editable={false}
               basicSetup={{ lineNumbers: true, foldGutter: true }}
             />
           </div>
 
-          <div className="rounded-lg border border-border bg-card p-6 min-h-[60vh] overflow-auto">
+          <div className="rounded-lg border border-border bg-card p-4 md:p-6 min-h-[40vh] md:min-h-[60vh] overflow-auto">
             <div className="space-y-5">
               <div>
-                <h3 className="font-display text-2xl mb-2">Summary</h3>
+                <h3 className="font-display text-xl md:text-2xl mb-2">Summary</h3>
                 <Markdown className="text-muted-foreground">
                   {submission.summary ?? "No summary available."}
                 </Markdown>
@@ -202,11 +202,11 @@ function WhatsNext({ issues }: { issues: any[] }) {
 
   return (
     <section
-      className={`rounded-lg border p-5 ${
+      className={`rounded-lg border p-4 md:p-5 ${
         hasWeakConcepts ? "border-amber-500/20 bg-amber-50/10" : "border-emerald-500/20 bg-emerald-50/10"
       }`}
     >
-      <h4 className={`font-display text-2xl mb-2 ${hasWeakConcepts ? "text-amber-500" : "text-emerald-500"}`}>
+      <h4 className={`font-display text-xl md:text-2xl mb-2 ${hasWeakConcepts ? "text-amber-500" : "text-emerald-500"}`}>
         What's next?
       </h4>
       {hasWeakConcepts ? (
@@ -224,13 +224,13 @@ function WhatsNext({ issues }: { issues: any[] }) {
               </span>
             ))}
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3">
             {weakConcepts.map((slug) => (
               <Link
                 key={slug}
                 to="/learn/$slug"
                 params={{ slug }}
-                className="inline-flex items-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium hover:border-accent/60 transition"
+                className="inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium hover:border-accent/60 transition"
               >
                 Learn {conceptName(slug)}
               </Link>
@@ -239,27 +239,27 @@ function WhatsNext({ issues }: { issues: any[] }) {
               <Link
                 to="/practice"
                 search={{ topic: firstConcept }}
-                className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
               >
                 Practice these concepts
               </Link>
             )}
             <Link
               to="/review"
-              className="inline-flex items-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium hover:border-accent/60 transition"
+              className="inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium hover:border-accent/60 transition"
             >
               Review another solution
             </Link>
           </div>
         </>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="flex items-center gap-2 text-sm text-emerald-500">
             <CheckCircle2 className="size-4" /> No weak concepts found. Great work!
           </p>
           <Link
             to="/review"
-            className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-1.5 md:py-2 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
           >
             Review another solution
           </Link>
@@ -283,7 +283,7 @@ function IssueCard({ issue }: { issue: any }) {
       ? "border-amber-500/20 bg-amber-50/10 text-amber-500"
       : "border-emerald-500/20 bg-emerald-50/10 text-emerald-500";
   return (
-    <li className={`rounded-md border p-4 ${tone}`}>
+    <li className={`rounded-md border p-3 md:p-4 ${tone}`}>
       <div className="flex items-start gap-3">
         <Icon className="size-4 mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
