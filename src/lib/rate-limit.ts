@@ -11,11 +11,21 @@ interface Bucket {
 
 const buckets = new Map<string, Bucket>();
 
+function cleanup(now: number) {
+  for (const [ip, bucket] of buckets) {
+    if (now > bucket.resetAt) buckets.delete(ip);
+  }
+}
+
 export function checkRateLimit(
   ip: string,
   limit = MAX_REQUESTS,
 ): { allowed: boolean; resetIn: number } {
   const now = Date.now();
+
+  // Opportunistic cleanup on each call (no global timers in Workers)
+  if (buckets.size > 100) cleanup(now);
+
   const bucket = buckets.get(ip);
 
   if (!bucket || now > bucket.resetAt) {
@@ -31,13 +41,6 @@ export function checkRateLimit(
   return { allowed: true, resetIn: bucket.resetAt - now };
 }
 
-// Periodic cleanup to avoid memory leaks
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, bucket] of buckets) {
-    if (now > bucket.resetAt) buckets.delete(ip);
-  }
-}, 60000);
 
 export function getClientIP(request: Request): string {
   return (
