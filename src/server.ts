@@ -66,15 +66,53 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   return brandedErrorResponse();
 }
 
+// Security headers applied to every response
+const securityHeaders: Record<string, string> = {
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+};
+
+// CSP applied only to HTML responses
+const csp =
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' https://js.stripe.com; " +
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+  "font-src 'self' https://fonts.gstatic.com; " +
+  "img-src 'self' data: https:; " +
+  "connect-src 'self' https://*.supabase.co https://api.paddle.com; " +
+  "frame-src 'self' https://js.stripe.com https://accounts.google.com;";
+
+function injectSecurityHeaders(response: Response): Response {
+  // Clone the response so we can safely mutate headers
+  const secure = new Response(response.body, response);
+
+  // Apply base security headers to every response
+  for (const [key, value] of Object.entries(securityHeaders)) {
+    secure.headers.set(key, value);
+  }
+
+  // Apply CSP only to HTML responses
+  const contentType = secure.headers.get("content-type") ?? "";
+  if (contentType.includes("text/html")) {
+    secure.headers.set("Content-Security-Policy", csp);
+  }
+
+  return secure;
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      return injectSecurityHeaders(normalized);
     } catch (error) {
       console.error(error);
-      return brandedErrorResponse();
+      return injectSecurityHeaders(brandedErrorResponse());
     }
   },
 };

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3-force";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 interface TopicRow {
   slug: string;
@@ -297,6 +298,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   const hasProgress = progress.length > 0;
 
   return (
+    <ErrorBoundary fallback={<div className="p-8 text-center">Graph unavailable</div>}>
     <div
       ref={containerRef}
       className="relative w-full overflow-hidden rounded-lg"
@@ -570,6 +572,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
 

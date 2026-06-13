@@ -10,10 +10,10 @@ export type Quotas = {
   codeRunsPerDay: number;
 };
 
-let _quotaCache: Record<Plan, Quotas> | null = null;
+let _quotaCache: { data: Record<Plan, Quotas>; ts: number } | null = null;
 
 export async function getPlanQuotas(): Promise<Record<Plan, Quotas>> {
-  if (_quotaCache) return _quotaCache;
+  if (_quotaCache && (Date.now() - _quotaCache.ts) < 60_000) return _quotaCache.data;
 
   const { data } = await supabaseAdmin.from("app_config").select("key, value");
   const map = new Map<string, string>();
@@ -22,18 +22,21 @@ export async function getPlanQuotas(): Promise<Record<Plan, Quotas>> {
   }
 
   _quotaCache = {
-    free: {
-      reviewsPerMonth: parseInt(map.get("plan_quota_free_reviews") ?? "50"),
-      problemsPerDay: parseInt(map.get("plan_quota_free_problems") ?? "25"),
-      codeRunsPerDay: parseInt(map.get("plan_quota_free_code_runs") ?? "100"),
+    data: {
+      free: {
+        reviewsPerMonth: parseInt(map.get("plan_quota_free_reviews") ?? "50"),
+        problemsPerDay: parseInt(map.get("plan_quota_free_problems") ?? "25"),
+        codeRunsPerDay: parseInt(map.get("plan_quota_free_code_runs") ?? "100"),
+      },
+      pro: {
+        reviewsPerMonth: parseInt(map.get("plan_quota_pro_reviews") ?? "1500"),
+        problemsPerDay: parseInt(map.get("plan_quota_pro_problems") ?? "15"),
+        codeRunsPerDay: parseInt(map.get("plan_quota_pro_code_runs") ?? "100"),
+      },
     },
-    pro: {
-      reviewsPerMonth: parseInt(map.get("plan_quota_pro_reviews") ?? "1500"),
-      problemsPerDay: parseInt(map.get("plan_quota_pro_problems") ?? "15"),
-      codeRunsPerDay: parseInt(map.get("plan_quota_pro_code_runs") ?? "100"),
-    },
+    ts: Date.now(),
   };
-  return _quotaCache;
+  return _quotaCache.data;
 }
 
 export function refreshPlanQuotas(): void {

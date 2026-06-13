@@ -2,15 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import CodeMirror from "@uiw/react-codemirror";
-import { python } from "@codemirror/lang-python";
-import { javascript } from "@codemirror/lang-javascript";
-import { java } from "@codemirror/lang-java";
-import { cpp } from "@codemirror/lang-cpp";
+import { langExt, type Lang, LANG_LABELS, loadEditorSettings } from "@/lib/codewise.editor";
 import { editorTheme } from "@/components/codemirror-themes";
 import { EditorSettingsPopover } from "@/components/editor-settings";
 import { reviewCode } from "@/lib/codewise.functions";
 import { runCode } from "@/lib/code-exec.functions";
 import { Markdown } from "@/components/markdown";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useTelemetry } from "@/hooks/use-telemetry";
 import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
@@ -34,37 +32,12 @@ export const Route = createFileRoute("/_authenticated/review")({
   component: Review,
 });
 
-type Lang = "python" | "javascript" | "java" | "cpp";
-const LANG_LABELS: Record<Lang, string> = {
-  python: "Python",
-  javascript: "JavaScript",
-  java: "Java",
-  cpp: "C++",
-};
 const DEFAULTS: Record<Lang, string> = {
   python: `def two_sum(nums, target):\n    for i in range(len(nums)):\n        for j in range(len(nums)):\n            if nums[i] + nums[j] == target:\n                return [i, j]\n    return []\n`,
   javascript: `function twoSum(nums, target) {\n  for (let i = 0; i < nums.length; i++) {\n    for (let j = 0; j < nums.length; j++) {\n      if (nums[i] + nums[j] === target) return [i, j];\n    }\n  }\n}\n`,
   java: `int[] twoSum(int[] nums, int target) {\n  for (int i=0;i<nums.length;i++)\n    for (int j=0;j<nums.length;j++)\n      if (nums[i]+nums[j]==target) return new int[]{i,j};\n  return new int[]{};\n}\n`,
   cpp: `vector<int> twoSum(vector<int>& nums, int target) {\n  for (int i=0;i<nums.size();i++)\n    for (int j=0;j<nums.size();j++)\n      if (nums[i]+nums[j]==target) return {i,j};\n  return {};\n}\n`,
 };
-
-function langExt(l: Lang) {
-  return l === "python"
-    ? python()
-    : l === "javascript"
-      ? javascript()
-      : l === "java"
-        ? java()
-        : cpp();
-}
-
-function loadEditorSettings() {
-  try {
-    const raw = localStorage.getItem("codewise-editor-settings");
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return { fontSize: 14, theme: "monokai" };
-}
 
 function Review() {
   const [lang, setLang] = useState<Lang>("python");
@@ -256,6 +229,7 @@ function Review() {
             </div>
           </div>
           <div style={{ fontSize: `${editorSettings.fontSize}px` }}>
+            <ErrorBoundary>
             <CodeMirror
               value={code}
               onChange={setCode}
@@ -264,6 +238,7 @@ function Review() {
               height={fullscreen ? "100vh" : "60vh"}
               basicSetup={{ lineNumbers: true, foldGutter: true }}
             />
+            </ErrorBoundary>
           </div>
         </div>
 
@@ -318,6 +293,7 @@ function Review() {
           )}
 
           {result?.ok && (
+            <ErrorBoundary>
             <div className="space-y-5">
               <div>
                 <h2 className="font-display text-2xl mb-2">Summary</h2>
@@ -357,6 +333,7 @@ function Review() {
                 )}
               </div>
             </div>
+            </ErrorBoundary>
           )}
 
           {result && !result.ok && (

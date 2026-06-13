@@ -4,10 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import CodeMirror from "@uiw/react-codemirror";
-import { python } from "@codemirror/lang-python";
-import { javascript } from "@codemirror/lang-javascript";
-import { java } from "@codemirror/lang-java";
-import { cpp } from "@codemirror/lang-cpp";
+import { langExt, type Lang, LANG_LABELS } from "@/lib/codewise.editor";
 import { editorTheme } from "@/components/codemirror-themes";
 import { EditorSettingsPopover } from "@/components/editor-settings";
 import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.functions";
@@ -28,23 +25,6 @@ export const Route = createFileRoute("/_authenticated/practice")({
   validateSearch: (search) => practiceSearchSchema.catch({}).parse(search),
   component: Practice,
 });
-
-type Lang = "python" | "javascript" | "java" | "cpp";
-const LANG_LABELS: Record<Lang, string> = {
-  python: "Python",
-  javascript: "JavaScript",
-  java: "Java",
-  cpp: "C++",
-};
-function langExt(l: Lang) {
-  return l === "python"
-    ? python()
-    : l === "javascript"
-      ? javascript()
-      : l === "java"
-        ? java()
-        : cpp();
-}
 
 type TopicSlug = string;
 interface TopicMeta {

@@ -75,6 +75,18 @@ async function handleSubscriptionCanceled(data: any, env: PaddleEnv) {
 
 async function handleWebhook(req: Request, env: PaddleEnv) {
   const event = await verifyWebhook(req, env);
+
+  // Idempotency: skip if this event was already processed (prevents Paddle retry oscillation)
+  const { data: existing } = await supabaseAdmin
+    .from("webhook_events")
+    .select("event_id")
+    .eq("event_id", event.eventId)
+    .maybeSingle();
+  if (existing) {
+    console.log("Duplicate webhook, already processed:", event.eventId);
+    return; // idempotent — no state change
+  }
+
   switch (event.eventType) {
     case EventName.SubscriptionCreated:
       await handleSubscriptionCreated(event.data, env);
@@ -88,6 +100,12 @@ async function handleWebhook(req: Request, env: PaddleEnv) {
     default:
       console.log("Unhandled event:", event.eventType);
   }
+
+  // Record that this event has been processed
+  await supabaseAdmin.from("webhook_events").insert({
+    event_id: event.eventId,
+    event_type: event.eventType,
+  });
 }
 
 export const Route = createFileRoute("/api/public/payments/webhook")({

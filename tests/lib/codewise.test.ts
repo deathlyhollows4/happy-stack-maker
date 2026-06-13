@@ -26,19 +26,20 @@ describe("computeFSRSGrade", () => {
     expect(computeFSRSGrade(issues)).toBe(1);
   });
 
-  it("returns grade 1 for code with syntax title keywords (string matching)", () => {
+  // H12: string matching removed — grades by severity count only
+  it("returns grade 3 for code with syntax title keywords (severity=warning)", () => {
     const issues = [{ severity: "warning", title: "Syntax error detected" }];
-    expect(computeFSRSGrade(issues)).toBe(1);
+    expect(computeFSRSGrade(issues)).toBe(3); // 1 warning = grade 3, not 1
   });
 
-  it("returns grade 1 for code with 'incorrect' title", () => {
+  it("returns grade 3 for code with 'incorrect' title (severity=warning)", () => {
     const issues = [{ severity: "warning", title: "Incorrect loop condition" }];
-    expect(computeFSRSGrade(issues)).toBe(1);
+    expect(computeFSRSGrade(issues)).toBe(3); // 1 warning = grade 3
   });
 
-  it("returns grade 1 for code with 'wrong' title", () => {
+  it("returns grade 3 for code with 'wrong' title (severity=warning)", () => {
     const issues = [{ severity: "warning", title: "Wrong data structure" }];
-    expect(computeFSRSGrade(issues)).toBe(1);
+    expect(computeFSRSGrade(issues)).toBe(3); // 1 warning = grade 3
   });
 
   it("returns grade 2 for code with 1 error only", () => {
@@ -81,9 +82,10 @@ describe("computeFSRSGrade", () => {
     expect(computeFSRSGrade(issues)).toBe(2);
   });
 
-  it("case-insensitive title matching for syntax/incorrect/wrong", () => {
+  // H12: string matching removed — severity count only
+  it("grade based on severity, not keyword matching", () => {
     const issues = [{ severity: "warning", title: "SYNTAX" }];
-    expect(computeFSRSGrade(issues)).toBe(1);
+    expect(computeFSRSGrade(issues)).toBe(3); // 1 warning = grade 3
   });
 });
 

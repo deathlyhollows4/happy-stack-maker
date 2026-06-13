@@ -2,10 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import CodeMirror from "@uiw/react-codemirror";
-import { python } from "@codemirror/lang-python";
-import { javascript } from "@codemirror/lang-javascript";
-import { java } from "@codemirror/lang-java";
-import { cpp } from "@codemirror/lang-cpp";
+import { langExt, type Lang, LANG_LABELS } from "@/lib/codewise.editor";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { getPublicSubmission } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
@@ -42,24 +39,6 @@ export const Route = createFileRoute("/s/$submissionId")({
   },
   component: SharePage,
 });
-
-type Lang = "python" | "javascript" | "java" | "cpp";
-const LANG_LABELS: Record<Lang, string> = {
-  python: "Python",
-  javascript: "JavaScript",
-  java: "Java",
-  cpp: "C++",
-};
-
-function langExt(l: Lang) {
-  return l === "python"
-    ? python()
-    : l === "javascript"
-      ? javascript()
-      : l === "java"
-        ? java()
-        : cpp();
-}
 
 function SharePage() {
   const { submissionId } = useParams({ from: "/s/$submissionId" });

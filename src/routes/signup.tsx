@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AuthShell, Field } from "./login";
 import { signInWithGoogleSignUp } from "@/lib/auth-helpers";
+import { checkRateLimit, getClientIP } from "@/lib/rate-limit";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -18,6 +19,27 @@ export const Route = createFileRoute("/signup")({
     ],
     links: [{ rel: "canonical", href: "https://happy-stack-maker.lovable.app/signup" }],
   }),
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const ip = getClientIP(request);
+        const { allowed, resetIn } = checkRateLimit(ip);
+        if (!allowed) {
+          return new Response(
+            JSON.stringify({ error: "Too many requests. Please try again later." }),
+            {
+              status: 429,
+              headers: {
+                "content-type": "application/json",
+                "retry-after": String(Math.ceil(resetIn / 1000)),
+              },
+            },
+          );
+        }
+        return new Response(null, { status: 204 });
+      },
+    },
+  },
   component: SignupPage,
 });
 
