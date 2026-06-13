@@ -1,45 +1,23 @@
-# Fix Connectivity & Polish Across All Features
+**Observed signal**
+- I opened the preview at `/`, and the homepage rendered with visible CodeWise content.
+- Dev-server logs are clean, with Vite connected.
+- Browser console has no app errors, only Lovable preview postMessage warnings.
+- Network requests show no `500` failures.
 
-## Context
+**Plan**
+1. Re-check the app shell and route setup for blank-page failure points: root layout, router bootstrap, `Outlet`, global CSS loading, and any route-level auth redirects.
+2. Inspect the recent SEO and CSS changes for anything that could intermittently blank the preview, especially head links, font loading, and `styles.css` ordering.
+3. If an app-side issue is found, patch only the affected file and verify the preview again with browser, console, network, and dev-server logs.
+4. If the app still renders correctly after verification, treat this as a preview-frame/session issue rather than an app bug, then restart the preview dev server and provide exact recovery steps.
+5. Before any symbol-level edits, run the required GitNexus impact analysis where tooling is available, and report the blast radius before changing code.
 
-`LOVABLE_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are auto-injected by Lovable Cloud at runtime — they don't need to be in `.env`. The "AI not configured" symptom in local dev is expected; in deployed preview/prod the keys are present. So the real bugs are routing, error handling, and a few UX gaps.
+**Expected outcome**
+- Either a concrete code fix for a reproducible blank-page cause, or a verified healthy app plus preview recovery steps.
 
-## Fixes
+<presentation-actions>
+  <presentation-open-history>View History</presentation-open-history>
+</presentation-actions>
 
-### 1. Broken navigation (HIGH)
-- `src/routes/_authenticated/practice.tsx:193` — `nav({ to: "/submission/$submissionId" })` works (route is at `_authenticated/submission.$submissionId.tsx`, URL is `/submission/:id`). **Verify** — likely fine, the `_authenticated` segment is a pathless layout.
-- `src/routes/pricing.tsx:114` — logged-in CTA links to `/app` which doesn't exist. Change to `/dashboard`.
-
-### 2. Silent error swallowing (HIGH)
-- `practice.tsx` `onGen` — wrap in try/catch, toast on failure.
-- `settings.tsx` delete-account handler — add catch + toast.
-- `codewise.functions.ts` `review_issues` insert — check + log error.
-
-### 3. Feature audit (non-AI)
-Quick check each route loads and primary action works:
-- `/dashboard` — progress + recent submissions render
-- `/review` — file upload + paste both submit
-- `/practice` — generate → run → submit flow
-- `/billing` — portal link, cancel dialog
-- `/settings` — display name, password, theme toggle, delete
-- `/explore`, `/learn/$slug` — public content renders
-- `/pricing` → checkout → `?checkout=success` toast on dashboard
-- Past-due banner shows when subscription status is `past_due`
-
-I'll spot-check each route file for obvious bugs (missing imports, broken links, unhandled promises) rather than runtime-testing every flow.
-
-### 4. Minor cleanup
-- Consolidate the duplicate `admin()` singleton in `account.functions.ts` — use the shared `supabaseAdmin` from `client.server.ts` instead.
-
-## Out of scope
-- Env var setup (handled by Lovable Cloud auto-injection)
-- Paddle keys (already in secrets per `<secrets>` listing)
-- New features
-
-## Files to edit
-- `src/routes/pricing.tsx` (1 link)
-- `src/routes/_authenticated/practice.tsx` (try/catch)
-- `src/routes/_authenticated/settings.tsx` (try/catch)
-- `src/lib/codewise.functions.ts` (error check)
-- `src/lib/account.functions.ts` (use shared admin client)
-- Plus whatever the route audit surfaces
+<presentation-actions>
+<presentation-link url="https://docs.lovable.dev/tips-tricks/troubleshooting">Troubleshooting docs</presentation-link>
+</presentation-actions>
