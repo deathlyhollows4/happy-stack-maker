@@ -10,6 +10,29 @@ import { toast } from "sonner";
 import { ArrowLeft, Share2, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const CONCEPT_NAMES: Record<string, string> = {
+  arrays: "Arrays",
+  strings: "Strings",
+  hashing: "Hashing",
+  "linked-lists": "Linked Lists",
+  stacks: "Stacks",
+  queues: "Queues",
+  trees: "Trees",
+  bst: "BST",
+  heaps: "Heaps",
+  graphs: "Graphs",
+  "two-pointers": "Two Pointers",
+  "sliding-window": "Sliding Window",
+  "binary-search": "Binary Search",
+  sorting: "Sorting",
+  recursion: "Recursion",
+  backtracking: "Backtracking",
+  dp: "Dynamic Programming",
+  greedy: "Greedy",
+  "bit-manipulation": "Bit Manipulation",
+  complexity: "Complexity Analysis",
+};
+
 export const Route = createFileRoute("/_authenticated/submission/$submissionId")({
   head: ({ params }) => ({
     meta: [
@@ -48,7 +71,7 @@ function SubmissionDetail() {
           <h1 className="mt-2 font-display text-5xl tracking-tight">Submission Detail</h1>
           <p className="text-muted-foreground mt-2">
             {submission
-              ? `${LANG_LABELS[lang]} · ${new Date(submission.created_at).toLocaleDateString()}`
+              ? `${LANG_LABELS[lang]} - ${new Date(submission.created_at).toLocaleDateString()}`
               : "Viewing your code and review results."}
           </p>
         </div>
@@ -151,12 +174,88 @@ function SubmissionDetail() {
                   </ul>
                 )}
               </div>
+              <WhatsNext issues={issues} />
             </div>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function WhatsNext({ issues }: { issues: any[] }) {
+  const weakConcepts = Array.from(
+    new Set(
+      issues
+        .filter((issue) => issue.severity === "error" && issue.concept_slug)
+        .map((issue) => issue.concept_slug as string),
+    ),
+  );
+  const firstConcept = weakConcepts[0] ?? null;
+
+  return (
+    <section className="rounded-lg border border-accent/40 bg-accent/10 p-5">
+      <h4 className="font-display text-2xl mb-2">What's next?</h4>
+      {weakConcepts.length > 0 ? (
+        <>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-accent mb-2">
+            Weak concepts found
+          </p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {weakConcepts.map((slug) => (
+              <span
+                key={slug}
+                className="px-2 py-1 rounded-sm bg-background/70 text-accent text-[11px] font-mono"
+              >
+                {conceptName(slug)}
+              </span>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {weakConcepts.map((slug) => (
+              <Link
+                key={slug}
+                to="/learn/$slug"
+                params={{ slug }}
+                className="inline-flex items-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium hover:border-accent/60 transition"
+              >
+                Learn {conceptName(slug)}
+              </Link>
+            ))}
+            {firstConcept && (
+              <Link
+                to="/practice"
+                search={{ topic: firstConcept }}
+                className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+              >
+                Practice these concepts
+              </Link>
+            )}
+            <Link
+              to="/review"
+              className="inline-flex items-center rounded-md border border-border bg-card px-3 py-2 text-sm font-medium hover:border-accent/60 transition"
+            >
+              Review another solution
+            </Link>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">No weak concepts found. Great work!</p>
+          <Link
+            to="/review"
+            className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+          >
+            Review another solution
+          </Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function conceptName(slug: string) {
+  return CONCEPT_NAMES[slug] ?? slug.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function IssueCard({ issue }: { issue: any }) {

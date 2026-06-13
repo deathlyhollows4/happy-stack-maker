@@ -263,3 +263,67 @@ Copy `CODEWISE_AUDIT_2026-06-11.md` from the VPS (`/tmp/happy-stack-maker/CODEWI
 **Tests added** - 23 unit tests via vitest. Config at vitest.config.ts. Build: PASS. Tests: 23/23 PASS.
 
 **Next: Phase 2** - Split monolith, more tests, CI/CD.
+
+
+---
+
+## APPENDIX: Browser Automation Setup (13 June 2026)
+
+### Tools Installed
+
+| Tool | Location | Status |
+|------|----------|--------|
+| Playwright (Python) | pip 1.59.0 | Installed |
+| @playwright/test (npm) | dev dependency | Installed |
+| browser-harness | C:\Users\brawl\.local\bin\browser-harness.exe | Installed (uv tool) |
+| browser-harness source | C:\Users\brawl\Developer\browser-harness\ | Cloned |
+| Chrome CDP (headless) | Port 9223, --disable-gpu | Working |
+
+### E2E Test Results (13 June 2026)
+All 12 critical-path tests PASS (7.5s).
+See tests/e2e/critical-path.spec.ts for the full test suite.
+Fix applied: pricing page locator changed to .first() to avoid strict mode violation.
+
+### browser-harness Hermes Skill
+Created at: /opt/data/.hermes/skills/software-development/browser-harness/SKILL.md
+Integrated into agent-mesh routing table: Forge -> E2E tests, Scout -> CDP scraping, Sentinel -> infra
+
+### CDP Chrome Launch
+Start-Process -NoNewWindow -FilePath 'C:\Program Files\Google\Chrome\Application\chrome.exe' -ArgumentList '--remote-debugging-port=9223','--user-data-dir=C:/Users/brawl/AppData/Local/Temp/chrome-cdp-profile','--no-first-run','--window-size=1280,720','--headless=new','--disable-gpu'
+
+Verify: Invoke-WebRequest -Uri http://127.0.0.1:9223/json/version
+
+### browser-harness usage (PowerShell)
+$env:PATH = 'C:\Users\brawl\.local\bin;C:\Program Files (x86)\VMware\VMware Workstation\bin\;c:\Users\brawl\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\Google\Chrome\Application;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files\dotnet\;C:\MinGW\bin;C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\brawl\AppData\Local\Microsoft\WindowsApps;C:\Users\brawl\AppData\Local\Muse Hub\lib;c:\Users\brawl\AppData\Local\Programs\cursor\resources\app\bin;C:\Program Files\Git\cmd;C:\Program Files\nodejs\;C:\Program Files\Go\bin;C:\Program Files\GitHub CLI\;C:\Program Files\Tailscale\;C:\Users\brawl\AppData\Local\hermes\hermes-agent\venv\Scripts;C:\Users\brawl\AppData\Local\hermes\bin;C:\Users\brawl\AppData\Local\agy\bin;C:\Users\brawl\anaconda3;C:\Users\brawl\anaconda3\Library\mingw-w64\bin;C:\Users\brawl\anaconda3\Library\usr\bin;C:\Users\brawl\anaconda3\Library\bin;C:\Users\brawl\anaconda3\Scripts;C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\brawl\AppData\Local\Microsoft\WindowsApps;C:\Users\brawl\AppData\Local\Muse Hub\lib;C:\Users\brawl\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\brawl\.lmstudio\bin;C:\Users\brawl\AppData\Roaming\npm;C:\Users\brawl\go\bin;C:\Users\brawl\AppData\Local\Programs\Antigravity\bin;C:\Users\brawl\AppData\Local\Programs\Antigravity IDE\bin;C:\Users\brawl\AppData\Local\Kiro-Cli\;C:\Users\brawl\AppData\Local\Programs\Kiro\bin;C:\Users\brawl\AppData\Local\Microsoft\WinGet\Packages\BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe\ripgrep-15.1.0-x86_64-pc-windows-msvc;C:\Users\brawl\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.1-full_build\bin;'
+$env:BU_CDP_URL = 'http://127.0.0.1:9223'
+Pipe Python code to browser-harness via $code | browser-harness
+
+### Updated browser-harness Working Pattern (13 June PM)
+
+**DAEMON NOW WORKS.** The issue was Chrome CDP dying between SSH sessions. Fix: always launch Chrome + run BH in same script.
+
+**Working template:**
+`
+# 1. Kill old CDP Chrome + launch fresh
+Get-CimInstance Win32_Process -Filter ""Name = 'chrome.exe'"" | Where-Object { $_.CommandLine -like ""*9223*"" } | Stop-Process -Force
+Start-Process -NoNewWindow -FilePath ""C:\Program Files\Google\Chrome\Application\chrome.exe"" -ArgumentList ""--remote-debugging-port=9223"",""--user-data-dir=C:\Users\brawl\AppData\Local\Temp\chrome-cdp-profile"",""--no-first-run"",""--window-size=1280,720"",""--headless=new"",""--disable-gpu""
+Start-Sleep -Seconds 5
+
+# 2. Set env + pipe code
+$env:PATH = ""C:\Users\brawl\.local\bin;$env:PATH""
+$env:BU_CDP_URL = ""http://127.0.0.1:9223""
+
+$code = @'
+goto_url("https://happy-stack-maker.lovable.app")
+wait_for_load()
+capture_screenshot("C:/Users/brawl/Developer/bh-codewise.png")
+print(page_info())
+'@
+
+$code | & ""C:\Users\brawl\.local\bin\browser-harness.exe""
+`
+
+Key rules:
+- Forward slashes in Python file paths (no backslash unicode escapes)
+- BU_CDP_URL must be set before running BH
+- Chrome + BH in SAME script session

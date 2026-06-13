@@ -1,4 +1,5 @@
 import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -103,30 +104,7 @@ function LearnPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-display text-lg tracking-tight">CodeWise</span>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-accent bg-accent/15 px-1.5 py-0.5 rounded-sm">
-              beta
-            </span>
-          </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground">
-              Pricing
-            </Link>
-            <Link to="/login" className="text-muted-foreground hover:text-foreground">
-              Sign in
-            </Link>
-            <Link
-              to="/signup"
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
-            >
-              Get started <ArrowRight className="size-3.5" />
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader active="learn" />
 
       <main>
         {isLoading && (
@@ -146,6 +124,12 @@ function LearnPage() {
             {/* Hero */}
             <section className="border-b border-border">
               <div className="max-w-6xl mx-auto px-8 py-24">
+                <Link
+                  to="/learn"
+                  className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  &lt;- All topics
+                </Link>
                 <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   {topic.category}
                 </p>
@@ -336,7 +320,7 @@ function LearnPage() {
                           </p>
                         )}
                         <p className="mt-3 text-xs font-mono text-accent">
-                          Learn {t.name.toLowerCase()} →
+                          Learn {t.name.toLowerCase()} -&gt;
                         </p>
                       </Link>
                     ))}
@@ -349,7 +333,7 @@ function LearnPage() {
             <section className="bg-card/40">
               <div className="max-w-3xl mx-auto px-8 py-24 text-center">
                 <Sparkles className="mx-auto size-6 text-accent" />
-                <h2 className="mt-4 font-display text-4xl">Start practicing {topic.name}</h2>
+                <h2 className="mt-4 font-display text-4xl">Practice this topic</h2>
                 <p className="mt-4 text-muted-foreground max-w-lg mx-auto">
                   Get code review feedback focused on the CS concepts you need to strengthen.
                 </p>
@@ -357,7 +341,7 @@ function LearnPage() {
                   to="/signup"
                   className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
                 >
-                  Start your first review <ArrowRight className="size-4" />
+                  Start free review <ArrowRight className="size-4" />
                 </Link>
               </div>
             </section>
@@ -373,16 +357,7 @@ function LearnPage() {
 function NotFound({ slug }: { slug: string }) {
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-8 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-display text-lg tracking-tight">CodeWise</span>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-accent bg-accent/15 px-1.5 py-0.5 rounded-sm">
-              beta
-            </span>
-          </Link>
-        </div>
-      </header>
+      <SiteHeader active="learn" />
       <main className="max-w-xl mx-auto px-8 py-24 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
           Topic not found
@@ -392,10 +367,10 @@ function NotFound({ slug }: { slug: string }) {
           We don't have a dedicated page for this topic yet. Check out the topics we do cover below.
         </p>
         <Link
-          to="/"
+          to="/learn"
           className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
         >
-          <ArrowRight className="size-4" /> Explore CodeWise
+          <ArrowRight className="size-4" /> Browse topics
         </Link>
       </main>
     </div>
