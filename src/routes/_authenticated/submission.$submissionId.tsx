@@ -7,7 +7,7 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { getSubmission } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { toast } from "sonner";
-import { ArrowLeft, Share2, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Share2, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const CONCEPT_NAMES: Record<string, string> = {
@@ -159,9 +159,14 @@ function SubmissionDetail() {
                 </div>
               )}
               <div>
-                <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
-                  Issues ({issues.length})
-                </h4>
+                <div className="mb-3 flex items-center gap-2">
+                  <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                    Review feedback
+                  </h4>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                    {issues.length}
+                  </span>
+                </div>
                 {issues.length === 0 ? (
                   <p className="text-sm text-success flex items-center gap-2">
                     <CheckCircle2 className="size-4" /> No issues found. Nice work.
@@ -193,19 +198,27 @@ function WhatsNext({ issues }: { issues: any[] }) {
   );
   const firstConcept = weakConcepts[0] ?? null;
 
+  const hasWeakConcepts = weakConcepts.length > 0;
+
   return (
-    <section className="rounded-lg border border-accent/40 bg-accent/10 p-5">
-      <h4 className="font-display text-2xl mb-2">What's next?</h4>
-      {weakConcepts.length > 0 ? (
+    <section
+      className={`rounded-lg border p-5 ${
+        hasWeakConcepts ? "border-amber-500/20 bg-amber-50/10" : "border-emerald-500/20 bg-emerald-50/10"
+      }`}
+    >
+      <h4 className={`font-display text-2xl mb-2 ${hasWeakConcepts ? "text-amber-500" : "text-emerald-500"}`}>
+        What's next?
+      </h4>
+      {hasWeakConcepts ? (
         <>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-accent mb-2">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-amber-500 mb-2">
             Weak concepts found
           </p>
           <div className="flex flex-wrap gap-2 mb-4">
             {weakConcepts.map((slug) => (
               <span
                 key={slug}
-                className="px-2 py-1 rounded-sm bg-background/70 text-accent text-[11px] font-mono"
+                className="px-2 py-1 rounded-sm bg-background/70 text-amber-500 text-[11px] font-mono"
               >
                 {conceptName(slug)}
               </span>
@@ -241,7 +254,9 @@ function WhatsNext({ issues }: { issues: any[] }) {
         </>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">No weak concepts found. Great work!</p>
+          <p className="flex items-center gap-2 text-sm text-emerald-500">
+            <CheckCircle2 className="size-4" /> No weak concepts found. Great work!
+          </p>
           <Link
             to="/review"
             className="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
@@ -259,23 +274,28 @@ function conceptName(slug: string) {
 }
 
 function IssueCard({ issue }: { issue: any }) {
-  const Icon =
-    issue.severity === "error" ? AlertCircle : issue.severity === "warning" ? AlertTriangle : Info;
-  const color =
-    issue.severity === "error"
-      ? "text-destructive"
-      : issue.severity === "warning"
-        ? "text-warning"
-        : "text-accent";
+  const isError = issue.severity === "error";
+  const isWarning = issue.severity === "warning";
+  const Icon = isError ? AlertCircle : isWarning ? AlertTriangle : CheckCircle2;
+  const tone = isError
+    ? "border-red-500/20 bg-red-50/10 text-red-500"
+    : isWarning
+      ? "border-amber-500/20 bg-amber-50/10 text-amber-500"
+      : "border-emerald-500/20 bg-emerald-50/10 text-emerald-500";
   return (
-    <li className="rounded-md border border-border p-4">
+    <li className={`rounded-md border p-4 ${tone}`}>
       <div className="flex items-start gap-3">
-        <Icon className={`size-4 mt-0.5 ${color}`} />
+        <Icon className="size-4 mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-medium">{issue.title}</span>
             {issue.line != null && (
               <span className="text-xs font-mono text-muted-foreground">line {issue.line}</span>
+            )}
+            {!isError && !isWarning && (
+              <span className="text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-500">
+                Validated
+              </span>
             )}
             {issue.concept_slug && (
               <span className="text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-accent/15 text-accent">

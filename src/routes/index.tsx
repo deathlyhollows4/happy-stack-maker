@@ -99,7 +99,7 @@ function LandingPage() {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             For CS students preparing for placements
           </p>
-          <h1 className="mt-6 max-w-3xl font-display text-6xl leading-[1.05] tracking-tight md:text-7xl">
+          <h1 className="mt-6 max-w-3xl font-display text-4xl leading-[1.08] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
             AI code review that <em className="text-accent">teaches</em>, not just fixes.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">

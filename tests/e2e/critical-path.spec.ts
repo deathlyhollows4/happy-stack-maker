@@ -9,7 +9,7 @@ test.describe("Critical Path E2E", () => {
     await page.goto("/");
     await expect(page).toHaveTitle(/CodeWise/);
     // Primary CTA button should be visible
-    const cta = page.getByRole("link", { name: /get started|start coding|try free/i });
+    const cta = page.getByRole("link", { name: /start free review|get started|start coding|try free/i });
     await expect(cta.first()).toBeVisible();
   });
 
@@ -24,7 +24,7 @@ test.describe("Critical Path E2E", () => {
   // ---------------------------------------------------------------
   test("login page â€” renders and shows sign-in with Google", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.locator("h1, h2")).toContainText(/log in|sign in|welcome/i, { ignoreCase: true });
+    await expect(page.locator("h1, h2").first()).toContainText(/log in|sign in|welcome/i, { ignoreCase: true });
     // Google OAuth button should exist on login page
     const googleBtn = page.getByRole("button", { name: /google|continue with/i });
     if (await googleBtn.count() > 0) {
@@ -82,7 +82,7 @@ test.describe("Critical Path E2E", () => {
   // ---------------------------------------------------------------
   test("pricing page â€” renders plan options", async ({ page }) => {
     await page.goto("/pricing");
-    await expect(page.locator("h1, h2").first()).toContainText(/pricing|plans/i, { ignoreCase: true });
+    await expect(page.locator("h1, h2").first().first()).toContainText(/pricing|plans/i, { ignoreCase: true });
     // Should show at least Free and Pro
     const pageContent = await page.textContent("body");
     expect(pageContent).toMatch(/free|pro/i);
@@ -114,4 +114,5 @@ test.describe("Critical Path E2E", () => {
     await expect(page).toHaveTitle(/privacy/i);
   });
 });
+
 

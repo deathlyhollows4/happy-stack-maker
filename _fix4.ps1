@@ -1,3 +1,9 @@
+$proj = "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"
+Set-Location $proj
+
+Write-Output "=== Fix learn.$slug.tsx SSR crash ==="
+
+$content = @'
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
@@ -17,7 +23,7 @@ const STATIC_TOPICS: Record<string, StaticTopic> = {
   trees: { name: "Trees", category: "Data Structures", description: "Hierarchical nodes connected by parent-child relationships.", overview: "Trees model hierarchy and recursive structure. Traversal order controls whether you solve top-down, bottom-up, level-order, or path-based problems.", operations: [{ name: "Visit all nodes", time: "O(n)", space: "O(h)" }, { name: "Find height", time: "O(n)", space: "O(h)" }, { name: "Level order", time: "O(n)", space: "O(w)" }], commonPatterns: [{ name: "DFS", slug: "depth-first-search" }, { name: "BFS", slug: "breadth-first-search" }], whenToUse: "Use trees for hierarchical data, divide-and-conquer recursion, and ancestor or subtree questions.", whenToAvoid: "Avoid plain trees for unordered lookup when a hash table or balanced search tree is more direct.", maangFrequency: "High", prerequisites: ["recursion"] },
   graphs: { name: "Graphs", category: "Data Structures", description: "Nodes connected by edges that may be directed, undirected, weighted, or unweighted.", overview: "Graphs model relationships. Most graph solutions start by choosing a representation, then applying BFS, DFS, topological ordering, or shortest-path logic.", operations: [{ name: "Traverse adjacency list", time: "O(V+E)", space: "O(V)" }, { name: "Add edge", time: "O(1)", space: "O(1)" }, { name: "Check adjacency list edge", time: "O(deg(v))", space: "O(1)" }], commonPatterns: [{ name: "BFS", slug: "breadth-first-search" }, { name: "DFS", slug: "depth-first-search" }], whenToUse: "Use graphs for networks, dependencies, grids, connectivity, paths, and relationship problems.", whenToAvoid: "Avoid graph modeling when the data is naturally linear or hierarchical and simpler structures solve it.", maangFrequency: "High", prerequisites: ["hash-tables"] },
   "dynamic-programming": { name: "Dynamic Programming", category: "Algorithms", description: "Optimization by reusing overlapping subproblem results.", overview: "Dynamic programming works when a problem has repeated subproblems and optimal substructure. Define state, transition, base cases, and iteration order.", operations: [{ name: "Memoized state", time: "O(states * transition)", space: "O(states)" }, { name: "Tabulation", time: "O(states * transition)", space: "O(states)" }, { name: "Space optimized DP", time: "O(states * transition)", space: "O(window)" }], commonPatterns: [{ name: "Recursion", slug: "recursion" }, { name: "Hash Tables", slug: "hash-tables" }], whenToUse: "Use DP for counting, optimization, subsequences, partitions, and choices with overlapping subproblems.", whenToAvoid: "Avoid DP when greedy, sorting, or a single pass solves the problem without repeated states.", maangFrequency: "High", prerequisites: ["recursion"] },
-  sorting: { name: "Sorting", category: "Algorithms", description: "Ordering values according to a comparison or key.", overview: "Sorting often unlocks simpler scans, two-pointer solutions, duplicate grouping, interval merging, and binary search.", operations: [{ name: "Comparison sort", time: "O(n log n)", space: "O(log n) to O(n)" }, { name: "Counting sort", time: "O(n+k)", space: "O(k)" }, { name: "Merge sorted arrays", time: "O(n+m)", space: "O(1) to O(n+m)" }], commonPatterns: [{ name: "Two Pointers", slug: "two-pointers" }, { name: "Arrays", slug: "arrays" }], whenToUse: "Use sorting when order helps remove nested loops, group values, or make greedy choices valid.", whenToAvoid: "Avoid sorting when original order must be preserved or a hash table can solve it in linear time.", maangFrequency: "High", prerequisites: ["arrays"] },
+  sorting: { name: "Sorting", category: "Algorithms", description: "Reordering values according to a comparison or key.", overview: "Sorting often unlocks simpler scans, two-pointer solutions, duplicate grouping, interval merging, and binary search.", operations: [{ name: "Comparison sort", time: "O(n log n)", space: "O(log n) to O(n)" }, { name: "Counting sort", time: "O(n+k)", space: "O(k)" }, { name: "Merge sorted arrays", time: "O(n+m)", space: "O(1) to O(n+m)" }], commonPatterns: [{ name: "Two Pointers", slug: "two-pointers" }, { name: "Arrays", slug: "arrays" }], whenToUse: "Use sorting when order helps remove nested loops, group values, or make greedy choices valid.", whenToAvoid: "Avoid sorting when original order must be preserved or a hash table can solve it in linear time.", maangFrequency: "High", prerequisites: ["arrays"] },
   recursion: { name: "Recursion", category: "Foundations", description: "A technique where a function solves a problem by calling itself on smaller inputs.", overview: "Recursive solutions need a clear base case, progress toward that base case, and a way to combine subresults.", operations: [{ name: "Function call", time: "Problem dependent", space: "O(depth)" }, { name: "Tree recursion", time: "O(branch^depth)", space: "O(depth)" }, { name: "Memoized recursion", time: "O(states)", space: "O(states)" }], commonPatterns: [{ name: "Trees", slug: "trees" }, { name: "Dynamic Programming", slug: "dynamic-programming" }], whenToUse: "Use recursion for trees, divide and conquer, backtracking, and naturally nested problems.", whenToAvoid: "Avoid recursion when stack depth can overflow or an iterative loop is clearer.", maangFrequency: "High", prerequisites: [] },
   "two-pointers": { name: "Two Pointers", category: "Patterns", description: "A pattern that uses two indexes moving through one or more sequences.", overview: "Two pointers reduce many array and string problems from nested loops to linear scans by maintaining a meaningful window or pair.", operations: [{ name: "Opposite ends", time: "O(n)", space: "O(1)" }, { name: "Same direction", time: "O(n)", space: "O(1)" }, { name: "Sliding window", time: "O(n)", space: "O(1) to O(k)" }], commonPatterns: [{ name: "Arrays", slug: "arrays" }, { name: "Strings", slug: "strings" }], whenToUse: "Use two pointers for sorted arrays, pairs, palindromes, partitions, and windows.", whenToAvoid: "Avoid it when data is unordered and needs fast arbitrary lookup instead.", maangFrequency: "High", prerequisites: ["arrays"] },
   "binary-search-trees": { name: "Binary Search Trees", category: "Data Structures", description: "Binary trees where left values are smaller and right values are larger.", overview: "BSTs combine tree traversal with ordering, enabling search, insertion, and sorted traversal when the tree is balanced.", operations: [{ name: "Search", time: "O(h)", space: "O(1)" }, { name: "Insert", time: "O(h)", space: "O(1)" }, { name: "In-order traversal", time: "O(n)", space: "O(h)" }], commonPatterns: [{ name: "DFS", slug: "depth-first-search" }, { name: "Sorting", slug: "sorting" }], whenToUse: "Use BSTs when ordered lookup, predecessor, successor, or sorted traversal is required.", whenToAvoid: "Avoid unbalanced BSTs for worst-case guarantees unless balancing is provided.", maangFrequency: "Medium", prerequisites: ["trees", "recursion"] },
@@ -47,6 +53,7 @@ function frequencyColor(freq: string) {
 function LearnPage() {
   const { slug } = useParams({ from: "/learn/$slug" });
   const topic = STATIC_TOPICS[slug] ?? null;
+  const displayName = topicDisplayName(slug);
 
   if (!topic) {
     return <NotFound slug={slug} />;
@@ -56,6 +63,7 @@ function LearnPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader active="learn" />
       <main>
+        {/* Hero */}
         <section className="border-b border-border">
           <div className="max-w-6xl mx-auto px-8 py-24">
             <Link to="/learn" className="mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">&lt;- All topics</Link>
@@ -68,25 +76,33 @@ function LearnPage() {
             </div>
           </div>
         </section>
+
+        {/* Prerequisites */}
         {topic.prerequisites.length > 0 && (
           <section className="border-b border-border bg-card/30">
             <div className="max-w-4xl mx-auto px-8 py-10">
               <div className="flex items-center gap-3 mb-4"><Link2 className="size-5 text-accent" /><h2 className="font-display text-2xl">Prerequisites</h2></div>
-              <p className="text-sm text-muted-foreground mb-4">These topics are prerequisites for {topic.name}.</p>
+              <p className="text-sm text-muted-foreground mb-4">These topics are prerequisites for {topic.name}. We recommend reviewing them first.</p>
               <div className="flex flex-wrap gap-2">
                 {topic.prerequisites.map((pre) => (
-                  <Link key={pre} to="/learn/$slug" params={{ slug: pre }} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/40 hover:text-accent transition-colors"><ChevronRight className="size-3.5" />{topicDisplayName(pre)}</Link>
+                  <Link key={pre} to="/learn/$slug" params={{ slug: pre }} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-sm hover:border-accent/40 hover:text-accent transition-colors">
+                    <ChevronRight className="size-3.5" />{topicDisplayName(pre)}
+                  </Link>
                 ))}
               </div>
             </div>
           </section>
         )}
+
+        {/* Concept Overview */}
         <section className="border-b border-border">
           <div className="max-w-4xl mx-auto px-8 py-14">
             <div className="flex items-center gap-3 mb-6"><Lightbulb className="size-5 text-accent" /><h2 className="font-display text-2xl">Concept Overview</h2></div>
             <p className="text-sm leading-relaxed text-muted-foreground max-w-3xl">{topic.overview}</p>
           </div>
         </section>
+
+        {/* Operations Table */}
         <section className="border-b border-border bg-card/30">
           <div className="max-w-4xl mx-auto px-8 py-14">
             <div className="flex items-center gap-3 mb-6"><BarChart3 className="size-5 text-accent" /><h2 className="font-display text-2xl">Key Operations &amp; Complexity</h2></div>
@@ -108,6 +124,8 @@ function LearnPage() {
             </div>
           </div>
         </section>
+
+        {/* Common Patterns + MAANG Frequency */}
         <section className="border-b border-border">
           <div className="max-w-4xl mx-auto px-8 py-14 grid gap-10 md:grid-cols-2">
             <div>
@@ -122,15 +140,26 @@ function LearnPage() {
             </div>
           </div>
         </section>
+
+        {/* When to Use / Avoid */}
         <section className="border-b border-border bg-card/30">
           <div className="max-w-4xl mx-auto px-8 py-14 grid gap-10 md:grid-cols-2">
-            <div><div className="flex items-center gap-3 mb-4"><Zap className="size-5 text-green-500" /><h2 className="font-display text-xl">When to Use</h2></div><p className="text-sm leading-relaxed text-muted-foreground">{topic.whenToUse}</p></div>
-            <div><div className="flex items-center gap-3 mb-4"><AlertTriangle className="size-5 text-amber-500" /><h2 className="font-display text-xl">When to Avoid</h2></div><p className="text-sm leading-relaxed text-muted-foreground">{topic.whenToAvoid}</p></div>
+            <div>
+              <div className="flex items-center gap-3 mb-4"><Zap className="size-5 text-green-500" /><h2 className="font-display text-xl">When to Use</h2></div>
+              <p className="text-sm leading-relaxed text-muted-foreground">{topic.whenToUse}</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-3 mb-4"><AlertTriangle className="size-5 text-amber-500" /><h2 className="font-display text-xl">When to Avoid</h2></div>
+              <p className="text-sm leading-relaxed text-muted-foreground">{topic.whenToAvoid}</p>
+            </div>
           </div>
         </section>
+
+        {/* Bottom CTA */}
         <section className="bg-card/40">
           <div className="max-w-3xl mx-auto px-8 py-24 text-center">
-            <Sparkles className="mx-auto size-6 text-accent" /><h2 className="mt-4 font-display text-4xl">Practice this topic</h2>
+            <Sparkles className="mx-auto size-6 text-accent" />
+            <h2 className="mt-4 font-display text-4xl">Practice this topic</h2>
             <p className="mt-4 text-muted-foreground max-w-lg mx-auto">Get code review feedback focused on the CS concepts you need to strengthen.</p>
             <Link to="/signup" className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition">Start free review <ArrowRight className="size-4" /></Link>
           </div>
@@ -148,9 +177,15 @@ function NotFound({ slug }: { slug: string }) {
       <main className="max-w-xl mx-auto px-8 py-24 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Topic not found</p>
         <h1 className="mt-4 font-display text-4xl">{topicDisplayName(slug)}</h1>
-        <p className="mt-4 text-muted-foreground">We don't have a dedicated page for this topic yet.</p>
+        <p className="mt-4 text-muted-foreground">We don't have a dedicated page for this topic yet. Check out the topics we do cover below.</p>
         <Link to="/learn" className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"><ArrowRight className="size-4" /> Browse topics</Link>
       </main>
     </div>
   );
 }
+'@
+
+Set-Content -Path "src/routes/learn.$slug.tsx" -Value $content -Encoding UTF8
+Write-Output "Updated learn.$slug.tsx - uses static data directly, no DB dependency"
+
+Write-Output "=== DONE ==="

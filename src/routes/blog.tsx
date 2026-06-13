@@ -83,7 +83,7 @@ function BlogList({ posts }: { posts: BlogPost[] }) {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Resources for CS students
           </p>
-          <h1 className="mt-4 font-display text-6xl tracking-tight md:text-7xl">Blog</h1>
+          <h1 className="mt-4 font-display text-4xl tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">Blog</h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Articles on CS concepts, DSA patterns, and learning strategies for students.
           </p>

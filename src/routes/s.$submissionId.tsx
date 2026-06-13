@@ -6,7 +6,7 @@ import { langExt, type Lang, LANG_LABELS } from "@/lib/codewise.editor";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { getPublicSubmission } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
-import { Sparkles, AlertCircle, AlertTriangle, Info, CheckCircle2 } from "lucide-react";
+import { Sparkles, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/s/$submissionId")({
   head: ({ params }) => {
@@ -158,9 +158,14 @@ function SharePage() {
                     </div>
                   )}
                   <div>
-                    <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
-                      Issues ({issues.length})
-                    </h4>
+                    <div className="mb-3 flex items-center gap-2">
+                      <h4 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                        Review feedback
+                      </h4>
+                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+                        {issues.length}
+                      </span>
+                    </div>
                     {issues.length === 0 ? (
                       <p className="text-sm text-success flex items-center gap-2">
                         <CheckCircle2 className="size-4" /> No issues found. Nice work.
@@ -197,23 +202,28 @@ function SharePage() {
 }
 
 function IssueCard({ issue }: { issue: any }) {
-  const Icon =
-    issue.severity === "error" ? AlertCircle : issue.severity === "warning" ? AlertTriangle : Info;
-  const color =
-    issue.severity === "error"
-      ? "text-destructive"
-      : issue.severity === "warning"
-        ? "text-warning"
-        : "text-accent";
+  const isError = issue.severity === "error";
+  const isWarning = issue.severity === "warning";
+  const Icon = isError ? AlertCircle : isWarning ? AlertTriangle : CheckCircle2;
+  const tone = isError
+    ? "border-red-500/20 bg-red-50/10 text-red-500"
+    : isWarning
+      ? "border-amber-500/20 bg-amber-50/10 text-amber-500"
+      : "border-emerald-500/20 bg-emerald-50/10 text-emerald-500";
   return (
-    <li className="rounded-md border border-border p-4">
+    <li className={`rounded-md border p-4 ${tone}`}>
       <div className="flex items-start gap-3">
-        <Icon className={`size-4 mt-0.5 ${color}`} />
+        <Icon className="size-4 mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-medium">{issue.title}</span>
             {issue.line != null && (
               <span className="text-xs font-mono text-muted-foreground">line {issue.line}</span>
+            )}
+            {!isError && !isWarning && (
+              <span className="text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-500">
+                Validated
+              </span>
             )}
             {issue.concept_slug && (
               <span className="text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-accent/15 text-accent">

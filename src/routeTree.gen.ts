@@ -24,6 +24,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as SSubmissionIdRouteImport } from './routes/s.$submissionId'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
@@ -120,6 +121,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LearnIndexRoute = LearnIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LearnRoute,
 } as any)
 const SSubmissionIdRoute = SSubmissionIdRouteImport.update({
   id: '/s/$submissionId',
@@ -266,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/explore/$slug': typeof ExploreSlugRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/learn/': typeof LearnIndexRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -285,7 +292,6 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/health': typeof HealthRoute
-  '/learn': typeof LearnRouteWithChildren
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -304,6 +310,7 @@ export interface FileRoutesByTo {
   '/explore/$slug': typeof ExploreSlugRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/learn': typeof LearnIndexRoute
   '/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -344,6 +351,7 @@ export interface FileRoutesById {
   '/explore/$slug': typeof ExploreSlugRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/s/$submissionId': typeof SSubmissionIdRoute
+  '/learn/': typeof LearnIndexRoute
   '/_authenticated/admin/blog': typeof AuthenticatedAdminBlogRoute
   '/_authenticated/admin/curriculum': typeof AuthenticatedAdminCurriculumRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -384,6 +392,7 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/learn/'
     | '/admin/blog'
     | '/admin/curriculum'
     | '/admin/dashboard'
@@ -403,7 +412,6 @@ export interface FileRouteTypes {
     | '/explore'
     | '/forgot-password'
     | '/health'
-    | '/learn'
     | '/login'
     | '/pricing'
     | '/privacy'
@@ -422,6 +430,7 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/learn'
     | '/admin/blog'
     | '/admin/curriculum'
     | '/admin/dashboard'
@@ -461,6 +470,7 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/learn/$slug'
     | '/s/$submissionId'
+    | '/learn/'
     | '/_authenticated/admin/blog'
     | '/_authenticated/admin/curriculum'
     | '/_authenticated/admin/dashboard'
@@ -603,6 +613,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/learn/': {
+      id: '/learn/'
+      path: '/'
+      fullPath: '/learn/'
+      preLoaderRoute: typeof LearnIndexRouteImport
+      parentRoute: typeof LearnRoute
     }
     '/s/$submissionId': {
       id: '/s/$submissionId'
@@ -835,10 +852,12 @@ const ExploreRouteWithChildren =
 
 interface LearnRouteChildren {
   LearnSlugRoute: typeof LearnSlugRoute
+  LearnIndexRoute: typeof LearnIndexRoute
 }
 
 const LearnRouteChildren: LearnRouteChildren = {
   LearnSlugRoute: LearnSlugRoute,
+  LearnIndexRoute: LearnIndexRoute,
 }
 
 const LearnRouteWithChildren = LearnRoute._addFileChildren(LearnRouteChildren)

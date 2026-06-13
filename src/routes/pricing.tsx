@@ -70,7 +70,7 @@ function PricingPage() {
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
           Pricing
         </p>
-        <h1 className="mt-4 font-display text-5xl md:text-6xl">
+        <h1 className="mt-4 font-display text-4xl sm:text-5xl md:text-6xl">
           Simple plans. <em className="text-accent">Real</em> learning.
         </h1>
         <p className="mt-4 max-w-2xl text-muted-foreground">
@@ -83,7 +83,7 @@ function PricingPage() {
           </div>
         )}
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {/* Free */}
           <div className="rounded-lg border border-border bg-card/40 p-6">
             <h2 className="font-display text-2xl">Free</h2>
