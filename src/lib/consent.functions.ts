@@ -143,32 +143,3 @@ export const exportResearchData = createServerFn({ method: "GET" })
     };
   });
 
-export const seedFSRSTestData = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { userId } = context;
-    const now = new Date();
-    const rows = [
-      { slug: "arrays", r: 0.45, d: 6.2, s: 1.8, nd: new Date(now.getTime() - 36 * 3600000).toISOString() },
-      { slug: "hashing", r: 0.22, d: 7.8, s: 0.9, nd: new Date(now.getTime() - 12 * 3600000).toISOString() },
-      { slug: "strings", r: 0.61, d: 4.5, s: 3.2, nd: new Date(now.getTime() - 2 * 3600000).toISOString() },
-      { slug: "recursion", r: 0.55, d: 5.1, s: 2.6, nd: new Date(now.getTime() + 3 * 3600000).toISOString() },
-      { slug: "dp", r: 0.72, d: 4.0, s: 4.5, nd: new Date(now.getTime() + 20 * 3600000).toISOString() },
-      { slug: "two-pointers", r: 0.81, d: 3.2, s: 7.0, nd: new Date(now.getTime() + 72 * 3600000).toISOString() },
-      { slug: "graphs", r: 0.68, d: 5.5, s: 3.8, nd: new Date(now.getTime() + 8 * 3600000).toISOString() },
-    ];
-    const upserts = rows.map((r) => ({
-      user_id: userId,
-      topic_slug: r.slug,
-      stability: r.s,
-      difficulty: r.d,
-      retrievability: r.r,
-      next_review_date: r.nd,
-      mastery: r.r,
-      attempts: 5 + Math.floor(Math.random() * 20),
-      last_reviewed: now.toISOString(),
-    }));
-    const { error } = await supabaseAdmin.from("progress").upsert(upserts, { onConflict: "user_id,topic_slug" });
-    if (error) console.error("seedFSRS failed:", error);
-    return { seeded: upserts.length, error: error?.message ?? null };
-  });

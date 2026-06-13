@@ -1,6 +1,6 @@
-// Barrel — re-exports from domain files so no route import breaks
+// Barrel, re-exports from domain files so no route import breaks
 
-export { extractJson, computeFSRSGrade } from "./codewise.utils";
+export { extractJson, computeFSRSGrade, updateFSRS } from "./codewise.utils";
 
 export { reviewCode, getSubmission, getPublicSubmission } from "./review.functions";
 
@@ -39,5 +39,4 @@ export {
   recordResearchEvent,
   exportResearchData,
   updateProfileAvatar,
-  seedFSRSTestData,
 } from "./consent.functions";

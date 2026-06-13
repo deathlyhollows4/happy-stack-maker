@@ -356,21 +356,42 @@ export type Database = {
       topics: {
         Row: {
           category: string
+          common_patterns: Json | null
           description: string | null
+          maang_frequency: string | null
           name: string
+          operations: Json | null
+          overview: string | null
+          prerequisites: Json | null
           slug: string
+          when_to_avoid: string | null
+          when_to_use: string | null
         }
         Insert: {
           category: string
+          common_patterns?: Json | null
           description?: string | null
+          maang_frequency?: string | null
           name: string
+          operations?: Json | null
+          overview?: string | null
+          prerequisites?: Json | null
           slug: string
+          when_to_avoid?: string | null
+          when_to_use?: string | null
         }
         Update: {
           category?: string
+          common_patterns?: Json | null
           description?: string | null
+          maang_frequency?: string | null
           name?: string
+          operations?: Json | null
+          overview?: string | null
+          prerequisites?: Json | null
           slug?: string
+          when_to_avoid?: string | null
+          when_to_use?: string | null
         }
         Relationships: []
       }
@@ -437,6 +458,27 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string
+          id?: number
         }
         Relationships: []
       }
