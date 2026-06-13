@@ -122,6 +122,17 @@ Hidden/misaligned surfaces:
 
 ---
 
+## Execution Status
+
+| Phase | Status | Date | Git Ref | Notes |
+|-------|--------|------|---------|-------|
+| Phase 1 — Navigation clarity | **COMPLETED** | 13 Jun 2026 | d8ac6ec | Site header, footer grouping, label fixes, encoding fix, admin link |
+| Phase 2 — Content hubs | **COMPLETED** | 13 Jun 2026 | d8ac6ec | /learn hub, /blog routes, sitemap, canonical URLs |
+| Phase 3 — Student workflow | **COMPLETED** | 13 Jun 2026 | d8ac6ec | Dashboard next-action, practice stepper, submission next-actions |
+| Phase 4 — Mobile UI fixes | **COMPLETED** | 13 Jun 2026 | uncommitted | See vps-ssh-wf-codefise.md Phase 4 section |
+
+---
+
 # Phase 1 — Navigation clarity and cognitive-load quick wins
 
 **Goal:** Make existing surfaces discoverable without major route migration.
@@ -619,6 +630,14 @@ Recommended 3-phase execution:
    - Practice stepper layout
    - Review-to-learn/practice links
    - Settings export page
+
+All 3 phases committed together at d8ac6ec.
+
+4. **Phase 4 (post-plan):** Mobile responsive UI + green styling
+   - Review page: responsive layout, green success tones
+   - Learn page: fixed duplicate navbar
+   - Practice page: mobile overflow fix
+   - See vps-ssh-wf-codefise.md Phase 4 section
 
 ---
 

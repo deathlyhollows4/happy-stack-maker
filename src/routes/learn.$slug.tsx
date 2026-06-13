@@ -1,5 +1,3 @@
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, ChevronRight, BarChart3, Zap, Target, AlertTriangle, TrendingUp, Lightbulb, Link2, Hash, Clock, Cpu } from "lucide-react";
 
@@ -54,7 +52,6 @@ function LearnPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader active="learn" />
       <main>
         <section className="border-b border-border">
           <div className="max-w-6xl mx-auto px-8 py-24">
@@ -136,7 +133,6 @@ function LearnPage() {
           </div>
         </section>
       </main>
-      <SiteFooter />
     </div>
   );
 }
@@ -144,7 +140,6 @@ function LearnPage() {
 function NotFound({ slug }: { slug: string }) {
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader active="learn" />
       <main className="max-w-xl mx-auto px-8 py-24 text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Topic not found</p>
         <h1 className="mt-4 font-display text-4xl">{topicDisplayName(slug)}</h1>

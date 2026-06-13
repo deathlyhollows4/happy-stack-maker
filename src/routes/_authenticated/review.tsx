@@ -16,7 +16,6 @@ import {
   Sparkles,
   AlertCircle,
   AlertTriangle,
-  Info,
   CheckCircle2,
   ArrowLeft,
   Upload,
@@ -297,7 +296,7 @@ function Review() {
           {result?.ok && (
             <ErrorBoundary>
             <div className="space-y-5">
-              <div>
+              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
                 <h2 className="font-display text-xl md:text-2xl mb-2">Summary</h2>
                 <Markdown className="text-muted-foreground">{result.summary}</Markdown>
               </div>
@@ -310,7 +309,7 @@ function Review() {
                     {result.concepts.map((c) => (
                       <span
                         key={c}
-                        className="px-2 py-1 rounded-sm bg-accent/15 text-accent text-[11px] font-mono"
+                        className="px-2 py-1 rounded-sm bg-emerald-500/10 text-emerald-500 text-[11px] font-mono"
                       >
                         {c}
                       </span>
@@ -323,9 +322,10 @@ function Review() {
                   Issues ({result.issues.length})
                 </h3>
                 {result.issues.length === 0 ? (
-                  <p className="text-sm text-success flex items-center gap-2">
-                    <CheckCircle2 className="size-4" /> No issues found. Nice work.
-                  </p>
+                  <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-500 flex items-center gap-2">
+                    <CheckCircle2 className="size-4" />
+                    <span className="font-medium">No issues found. Nice work.</span>
+                  </div>
                 ) : (
                   <ul className="space-y-3">
                     {result.issues.map((it, i) => (
@@ -364,13 +364,19 @@ function Review() {
 
 function IssueCard({ issue }: { issue: any }) {
   const Icon =
-    issue.severity === "error" ? AlertCircle : issue.severity === "warning" ? AlertTriangle : Info;
+    issue.severity === "error" ? AlertCircle : issue.severity === "warning" ? AlertTriangle : CheckCircle2;
   const color =
     issue.severity === "error"
       ? "text-destructive"
       : issue.severity === "warning"
         ? "text-warning"
-        : "text-accent";
+        : "text-emerald-500";
+  const hintColor = issue.severity === "info" ? "border-emerald-500/50" : "border-accent/50";
+  const hintLabelColor = issue.severity === "info" ? "text-emerald-500" : "text-accent";
+  const conceptClass =
+    issue.severity === "info"
+      ? "bg-emerald-500/10 text-emerald-500"
+      : "bg-accent/15 text-accent";
   return (
     <li className="rounded-md border border-border p-3 md:p-4">
       <div className="flex items-start gap-3">
@@ -382,15 +388,15 @@ function IssueCard({ issue }: { issue: any }) {
               <span className="text-xs font-mono text-muted-foreground">line {issue.line}</span>
             )}
             {issue.concept_slug && (
-              <span className="text-[11px] font-mono px-1.5 py-0.5 rounded-sm bg-accent/15 text-accent">
+              <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded-sm ${conceptClass}`}>
                 {issue.concept_slug}
               </span>
             )}
           </div>
           <Markdown className="text-muted-foreground">{issue.explanation}</Markdown>
           {issue.fix_hint && (
-            <div className="mt-2 text-sm border-l-2 border-accent/50 pl-3">
-              <span className="font-mono text-[10px] uppercase tracking-widest text-accent mr-2">
+            <div className={`mt-2 text-sm border-l-2 ${hintColor} pl-3`}>
+              <span className={`font-mono text-[10px] uppercase tracking-widest ${hintLabelColor} mr-2`}>
                 fix
               </span>
               <Markdown className="text-foreground/90 mt-1">{issue.fix_hint}</Markdown>

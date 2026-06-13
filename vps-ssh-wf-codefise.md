@@ -1,4 +1,4 @@
-﻿# CodeWise - Single-Source Reference
+# CodeWise - Single-Source Reference
 
 > **Project:** C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker\
 > **Live URL:** https://happy-stack-maker.lovable.app/
@@ -64,6 +64,33 @@ Shared site-header (Learn/Blog/Pricing/Sign in/Start free review). Grouped foote
 ### Phase 3 - Student workflow
 Dashboard next-best-action card (0 reviews/weakest topic/review feedback). KG collapsible. Practice 3-step stepper (topic>language>solve) + Show all options. Submission "What's next?" card with Learn/Practice/Review CTAs. Settings/export already done.
 
+## Phase 4 — Mobile responsive UI + green success styling (13 June 2026)
+
+Uncommitted. 3 files modified: review.tsx, practice.tsx, learn.$slug.tsx.
+
+### Mobile UI fixes
+
+All 3 core student pages received mobile-first responsive overhauls:
+
+| Page | File | Changes |
+|------|------|---------|
+| Review Code | review.tsx | p-4 md:p-8, text-3xl md:text-5xl, buttons stack on mobile (flex-col sm:flex-row), editor/summary heights match via clamp(40vh,60vw,60vh), button labels shorten on mobile, gap-4 md:gap-6 |
+| Submission Detail | submission.$submissionId.tsx | p-4 md:p-8, text-3xl md:text-5xl, Share/Back buttons stack on mobile, matched column heights |
+| Shared Review | s.$submissionId.tsx | Header responsive, CTA button smaller on mobile, matched column heights |
+| Practice | practice.tsx | p-4 md:p-8, text-3xl md:text-5xl, problem list sidebar uses truncate+min-w-0 to prevent overflow, controls stack on mobile, stepper uses max-w-full |
+| Learn topic detail | learn.$slug.tsx | Fixed duplicate navbar — learn.tsx layout already wraps SiteHeader+Outlet+SiteFooter, slug page was duplicating it |
+
+### Green success styling (review.tsx)
+- Concept tags changed from reddish bg-accent/15 text-accent to emerald bg-emerald-500/10 text-emerald-500
+- Info-severity issues changed from Info icon + text-accent to CheckCircle2 + text-emerald-500
+- No issues found state made more prominent with green styling
+- Fix hint borders use emerald for validated/info issues
+
+### Verification
+- npm run build: 0 errors (client + SSR)
+- No em dashes or banned patterns in changed files
+- New git head: 1b626aa mobile-oriented beta v0.0.1
+
 ## Route Structure
 
 ### Public
@@ -71,11 +98,11 @@ Dashboard next-best-action card (0 reviews/weakest topic/review feedback). KG co
 |-------|-------------|
 | / | Home: hero + featured topics + latest blog |
 | /learn | Topic hub (DSA cards by category) |
-| /learn/ | Topic detail |
+| /learn/$slug | Topic detail |
 | /blog | Canonical blog index (H1 "Blog") |
-| /blog/ | Canonical blog post |
+| /blog/$slug | Canonical blog post |
 | /explore | 307 redirect to /blog |
-| /explore/ | 307 redirect to /blog/ |
+| /explore/$slug | 307 redirect to /blog/$slug |
 | /pricing | Plans |
 | /login, /signup, /forgot-password, /reset-password | Auth |
 | /terms, /privacy, /refunds | Legal |
@@ -85,9 +112,9 @@ Dashboard next-best-action card (0 reviews/weakest topic/review feedback). KG co
 | Route | Description |
 |-------|-------------|
 | /dashboard | Next-best-action + stats + collapsible KG + mastery + reviews |
-| /review | Submit code for AI review |
+| /review | Submit code for AI review (mobile responsive) |
 | /practice | 3-step stepper (topic/language/solve) + power-user escape |
-| /submission/ | Review results + "What's next?" learn/practice CTAs |
+| /submission/$id | Review results + "What's next?" learn/practice CTAs |
 | /settings | Profile, security, appearance, data, research, danger |
 | /settings/export | Export JSON/CSV (H1 "Export your data", distinct page) |
 | /billing | Subscription |
@@ -101,12 +128,12 @@ Dashboard next-best-action card (0 reviews/weakest topic/review feedback). KG co
 
 | Agent | Handles | Model |
 |-------|---------|-------|
-| @Forge | All code, E2E tests | gpt-5.4 |
+| @Forge | All code, E2E tests, vision analysis | gpt-5.4 |
 | @Scout | Browser crawl verification | deepseek-v4-flash |
 | @Sentinel | Infra/dev-server issues | deepseek-v4-flash |
 | @Maven | Labels/titles/SEO | gpt-5.4-mini |
 
-**Verification protocol**: build (0 errors) -> E2E (12/12 pass) -> re-read modified files (check template-literal leaks) -> HTTP route check -> @Scout crawl
+**Verification protocol**: build (0 errors) -> E2E (12/12 pass) -> re-read modified files (check template-literal leaks) -> HTTP route check -> @Scout crawl -> vision verify with @Forge
 
 ## GitNexus
 - Repo: happy-stack-maker (VPS clone: /tmp/happy-stack-maker, at 741b0f9)

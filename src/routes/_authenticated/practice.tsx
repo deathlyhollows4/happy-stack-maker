@@ -121,32 +121,32 @@ function Practice() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <Link
         to="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+        className="inline-flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground hover:text-foreground mb-4"
       >
         <ArrowLeft className="size-3.5" /> Back to Dashboard
       </Link>
 
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-6 md:mb-8 gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Targeted reps
           </p>
-          <h1 className="mt-2 font-display text-5xl tracking-tight">Practice</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Practice</h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-2">
             {topicSlug
               ? `Generating problems for ${selectedTopicName}.`
               : "Auto-generated problems targeting your weakest topic."}
           </p>
         </div>
         {showAllOptions && (
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
             <button
               onClick={onGen}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 md:gap-2 rounded-md bg-primary px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
             >
               <Sparkles className="size-4" /> {busy ? "Generating..." : "Generate a problem"}
             </button>
@@ -157,7 +157,7 @@ function Practice() {
       </div>
 
       {!showAllOptions && step === "topic" && (
-        <section className="max-w-xl mx-auto rounded-lg border border-border bg-card p-6">
+        <section className="max-w-xl max-w-full mx-auto rounded-lg border border-border bg-card p-4 md:p-6">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">Step 1 of 3</p>
           <h2 className="font-display text-3xl mt-2 mb-2">Choose topic</h2>
           <p className="text-sm text-muted-foreground mb-6">
@@ -174,18 +174,18 @@ function Practice() {
             Topic
           </label>
           <TopicSelect topicSlug={topicSlug} onChange={setTopicSlug} className="mt-2 w-full" />
-          <div className="mt-6 flex items-center justify-between gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <button
               type="button"
               onClick={() => setShowAllOptions(true)}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="text-xs md:text-sm text-muted-foreground hover:text-foreground"
             >
               Show all options
             </button>
             <button
               type="button"
               onClick={() => setStep("language")}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
             >
               Next: Choose language
             </button>
@@ -194,7 +194,7 @@ function Practice() {
       )}
 
       {!showAllOptions && step === "language" && (
-        <section className="max-w-xl mx-auto rounded-lg border border-border bg-card p-6">
+        <section className="max-w-xl max-w-full mx-auto rounded-lg border border-border bg-card p-4 md:p-6">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">Step 2 of 3</p>
           <h2 className="font-display text-3xl mt-2 mb-2">Choose language</h2>
           <p className="text-sm text-muted-foreground mb-6">
@@ -204,11 +204,11 @@ function Practice() {
             Language
           </label>
           <LanguageSelect lang={lang} onChange={setLang} className="mt-2 w-full" />
-          <div className="mt-6 flex items-center justify-between gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <button
               type="button"
               onClick={() => setStep("topic")}
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="size-3.5" /> Back to topic
             </button>
@@ -216,7 +216,7 @@ function Practice() {
               type="button"
               onClick={onGen}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
             >
               <Sparkles className="size-4" /> {busy ? "Generating..." : "Generate problem"}
             </button>
@@ -338,19 +338,19 @@ function PracticeWorkspace({
       )}
 
       {data && data.problems.length > 0 && (
-        <div className="grid lg:grid-cols-[260px_1fr] gap-6">
-          <aside className="space-y-2">
+        <div className="grid lg:grid-cols-[260px_1fr] gap-4 md:gap-6 min-w-0">
+          <aside className="space-y-2 w-full overflow-hidden min-w-0">
             {data.problems.map((p: any) => (
               <button
                 key={p.id}
                 onClick={() => onSelect(p.id)}
-                className={`w-full text-left rounded-md border p-3 transition ${
+                className={`w-full min-w-0 text-left rounded-md border p-3 transition ${
                   activeId === p.id
                     ? "border-accent bg-accent/10"
                     : "border-border bg-card hover:border-accent/40"
                 }`}
               >
-                <div className="text-sm font-medium truncate">{p.title}</div>
+                <div className="text-sm font-medium truncate min-w-0 max-w-full">{p.title}</div>
                 {p.topic_slug && (
                   <div className="mt-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
                     {p.topic_slug}
@@ -444,8 +444,8 @@ function ProblemWorkspace({ problem }: { problem: any }) {
   };
 
   return (
-    <article className="space-y-4">
-      <div className="rounded-lg border border-border bg-card p-6">
+    <article className="space-y-4 min-w-0">
+      <div className="rounded-lg border border-border bg-card p-4 md:p-6">
         <h2 className="font-display text-2xl mb-1">{problem.title}</h2>
         {problem.topic_slug && (
           <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-accent/15 text-accent">

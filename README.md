@@ -8,7 +8,7 @@ AI-powered DSA learning platform for CS students. Write code, get concept-level 
 
 - **Framework:** TanStack Start v1 (React 19, Vite 7)
 - **Database:** Supabase (PostgreSQL, RLS)
-- **AI:** Lovable AI Gateway → `openai/gpt-5-mini`
+- **AI:** Lovable AI Gateway (openai/gpt-5-mini)
 - **Payments:** Paddle (merchant of record)
 - **Styling:** Tailwind CSS v4 + shadcn/ui
 - **Editor:** CodeMirror 6
@@ -76,6 +76,36 @@ npm test
 npx playwright test
 ```
 
+## Recent Updates
+
+### mobile UI & green success styling (13 June 2026)
+
+Responsive mobile-first overhaul across the 3 key student pages:
+
+- **Review Code** (`/review`):
+  - Responsive padding: `p-4 md:p-8`
+  - Title scales: `text-3xl md:text-5xl`
+  - Buttons stack vertically on mobile, show compact labels
+  - Editor and summary column heights match via `clamp(40vh, 60vw, 60vh)`
+  - Green success styling: concept tags use emerald tones, validated issues show CheckCircle2 + green
+
+- **Submission Detail** (`/submission/$id`):
+  - Same responsive padding/title sizing
+  - Share and Back buttons stack on mobile
+  - Code/feedback panels match heights with responsive clamp
+
+- **Shared Review** (`/s/$id`):
+  - Mobile-friendly header, smaller CTA button
+  - Matched column heights
+
+- **Practice** (`/practice`):
+  - Problem list sidebar text no longer overflows on mobile (truncate + overflow-hidden)
+  - 3-step stepper cards use `max-w-full` to prevent horizontal scroll
+  - Generate/controls stack vertically on mobile
+
+- **Learn** (`/learn/$slug`):
+  - Fixed duplicate navbar bug (layout already had SiteHeader, slug page was rendering another)
+
 ## License
 
-Private — CodeWise by Vidhan Tomar.
+Private - CodeWise by Vidhan Tomar.
