@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
 import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -20,42 +19,9 @@ export const Route = createFileRoute("/privacy")({
 });
 
 function PrivacyPage() {
-  const [hasSession, setHasSession] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setHasSession(!!data.session);
-    });
-  }, []);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-display text-2xl">CodeWise</span>
-            <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
-              beta
-            </span>
-          </Link>
-          <nav className="flex items-center gap-6 text-sm">
-            <Link
-              to={hasSession ? "/dashboard" : "/login"}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Dashboard
-            </Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground">
-              Pricing
-            </Link>
-            {hasSession ? null : (
-              <Link to="/signup" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                Get started
-              </Link>
-            )}
-          </nav>
-        </div>
-      </header>
+      <SiteHeader />
 
       <div className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="font-display text-4xl">Privacy Notice</h1>

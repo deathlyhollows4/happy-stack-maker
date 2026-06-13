@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 const NAV_ITEMS = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/review", icon: Code2, label: "Review" },
+  { to: "/review", icon: Code2, label: "Review Code" },
   { to: "/practice", icon: Sparkles, label: "Practice" },
 ] as const;
 
@@ -103,7 +103,7 @@ function AuthLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Top nav bar */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 h-14">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">

@@ -18,7 +18,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/pricing", changefreq: "monthly", priority: "0.8" },
-          { path: "/explore", changefreq: "weekly", priority: "0.8" },
+          { path: "/learn", changefreq: "weekly", priority: "0.9" },
+          { path: "/blog", changefreq: "weekly", priority: "0.8" },
           { path: "/login", changefreq: "yearly", priority: "0.4" },
           { path: "/signup", changefreq: "yearly", priority: "0.5" },
           { path: "/terms", changefreq: "yearly", priority: "0.3" },
@@ -33,7 +34,7 @@ export const Route = createFileRoute("/sitemap.xml")({
             .eq("published", true);
           for (const p of posts ?? []) {
             entries.push({
-              path: `/explore/${p.slug}`,
+              path: `/blog/${p.slug}`,
               lastmod: p.updated_at,
               changefreq: "monthly",
               priority: "0.7",

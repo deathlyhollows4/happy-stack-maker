@@ -27,6 +27,7 @@ export const Route = createFileRoute("/_authenticated/practice")({
 });
 
 type TopicSlug = string;
+type PracticeStep = "topic" | "language" | "solve";
 interface TopicMeta {
   slug: TopicSlug;
   name: string;
@@ -70,11 +71,16 @@ function Practice() {
   const [busy, setBusy] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("python");
+  const [step, setStep] = useState<PracticeStep>("topic");
+  const [showAllOptions, setShowAllOptions] = useState(false);
   const [topicSlug, setTopicSlug] = useState<string | null>(
     search.topic && TOPIC_LIST.some((t) => t.slug === search.topic) ? search.topic : null,
   );
 
   const active = data?.problems.find((p: any) => p.id === activeId) ?? null;
+  const selectedTopicName = topicSlug
+    ? TOPIC_LIST.find((t) => t.slug === topicSlug)?.name ?? topicSlug
+    : "Weakest Topic (auto)";
 
   useEffect(() => {
     if (!activeId && data?.problems?.[0]) setActiveId(data.problems[0].id);
@@ -86,22 +92,32 @@ function Practice() {
       const r = await gen({
         data: { language: lang, topicSlug, environment: getPaddleEnvironment() },
       });
-      if (!r.ok) toast.error(r.error);
-      else {
-        toast.success("New problem ready");
-        await refetch();
-        setActiveId((r as any).problem?.id ?? null);
-        track("practice_generated", {
-          topic: (r as any).problem?.topic_slug ?? null,
-          language: lang,
-        });
+      if (!r.ok) {
+        toast.error(r.error);
+        return false;
       }
+      toast.success("New problem ready");
+      await refetch();
+      setActiveId((r as any).problem?.id ?? null);
+      setStep("solve");
+      track("practice_generated", {
+        topic: (r as any).problem?.topic_slug ?? null,
+        language: lang,
+      });
+      return true;
     } catch (e: any) {
       console.error("generatePractice failed:", e);
       toast.error(e?.message || "Could not generate a problem. Try again.");
+      return false;
     } finally {
       setBusy(false);
     }
+  };
+
+  const resetFlow = () => {
+    setStep("topic");
+    setShowAllOptions(false);
+    setActiveId(null);
   };
 
   return (
@@ -121,45 +137,189 @@ function Practice() {
           <h1 className="mt-2 font-display text-5xl tracking-tight">Practice</h1>
           <p className="text-muted-foreground mt-2">
             {topicSlug
-              ? `Generating problems for ${TOPIC_LIST.find((t) => t.slug === topicSlug)?.name ?? topicSlug}.`
+              ? `Generating problems for ${selectedTopicName}.`
               : "Auto-generated problems targeting your weakest topic."}
           </p>
         </div>
-        <button
-          onClick={onGen}
-          disabled={busy}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
-        >
-          <Sparkles className="size-4" /> {busy ? "Generating…" : "Generate a problem"}
-        </button>
-        <select
-          value={topicSlug ?? ""}
-          onChange={(e) => setTopicSlug(e.target.value || null)}
-          className="rounded-md border border-border bg-input px-3 py-2 text-sm"
-        >
-          <option value="">Weakest Topic (auto)</option>
-          {TOPIC_CATEGORIES.map((cat) => (
-            <optgroup key={cat} label={cat}>
-              {TOPIC_LIST.filter((t) => t.category === cat).map((t) => (
-                <option key={t.slug} value={t.slug}>
-                  {t.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-        <select
-          value={lang}
-          onChange={(e) => setLang(e.target.value as Lang)}
-          className="rounded-md border border-border bg-input px-3 py-2 text-sm font-mono"
-        >
-          {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
-            <option key={l} value={l}>
-              {LANG_LABELS[l]}
+        {showAllOptions && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={onGen}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
+            >
+              <Sparkles className="size-4" /> {busy ? "Generating..." : "Generate a problem"}
+            </button>
+            <TopicSelect topicSlug={topicSlug} onChange={setTopicSlug} />
+            <LanguageSelect lang={lang} onChange={setLang} />
+          </div>
+        )}
+      </div>
+
+      {!showAllOptions && step === "topic" && (
+        <section className="max-w-xl mx-auto rounded-lg border border-border bg-card p-6">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">Step 1 of 3</p>
+          <h2 className="font-display text-3xl mt-2 mb-2">Choose topic</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Start with your weakest topic automatically, or pick a specific area.
+          </p>
+          <div className="rounded-md border border-accent/40 bg-accent/10 p-4 mb-4">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-accent">Suggested</p>
+            <p className="font-medium mt-1">Weakest topic</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Leave the picker on auto to let CodeWise choose your lowest mastery topic.
+            </p>
+          </div>
+          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+            Topic
+          </label>
+          <TopicSelect topicSlug={topicSlug} onChange={setTopicSlug} className="mt-2 w-full" />
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setShowAllOptions(true)}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Show all options
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep("language")}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+            >
+              Next: Choose language
+            </button>
+          </div>
+        </section>
+      )}
+
+      {!showAllOptions && step === "language" && (
+        <section className="max-w-xl mx-auto rounded-lg border border-border bg-card p-6">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">Step 2 of 3</p>
+          <h2 className="font-display text-3xl mt-2 mb-2">Choose language</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Topic: <span className="text-foreground">{selectedTopicName}</span>
+          </p>
+          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+            Language
+          </label>
+          <LanguageSelect lang={lang} onChange={setLang} className="mt-2 w-full" />
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setStep("topic")}
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="size-3.5" /> Back to topic
+            </button>
+            <button
+              type="button"
+              onClick={onGen}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition disabled:opacity-50"
+            >
+              <Sparkles className="size-4" /> {busy ? "Generating..." : "Generate problem"}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {(showAllOptions || step === "solve") && (
+        <PracticeWorkspace
+          data={data}
+          active={active}
+          activeId={activeId}
+          isLoading={isLoading}
+          onSelect={setActiveId}
+          onNewProblem={resetFlow}
+          showNewProblem={!showAllOptions}
+        />
+      )}
+    </div>
+  );
+}
+
+function TopicSelect({
+  topicSlug,
+  onChange,
+  className = "",
+}: {
+  topicSlug: string | null;
+  onChange: (slug: string | null) => void;
+  className?: string;
+}) {
+  return (
+    <select
+      value={topicSlug ?? ""}
+      onChange={(e) => onChange(e.target.value || null)}
+      className={`rounded-md border border-border bg-input px-3 py-2 text-sm ${className}`}
+    >
+      <option value="">Weakest Topic (auto)</option>
+      {TOPIC_CATEGORIES.map((cat) => (
+        <optgroup key={cat} label={cat}>
+          {TOPIC_LIST.filter((t) => t.category === cat).map((t) => (
+            <option key={t.slug} value={t.slug}>
+              {t.name}
             </option>
           ))}
-        </select>
-      </div>
+        </optgroup>
+      ))}
+    </select>
+  );
+}
+
+function LanguageSelect({
+  lang,
+  onChange,
+  className = "",
+}: {
+  lang: Lang;
+  onChange: (lang: Lang) => void;
+  className?: string;
+}) {
+  return (
+    <select
+      value={lang}
+      onChange={(e) => onChange(e.target.value as Lang)}
+      className={`rounded-md border border-border bg-input px-3 py-2 text-sm font-mono ${className}`}
+    >
+      {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
+        <option key={l} value={l}>
+          {LANG_LABELS[l]}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function PracticeWorkspace({
+  data,
+  active,
+  activeId,
+  isLoading,
+  onSelect,
+  onNewProblem,
+  showNewProblem,
+}: {
+  data: any;
+  active: any;
+  activeId: string | null;
+  isLoading: boolean;
+  onSelect: (id: string) => void;
+  onNewProblem: () => void;
+  showNewProblem: boolean;
+}) {
+  return (
+    <div className="space-y-4">
+      {showNewProblem && (
+        <button
+          type="button"
+          onClick={onNewProblem}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-3.5" /> New problem
+        </button>
+      )}
 
       {isLoading && (
         <div className="grid lg:grid-cols-[260px_1fr] gap-6">
@@ -183,7 +343,7 @@ function Practice() {
             {data.problems.map((p: any) => (
               <button
                 key={p.id}
-                onClick={() => setActiveId(p.id)}
+                onClick={() => onSelect(p.id)}
                 className={`w-full text-left rounded-md border p-3 transition ${
                   activeId === p.id
                     ? "border-accent bg-accent/10"
@@ -335,14 +495,14 @@ function ProblemWorkspace({ problem }: { problem: any }) {
                 disabled={running || reviewing}
                 className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10 disabled:opacity-50"
               >
-                <Play className="size-3" /> {running ? "Running…" : "Run"}
+                <Play className="size-3" /> {running ? "Running..." : "Run"}
               </button>
               <button
                 onClick={onSubmit}
                 disabled={running || reviewing}
                 className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                <Send className="size-3" /> {reviewing ? "Reviewing…" : "Submit"}
+                <Send className="size-3" /> {reviewing ? "Reviewing..." : "Submit"}
               </button>
             </div>
           </div>
@@ -389,7 +549,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
             {!output && !running && (
               <span className="text-muted-foreground">Run your code to see output.</span>
             )}
-            {running && <span className="text-muted-foreground animate-pulse">Executing…</span>}
+            {running && <span className="text-muted-foreground animate-pulse">Executing...</span>}
             {output?.stdout && <span>{output.stdout}</span>}
             {output?.stderr && <span className="text-destructive">{output.stderr}</span>}
           </pre>

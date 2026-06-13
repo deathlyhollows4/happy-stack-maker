@@ -1,9 +1,33 @@
 import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, GraduationCap, LineChart, Code2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+const FEATURED_TOPICS = [
+  {
+    name: "Arrays",
+    slug: "arrays",
+    description: "Build confidence with traversal, indexing, and two-pointer patterns.",
+  },
+  {
+    name: "Hash Tables",
+    slug: "hash-tables",
+    description: "Practice fast lookups, frequency maps, grouping, and duplicate checks.",
+  },
+  {
+    name: "Graphs",
+    slug: "graphs",
+    description: "Review reachability, traversal, components, and path-finding ideas.",
+  },
+  {
+    name: "Dynamic Programming",
+    slug: "dynamic-programming",
+    description: "Learn to spot repeated subproblems and reuse previous answers.",
+  },
+];
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -52,7 +76,7 @@ function LandingPage() {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (url.searchParams.get("checkout") === "success") {
-      toast.success("You're subscribed. Welcome to Pro 🎉");
+      toast.success("You're subscribed. Welcome to Pro");
       url.searchParams.delete("checkout");
       window.history.replaceState({}, "", url.toString());
     }
@@ -66,33 +90,7 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-display text-2xl">CodeWise</span>
-            <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
-              beta
-            </span>
-          </Link>
-          <nav className="flex items-center gap-6 text-sm">
-            <Link to={hasSession ? "/dashboard" : "/login"} className="text-muted-foreground hover:text-foreground">
-              Dashboard
-            </Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground">
-              Pricing
-            </Link>
-            <Link to="/login" className="text-muted-foreground hover:text-foreground">
-              Sign in
-            </Link>
-            <Link
-              to="/signup"
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Get started <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader hasSession={hasSession} active="home" />
 
       <main>
       <section className="border-b border-border/60">
@@ -115,7 +113,7 @@ function LandingPage() {
               to="/signup"
               className="inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
-              Start your first review <ArrowRight className="h-4 w-4" />
+              Start free review <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/login"
@@ -164,7 +162,7 @@ function LandingPage() {
                 </div>
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Correct logic, but O(n²). You're not yet using a hash map to trade space for time, a
+                Correct logic, but O(n^2). You're not yet using a hash map to trade space for time, a
                 foundational pattern for the rest of the curriculum.
               </p>
               <div>
@@ -187,8 +185,8 @@ function LandingPage() {
                   Suggested practice
                 </p>
                 <ul className="mt-2 space-y-1 text-sm">
-                  <li>· Contains Duplicate (easy)</li>
-                  <li>· Group Anagrams (medium)</li>
+                  <li>- Contains Duplicate (easy)</li>
+                  <li>- Group Anagrams (medium)</li>
                 </ul>
               </div>
             </div>
@@ -217,6 +215,61 @@ function LandingPage() {
       </section>
 
       <section className="border-b border-border/60 bg-card/40">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Featured topics
+              </p>
+              <h2 className="mt-3 font-display text-4xl">Start with high-signal CS concepts.</h2>
+            </div>
+            <Link to="/learn" className="inline-flex items-center gap-2 text-sm font-medium text-accent">
+              View all topics <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURED_TOPICS.map((topic) => (
+              <Link
+                key={topic.slug}
+                to="/learn/$slug"
+                params={{ slug: topic.slug }}
+                className="group rounded-lg border border-border bg-background p-5 hover:border-accent/40 transition-colors"
+              >
+                <h3 className="font-display text-xl group-hover:text-accent transition-colors">
+                  {topic.name}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {topic.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="rounded-lg border border-border bg-card p-8 md:flex md:items-center md:justify-between md:gap-8">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Latest from the blog
+              </p>
+              <h2 className="mt-3 font-display text-4xl">Resources for CS students.</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Read guides on DSA patterns, code review habits, and learning strategies.
+              </p>
+            </div>
+            <Link
+              to="/blog"
+              className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 md:mt-0"
+            >
+              Read the blog <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border/60 bg-card/40">
         <div className="mx-auto max-w-3xl px-6 py-24 text-center">
           <Sparkles className="mx-auto h-6 w-6 text-accent" />
           <h2 className="mt-4 font-display text-5xl">Ready when you are.</h2>
@@ -227,7 +280,7 @@ function LandingPage() {
             to="/signup"
             className="mt-8 inline-flex items-center gap-2 rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Create your account <ArrowRight className="h-4 w-4" />
+            Start free review <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>

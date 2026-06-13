@@ -15,6 +15,7 @@ import {
   GraduationCap,
   Download,
   RefreshCw,
+  FlaskConical,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
@@ -147,6 +148,12 @@ function AdminDashboard() {
             icon={<RefreshCw className="size-4" />}
             label="Update Price"
             desc="Sync Paddle yearly price"
+          />
+          <QuickLink
+            to="/admin/research"
+            icon={<FlaskConical className="size-4" />}
+            label="Research"
+            desc="Review study consent data"
           />
         </div>
       </div>

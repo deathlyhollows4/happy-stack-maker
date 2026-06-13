@@ -1,4 +1,5 @@
 import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useId, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,16 +155,7 @@ export function AuthShell({
 }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="border-b border-border/60">
-        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-display text-2xl">CodeWise</span>
-            <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
-              beta
-            </span>
-          </Link>
-        </div>
-      </header>
+      <SiteHeader />
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <h1 className="font-display text-5xl tracking-tight mb-2">{title}</h1>
