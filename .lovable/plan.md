@@ -1,45 +1,15 @@
-# Fix infinite reload on `/auth/callback` after Google sign-up
+I found the callback page is still waiting inside the client auth/session handoff, so it can sit on “Completing sign in” forever instead of failing or continuing.
 
-## Root cause
+Plan:
+1. Update the Google OAuth callback route to handle both callback formats:
+   - implicit tokens in the URL hash: `access_token` and `refresh_token`
+   - code-based callback: `code`, using the auth client’s code exchange
+2. Add a short auth-state race so the page redirects as soon as a session exists, instead of depending on one promise path.
+3. Add a timeout fallback that checks for an existing session, then either redirects to `/dashboard` or shows a real error with a retry link. No more infinite spinner.
+4. Clean the callback URL only after the session is confirmed, then navigate with `replace: true`.
+5. Keep the Google sign-in/start code unchanged unless the callback inspection shows the redirect URL itself is wrong.
 
-`src/routes/auth/callback.tsx` currently calls `lovable.auth.signInWithOAuth("google", { redirect_uri: ".../auth/callback" })` on mount. Inspecting `@lovable.dev/cloud-auth-js` (`node_modules/.../dist/index.js`) shows that on a top-level (non-iframe) page this call unconditionally does:
-
-```
-window.location.href = `${oauthBrokerUrl}?...`;
-return { redirected: true };
-```
-
-It does NOT detect that we're already on a return URL with tokens. So on the published site the flow becomes:
-
-1. User completes Google consent → broker redirects to `/auth/callback#access_token=...&refresh_token=...`
-2. Callback page mounts → calls `signInWithOAuth` → redirects to `/~oauth/initiate` again
-3. Broker bounces back to `/auth/callback` with new tokens → loop
-
-That's the "stuck on Completing sign in… and keeps reloading" symptom. It also explains why existing users sometimes worked (a prior valid session may have already been written to `localStorage` before the loop started).
-
-The popup/iframe flow (used in the editor preview) does work, because the SDK's `setSession(result.tokens)` is called inside the popup wrapper in `src/integrations/lovable/index.ts`, and the opener page handles navigation. The break is specifically the top-level redirect flow on the published site.
-
-## Fix
-
-Make `/auth/callback` consume the tokens the broker put in the URL, instead of re-initiating OAuth.
-
-### `src/routes/auth/callback.tsx`
-
-On mount:
-
-1. Read tokens from `window.location.hash` (and fall back to `window.location.search` in case the broker uses query params). Expected params: `access_token`, `refresh_token`, optional `error` / `error_description`.
-2. If `error` is present → set error state, render the existing failure UI with the "Back to sign in" link.
-3. If both tokens are present → `await supabase.auth.setSession({ access_token, refresh_token })`. On success, clear the hash with `history.replaceState(null, "", window.location.pathname)` and `navigate({ to: "/dashboard", replace: true })`.
-4. If neither tokens nor error are present (someone landed on the page directly), fall back once to `supabase.auth.getSession()`. If a session exists → navigate to `/dashboard`; otherwise show the error UI.
-5. Do NOT call `lovable.auth.signInWithOAuth` here. Remove that import.
-6. Keep the `cancelled` flag for unmount safety. No `onAuthStateChange` subscription.
-
-No other files change. `signInWithGoogle` / `signInWithGoogleSignUp` and the broker config stay the same; `redirect_uri` remains `/auth/callback`.
-
-## Verification
-
-- Brand-new Google account on the published site → lands on `/dashboard` within ~1s, URL hash cleared, no reload loop.
-- Existing Google user → still lands on `/dashboard`.
-- Cancel Google consent → `/auth/callback?error=...`, error UI renders with "Back to sign in".
-- Visit `/auth/callback` directly with no params and no session → error UI renders, no redirect loop.
-- Editor preview (iframe popup flow) → unchanged: `signup.tsx` / `login.tsx` still navigate to `/dashboard` after the popup resolves.
+Technical notes:
+- Primary file: `src/routes/auth/callback.tsx`
+- Possible related checks: `src/lib/auth-helpers.ts`, `_authenticated` route guard
+- Before editing the callback symbol, I’ll run impact analysis and report the blast radius.
