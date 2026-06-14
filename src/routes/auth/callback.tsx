@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { AuthShell } from "../login";
 
 export const Route = createFileRoute("/auth/callback")({
@@ -13,20 +14,42 @@ function OAuthCallback() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data, error: err }) => {
-      if (err) {
-        setError(err.message);
-        return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // Consume the OAuth response tokens left in the URL by the Lovable broker.
+        const result = await lovable.auth.signInWithOAuth("google", {
+          redirect_uri: `${window.location.origin}/auth/callback`,
+        });
+
+        if (cancelled) return;
+
+        if (result?.error) {
+          setError(result.error.message ?? "Sign in failed.");
+          return;
+        }
+
+        // If the SDK chose to redirect again, just wait for the next load.
+        if (result?.redirected) return;
+
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+
+        if (data.session) {
+          nav({ to: "/dashboard" });
+        } else {
+          setError("We couldn't complete your sign in. Please try again.");
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Sign in failed.");
       }
-      if (data.session) {
-        nav({ to: "/dashboard" });
-        return;
-      }
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (session) nav({ to: "/dashboard" });
-      });
-      return () => sub.subscription.unsubscribe();
-    });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [nav]);
 
   if (error) {
