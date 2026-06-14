@@ -90,30 +90,41 @@ function OAuthCallback() {
 
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
+        const code = params.get("code");
 
         if (access_token && refresh_token) {
-          const { error: setErr } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
+          const result = await completeAuthWithTimeout(() =>
+            supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            }),
+          );
           if (cancelled) return;
-          if (setErr) {
-            setError(setErr.message);
+          if (!result.ok) {
+            setError(result.message);
             return;
           }
-          try {
-            history.replaceState(null, "", window.location.pathname);
-          } catch {
-            // best-effort cleanup
-          }
+          clearCallbackUrl();
           nav({ to: "/dashboard", replace: true });
           return;
         }
 
-        // Fallback: no tokens in URL — maybe session already established.
-        const { data } = await supabase.auth.getSession();
+        if (code) {
+          const result = await completeAuthWithTimeout(() => supabase.auth.exchangeCodeForSession(code));
+          if (cancelled) return;
+          if (!result.ok) {
+            setError(result.message);
+            return;
+          }
+          clearCallbackUrl();
+          nav({ to: "/dashboard", replace: true });
+          return;
+        }
+
+        const hasSession = await waitForSession(CALLBACK_TIMEOUT_MS);
         if (cancelled) return;
-        if (data.session) {
+        if (hasSession) {
+          clearCallbackUrl();
           nav({ to: "/dashboard", replace: true });
         } else {
           setError("We couldn't complete your sign in. Please try again.");
