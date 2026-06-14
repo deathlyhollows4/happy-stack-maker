@@ -3,18 +3,74 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthShell } from "../login";
 
+const CALLBACK_TIMEOUT_MS = 8_000;
+
+type AuthResult =
+  | { ok: true }
+  | { ok: false; message: string };
+
 export const Route = createFileRoute("/auth/callback")({
   head: () => ({ meta: [{ title: "Signing in... | CodeWise" }] }),
   component: OAuthCallback,
 });
 
 function readParams(): URLSearchParams {
-  const hash = window.location.hash.startsWith("#")
-    ? window.location.hash.slice(1)
-    : window.location.hash;
-  const fromHash = new URLSearchParams(hash);
-  if (fromHash.get("access_token") || fromHash.get("error")) return fromHash;
-  return new URLSearchParams(window.location.search);
+  const params = new URLSearchParams();
+  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
+  new URLSearchParams(hash).forEach((value, key) => params.set(key, value));
+  new URLSearchParams(window.location.search).forEach((value, key) => params.set(key, value));
+  return params;
+}
+
+function clearCallbackUrl() {
+  try {
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+function waitForSession(timeoutMs: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    let subscription: { unsubscribe: () => void } | null = null;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const finish = (hasSession: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      subscription?.unsubscribe();
+      resolve(hasSession);
+    };
+
+    timer = setTimeout(() => finish(false), timeoutMs);
+
+    const authSub = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) finish(true);
+    });
+    subscription = authSub.data.subscription;
+
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        if (data.session) finish(true);
+      })
+      .catch(() => undefined);
+  });
+}
+
+async function completeAuthWithTimeout(operation: () => Promise<{ error: Error | null }>): Promise<AuthResult> {
+  const operationResult = operation()
+    .then(({ error }) => (error ? { ok: false as const, message: error.message } : { ok: true as const }))
+    .catch((e) => ({ ok: false as const, message: e instanceof Error ? e.message : "Sign in failed." }));
+
+  const sessionResult = waitForSession(CALLBACK_TIMEOUT_MS).then((hasSession) => (
+    hasSession
+      ? { ok: true as const }
+      : { ok: false as const, message: "Sign in took too long. Please try again." }
+  ));
+
+  return Promise.race([operationResult, sessionResult]);
 }
 
 function OAuthCallback() {
@@ -35,30 +91,41 @@ function OAuthCallback() {
 
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
+        const code = params.get("code");
 
         if (access_token && refresh_token) {
-          const { error: setErr } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
+          const result = await completeAuthWithTimeout(() =>
+            supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            }),
+          );
           if (cancelled) return;
-          if (setErr) {
-            setError(setErr.message);
+          if (!result.ok) {
+            setError(result.message);
             return;
           }
-          try {
-            history.replaceState(null, "", window.location.pathname);
-          } catch {
-            // best-effort cleanup
-          }
+          clearCallbackUrl();
           nav({ to: "/dashboard", replace: true });
           return;
         }
 
-        // Fallback: no tokens in URL — maybe session already established.
-        const { data } = await supabase.auth.getSession();
+        if (code) {
+          const result = await completeAuthWithTimeout(() => supabase.auth.exchangeCodeForSession(code));
+          if (cancelled) return;
+          if (!result.ok) {
+            setError(result.message);
+            return;
+          }
+          clearCallbackUrl();
+          nav({ to: "/dashboard", replace: true });
+          return;
+        }
+
+        const hasSession = await waitForSession(CALLBACK_TIMEOUT_MS);
         if (cancelled) return;
-        if (data.session) {
+        if (hasSession) {
+          clearCallbackUrl();
           nav({ to: "/dashboard", replace: true });
         } else {
           setError("We couldn't complete your sign in. Please try again.");
