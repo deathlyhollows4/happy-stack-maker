@@ -34,6 +34,7 @@ function waitForSession(timeoutMs: number): Promise<boolean> {
   return new Promise((resolve) => {
     let settled = false;
     let subscription: { unsubscribe: () => void } | null = null;
+    let timer: ReturnType<typeof setTimeout>;
 
     const finish = (hasSession: boolean) => {
       if (settled) return;
@@ -43,7 +44,7 @@ function waitForSession(timeoutMs: number): Promise<boolean> {
       resolve(hasSession);
     };
 
-    const timer = setTimeout(() => finish(false), timeoutMs);
+    timer = setTimeout(() => finish(false), timeoutMs);
 
     const authSub = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) finish(true);
