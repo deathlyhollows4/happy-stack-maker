@@ -1,13 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { AuthShell } from "../login";
 
 export const Route = createFileRoute("/auth/callback")({
   head: () => ({ meta: [{ title: "Signing in... | CodeWise" }] }),
   component: OAuthCallback,
 });
+
+function readParams(): URLSearchParams {
+  const hash = window.location.hash.startsWith("#")
+    ? window.location.hash.slice(1)
+    : window.location.hash;
+  const fromHash = new URLSearchParams(hash);
+  if (fromHash.get("access_token") || fromHash.get("error")) return fromHash;
+  return new URLSearchParams(window.location.search);
+}
 
 function OAuthCallback() {
   const nav = useNavigate();
@@ -18,26 +26,40 @@ function OAuthCallback() {
 
     (async () => {
       try {
-        // Consume the OAuth response tokens left in the URL by the Lovable broker.
-        const result = await lovable.auth.signInWithOAuth("google", {
-          redirect_uri: `${window.location.origin}/auth/callback`,
-        });
-
-        if (cancelled) return;
-
-        if (result?.error) {
-          setError(result.error.message ?? "Sign in failed.");
+        const params = readParams();
+        const errParam = params.get("error_description") || params.get("error");
+        if (errParam) {
+          if (!cancelled) setError(errParam);
           return;
         }
 
-        // If the SDK chose to redirect again, just wait for the next load.
-        if (result?.redirected) return;
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
 
+        if (access_token && refresh_token) {
+          const { error: setErr } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+          if (cancelled) return;
+          if (setErr) {
+            setError(setErr.message);
+            return;
+          }
+          try {
+            history.replaceState(null, "", window.location.pathname);
+          } catch {
+            // best-effort cleanup
+          }
+          nav({ to: "/dashboard", replace: true });
+          return;
+        }
+
+        // Fallback: no tokens in URL — maybe session already established.
         const { data } = await supabase.auth.getSession();
         if (cancelled) return;
-
         if (data.session) {
-          nav({ to: "/dashboard" });
+          nav({ to: "/dashboard", replace: true });
         } else {
           setError("We couldn't complete your sign in. Please try again.");
         }
