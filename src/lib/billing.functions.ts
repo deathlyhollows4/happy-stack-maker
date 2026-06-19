@@ -11,14 +11,7 @@ async function getLatestSubscription(userId: string, environment: "sandbox" | "l
   const { data } = await supabaseAdmin
     .from("subscriptions")
     .select(
-      [
-        "id",
-        "provider",
-        "provider_subscription_id",
-        "status",
-        "current_period_end",
-        "external_status_updated_at",
-      ].join(", "),
+      "id, provider, provider_subscription_id, status, current_period_end, external_status_updated_at",
     )
     .eq("user_id", userId)
     .eq("environment", environment)
