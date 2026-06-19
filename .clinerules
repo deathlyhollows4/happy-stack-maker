@@ -1,0 +1,24 @@
+# Cline Rules | CodeWise
+
+Start with `CLAUDE.md` and `.claude/rules/`.
+
+Project:
+- CodeWise is a TanStack Start app for code review, spaced repetition, practice generation, and subscription-based learning workflows.
+- Auth and persistence use Supabase.
+- Billing uses Paddle.
+- AI review and practice generation use the Lovable AI Gateway.
+
+Read:
+- `.claude/rules/architecture.md`
+- `.claude/rules/stack.md`
+- `.claude/rules/modules.md`
+- `.claude/rules/models.md`
+- `.claude/rules/api.md`
+- `.claude/rules/conventions.md`
+- `.claude/rules/gotchas.md`
+
+Guardrails:
+- `CLAUDE.md` contains repo-specific GitNexus edit rules.
+- Backend logic lives mainly in `src/lib/*.functions.ts`.
+- Authenticated server functions use Supabase auth middleware.
+- Prefer npm commands when reproducing CI.

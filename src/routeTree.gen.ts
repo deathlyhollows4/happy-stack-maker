@@ -21,6 +21,7 @@ import { Route as LearnRouteImport } from './routes/learn'
 import { Route as HealthRouteImport } from './routes/health'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as DemoReviewRouteImport } from './routes/demo-review'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -106,6 +107,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoReviewRoute = DemoReviewRouteImport.update({
+  id: '/demo-review',
+  path: '/demo-review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BlogRoute = BlogRouteImport.update({
@@ -250,6 +256,7 @@ const ApiPublicOgSubmissionIdRoute = ApiPublicOgSubmissionIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/blog': typeof BlogRouteWithChildren
+  '/demo-review': typeof DemoReviewRoute
   '/explore': typeof ExploreRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/health': typeof HealthRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/blog': typeof BlogRouteWithChildren
+  '/demo-review': typeof DemoReviewRoute
   '/explore': typeof ExploreRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/health': typeof HealthRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/blog': typeof BlogRouteWithChildren
+  '/demo-review': typeof DemoReviewRoute
   '/explore': typeof ExploreRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/health': typeof HealthRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/blog'
+    | '/demo-review'
     | '/explore'
     | '/forgot-password'
     | '/health'
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/blog'
+    | '/demo-review'
     | '/explore'
     | '/forgot-password'
     | '/health'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/blog'
+    | '/demo-review'
     | '/explore'
     | '/forgot-password'
     | '/health'
@@ -489,6 +501,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   BlogRoute: typeof BlogRouteWithChildren
+  DemoReviewRoute: typeof DemoReviewRoute
   ExploreRoute: typeof ExploreRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HealthRoute: typeof HealthRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo-review': {
+      id: '/demo-review'
+      path: '/demo-review'
+      fullPath: '/demo-review'
+      preLoaderRoute: typeof DemoReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/blog': {
@@ -866,6 +886,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   BlogRoute: BlogRouteWithChildren,
+  DemoReviewRoute: DemoReviewRoute,
   ExploreRoute: ExploreRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HealthRoute: HealthRoute,
@@ -886,3 +907,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

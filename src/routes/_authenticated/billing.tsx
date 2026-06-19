@@ -141,8 +141,8 @@ function FreePlanCard() {
         </span>
       </div>
       <p className="text-sm text-muted-foreground">
-        50 code reviews / month · 25 practice problems / day · 100 code runs / day. Upgrade for 1500
-        reviews and 15 practice problems daily.
+        50 code reviews / month, 25 practice problems / day, 100 code runs / day. Upgrade for 1500
+        reviews and 150 practice problems daily.
       </p>
       <Link
         to="/pricing"

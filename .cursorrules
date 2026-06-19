@@ -1,0 +1,23 @@
+# Cursor Rules | CodeWise
+
+Read `CLAUDE.md` and `.claude/rules/` before broad edits.
+
+Key facts:
+- Framework: TanStack Start with React 19 and TanStack Router
+- Backend boundary: TanStack Start server functions in `src/lib/*.functions.ts`
+- Data layer: Supabase with generated types in `src/integrations/supabase/types.ts`
+- Billing: Paddle
+- AI provider: Lovable AI Gateway
+
+Navigation:
+- Architecture: `.claude/rules/architecture.md`
+- Stack and commands: `.claude/rules/stack.md`
+- Modules: `.claude/rules/modules.md`
+- Tables and RPCs: `.claude/rules/models.md`
+- Routes and server functions: `.claude/rules/api.md`
+- Working patterns and gotchas: `.claude/rules/conventions.md`, `.claude/rules/gotchas.md`
+
+Rules:
+- Keep `CLAUDE.md` repo-specific guidance intact.
+- Treat generated memory as helper context, then verify against code for important changes.
+- Prefer npm-style commands when matching CI behavior.

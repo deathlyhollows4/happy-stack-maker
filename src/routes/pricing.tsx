@@ -14,13 +14,13 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "CodeWise Pro: 1500 code reviews per month and 15 practice problems per day. Cancel anytime.",
+          "CodeWise Pro: 1500 code reviews per month and 150 practice problems per day. Cancel anytime.",
       },
       { property: "og:title", content: "Pricing | CodeWise" },
       {
         property: "og:description",
         content:
-          "CodeWise Pro: 1500 code reviews per month and 15 practice problems per day. Cancel anytime.",
+          "CodeWise Pro: 1500 code reviews per month and 150 practice problems per day. Cancel anytime.",
       },
       { property: "og:url", content: "https://happy-stack-maker.lovable.app/pricing" },
     ],
@@ -38,7 +38,7 @@ const FREE_FEATURES = [
 
 const PRO_FEATURES = [
   "1500 code reviews / month",
-  "15 practice problems / day",
+  "150 practice problems / day",
   "Priority support",
 ];
 

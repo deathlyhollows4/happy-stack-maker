@@ -3,6 +3,7 @@ import * as d3 from "d3-force";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { PREREQUISITE_EDGES } from "@/lib/topics";
 
 interface TopicRow {
   slug: string;
@@ -33,38 +34,20 @@ const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 3.0;
 const ZOOM_STEP = 0.2;
 
-const PREREQUISITE_EDGES: Array<{ source: string; target: string }> = [
-  { source: "arrays", target: "two-pointers" },
-  { source: "arrays", target: "sliding-window" },
-  { source: "arrays", target: "hashing" },
-  { source: "arrays", target: "sorting" },
-  { source: "sorting", target: "binary-search" },
-  { source: "linked-lists", target: "stacks" },
-  { source: "linked-lists", target: "queues" },
-  { source: "stacks", target: "recursion" },
-  { source: "recursion", target: "trees" },
-  { source: "recursion", target: "backtracking" },
-  { source: "recursion", target: "dp" },
-  { source: "trees", target: "bst" },
-  { source: "trees", target: "heaps" },
-  { source: "trees", target: "graphs" },
-  { source: "graphs", target: "dp" },
-  { source: "greedy", target: "dp" },
-  { source: "two-pointers", target: "sliding-window" },
-  { source: "binary-search", target: "dp" },
-  { source: "bit-manipulation", target: "hashing" },
-  { source: "complexity", target: "sorting" },
-];
-
 interface SimNode {
   slug: string;
   name: string;
   category: string;
   mastery: number | null;
   attempts: number;
-  x: number;
-  y: number;
+  x?: number;
+  y?: number;
 }
+
+type SimLink = d3.SimulationLinkDatum<SimNode> & {
+  source: string | SimNode;
+  target: string | SimNode;
+};
 
 function masteryColor(m: number | null): string {
   if (m === null) return "oklch(0.38 0.01 60 / 0.6)";
@@ -172,16 +155,16 @@ export function KnowledgeGraph({ topics, progress }: Props) {
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    const simNodesCopy = nodes.map((n) => ({ ...n })) as any[];
-    const simLinksCopy = links.map((l) => ({ ...l }));
+    const simNodesCopy: SimNode[] = nodes.map((n) => ({ ...n }));
+    const simLinksCopy: SimLink[] = links.map((l) => ({ ...l }));
 
     const sim = d3
-      .forceSimulation<any>(simNodesCopy)
+      .forceSimulation<SimNode>(simNodesCopy)
       .force(
         "link",
         d3
-          .forceLink<any, any>(simLinksCopy)
-          .id((d: any) => d.slug)
+          .forceLink<SimNode, SimLink>(simLinksCopy)
+          .id((d) => d.slug)
           .distance(95),
       )
       .force("charge", d3.forceManyBody().strength(-350))
@@ -196,12 +179,12 @@ export function KnowledgeGraph({ topics, progress }: Props) {
     let raf = 0;
     sim.on("tick", () => {
       for (const n of simNodesCopy) {
-        n.x = clamp(n.x, margin, VB_W - margin);
-        n.y = clamp(n.y, margin, VB_H - margin);
+        n.x = clamp(n.x ?? VB_W / 2, margin, VB_W - margin);
+        n.y = clamp(n.y ?? VB_H / 2, margin, VB_H - margin);
       }
       if (raf) return;
       raf = requestAnimationFrame(() => {
-        setSimNodes([...simNodesCopy] as SimNode[]);
+        setSimNodes([...simNodesCopy]);
         raf = 0;
       });
     });
@@ -299,279 +282,279 @@ export function KnowledgeGraph({ topics, progress }: Props) {
 
   return (
     <ErrorBoundary fallback={<div className="p-8 text-center">Graph unavailable</div>}>
-    <div
-      ref={containerRef}
-      className="relative w-full overflow-hidden rounded-lg"
-      style={{ background: colors.bg, aspectRatio: `${VB_W}/${VB_H}` }}
-    >
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${VB_W} ${VB_H}`}
-        className="w-full h-full"
-        preserveAspectRatio="xMidYMid meet"
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        style={{ cursor: dragging ? "grabbing" : "grab" }}
+      <div
+        ref={containerRef}
+        className="relative w-full overflow-hidden rounded-lg"
+        style={{ background: colors.bg, aspectRatio: `${VB_W}/${VB_H}` }}
       >
-        <defs>
-          <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1" />
-            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur2" />
-            <feMerge>
-              <feMergeNode in="blur2" />
-              <feMergeNode in="blur1" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <filter id="edge-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur1" />
-            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur2" />
-            <feMerge>
-              <feMergeNode in="blur2" />
-              <feMergeNode in="blur1" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-          <marker
-            id="arrowhead"
-            viewBox="0 0 10 7"
-            refX={10}
-            refY={3.5}
-            markerWidth={6}
-            markerHeight={5}
-            orient="auto-start-reverse"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill={colors.arrowhead} />
-          </marker>
-        </defs>
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${VB_W} ${VB_H}`}
+          className="w-full h-full"
+          preserveAspectRatio="xMidYMid meet"
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          style={{ cursor: dragging ? "grabbing" : "grab" }}
+        >
+          <defs>
+            <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1" />
+              <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur2" />
+              <feMerge>
+                <feMergeNode in="blur2" />
+                <feMergeNode in="blur1" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="edge-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur1" />
+              <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur2" />
+              <feMerge>
+                <feMergeNode in="blur2" />
+                <feMergeNode in="blur1" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <marker
+              id="arrowhead"
+              viewBox="0 0 10 7"
+              refX={10}
+              refY={3.5}
+              markerWidth={6}
+              markerHeight={5}
+              orient="auto-start-reverse"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill={colors.arrowhead} />
+            </marker>
+          </defs>
 
-        <g transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}>
-          {links.map((link, i) => {
-            const src = simNodes.find((n) => n.slug === link.source);
-            const tgt = simNodes.find((n) => n.slug === link.target);
-            if (!src || !tgt) return null;
+          <g transform={`translate(${transform.x},${transform.y}) scale(${transform.k})`}>
+            {links.map((link, i) => {
+              const src = simNodes.find((n) => n.slug === link.source);
+              const tgt = simNodes.find((n) => n.slug === link.target);
+              if (!src || !tgt) return null;
 
-            const isHovered = hoveredSlug === link.source || hoveredSlug === link.target;
-            const isConnected =
-              hoveredSlug && connectedSlugs.has(link.source) && connectedSlugs.has(link.target);
+              const isHovered = hoveredSlug === link.source || hoveredSlug === link.target;
+              const isConnected =
+                hoveredSlug && connectedSlugs.has(link.source) && connectedSlugs.has(link.target);
 
-            let edgeOpacity: number;
-            let edgeStroke: string;
-            let edgeWidth: number;
-            let edgeFilter: string | undefined;
+              let edgeOpacity: number;
+              let edgeStroke: string;
+              let edgeWidth: number;
+              let edgeFilter: string | undefined;
 
-            if (!hoveredSlug) {
-              edgeOpacity = 0.5;
-              edgeStroke = colors.edgeDefault;
-              edgeWidth = 0.8;
-              edgeFilter = undefined;
-            } else if (isHovered) {
-              edgeOpacity = 1;
-              edgeStroke = colors.edgeHovered;
-              edgeWidth = 2.5;
-              edgeFilter = "url(#edge-glow)";
-            } else if (isConnected) {
-              edgeOpacity = 0.7;
-              edgeStroke = colors.edgeConnected;
-              edgeWidth = 1.2;
-              edgeFilter = undefined;
-            } else {
-              edgeOpacity = 0.08;
-              edgeStroke = colors.edgeDefault;
-              edgeWidth = 0.6;
-              edgeFilter = undefined;
-            }
+              if (!hoveredSlug) {
+                edgeOpacity = 0.5;
+                edgeStroke = colors.edgeDefault;
+                edgeWidth = 0.8;
+                edgeFilter = undefined;
+              } else if (isHovered) {
+                edgeOpacity = 1;
+                edgeStroke = colors.edgeHovered;
+                edgeWidth = 2.5;
+                edgeFilter = "url(#edge-glow)";
+              } else if (isConnected) {
+                edgeOpacity = 0.7;
+                edgeStroke = colors.edgeConnected;
+                edgeWidth = 1.2;
+                edgeFilter = undefined;
+              } else {
+                edgeOpacity = 0.08;
+                edgeStroke = colors.edgeDefault;
+                edgeWidth = 0.6;
+                edgeFilter = undefined;
+              }
 
-            return (
-              <line
-                key={`e-${i}`}
-                x1={src.x}
-                y1={src.y}
-                x2={tgt.x}
-                y2={tgt.y}
-                stroke={edgeStroke}
-                strokeWidth={edgeWidth}
-                opacity={edgeOpacity}
-                filter={edgeFilter}
-                markerEnd={isHovered ? "url(#arrowhead)" : undefined}
-                style={{ transition: "opacity 200ms, stroke-width 200ms" }}
-              />
-            );
-          })}
-
-          {simNodes.map((node) => {
-            const isHovered = hoveredSlug === node.slug;
-            const isLinked = hoveredSlug && !isHovered && connectedSlugs.has(node.slug);
-            const isDimmed = hoveredSlug && !isHovered && !isLinked;
-
-            const r = 14 + (node.mastery ?? 0) * 10;
-            const nodeOpacity = isDimmed ? 0.2 : 1;
-            const strokeW = isHovered ? 2.5 : isLinked ? 2 : 1.5;
-
-            const labelLines =
-              node.name.length > 14
-                ? [
-                    node.name.slice(0, Math.floor(node.name.length / 2)),
-                    node.name.slice(Math.floor(node.name.length / 2)),
-                  ]
-                : [node.name];
-
-            const labelOpacity = isDimmed ? 0.15 : isHovered ? 1 : isLinked ? 0.9 : 0.85;
-
-            return (
-              <g
-                key={node.slug}
-                className="cursor-pointer"
-                onMouseEnter={() => setHoveredSlug(node.slug)}
-                onMouseLeave={() => setHoveredSlug(null)}
-                opacity={nodeOpacity}
-                style={{ transition: "opacity 200ms" }}
-              >
-                <circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={isHovered ? r + 4 : isLinked ? r + 2 : r}
-                  fill={
-                    isHovered
-                      ? masteryBg(node.mastery)
-                      : isLinked
-                        ? masteryBg(node.mastery)
-                        : colors.circleFill
-                  }
-                  stroke={masteryColor(node.mastery)}
-                  strokeWidth={strokeW}
-                  filter={isHovered ? "url(#neon-glow)" : undefined}
-                  style={{ transition: "r 200ms, stroke-width 200ms" }}
+              return (
+                <line
+                  key={`e-${i}`}
+                  x1={src.x}
+                  y1={src.y}
+                  x2={tgt.x}
+                  y2={tgt.y}
+                  stroke={edgeStroke}
+                  strokeWidth={edgeWidth}
+                  opacity={edgeOpacity}
+                  filter={edgeFilter}
+                  markerEnd={isHovered ? "url(#arrowhead)" : undefined}
+                  style={{ transition: "opacity 200ms, stroke-width 200ms" }}
                 />
-                <circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={r}
-                  fill="none"
-                  stroke={masteryColor(node.mastery)}
-                  strokeWidth={1.5}
-                  strokeDasharray={`${(node.mastery ?? 0) * 2 * Math.PI * r} ${2 * Math.PI * r}`}
-                  strokeLinecap="round"
-                  opacity={node.mastery !== null ? 0.4 : 0}
-                  style={{
-                    transform: "rotate(-90deg)",
-                    transformOrigin: `${node.x}px ${node.y}px`,
-                    transition: "opacity 200ms",
-                  }}
-                />
-                {labelLines.map((line, li) => (
-                  <text
-                    key={li}
-                    x={node.x}
-                    y={node.y + r + 14 + li * 11}
-                    textAnchor="middle"
-                    className="text-[10px] font-mono"
+              );
+            })}
+
+            {simNodes.map((node) => {
+              const isHovered = hoveredSlug === node.slug;
+              const isLinked = hoveredSlug && !isHovered && connectedSlugs.has(node.slug);
+              const isDimmed = hoveredSlug && !isHovered && !isLinked;
+
+              const r = 14 + (node.mastery ?? 0) * 10;
+              const nodeOpacity = isDimmed ? 0.2 : 1;
+              const strokeW = isHovered ? 2.5 : isLinked ? 2 : 1.5;
+
+              const labelLines =
+                node.name.length > 14
+                  ? [
+                      node.name.slice(0, Math.floor(node.name.length / 2)),
+                      node.name.slice(Math.floor(node.name.length / 2)),
+                    ]
+                  : [node.name];
+
+              const labelOpacity = isDimmed ? 0.15 : isHovered ? 1 : isLinked ? 0.9 : 0.85;
+
+              return (
+                <g
+                  key={node.slug}
+                  className="cursor-pointer"
+                  onMouseEnter={() => setHoveredSlug(node.slug)}
+                  onMouseLeave={() => setHoveredSlug(null)}
+                  opacity={nodeOpacity}
+                  style={{ transition: "opacity 200ms" }}
+                >
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={isHovered ? r + 4 : isLinked ? r + 2 : r}
                     fill={
                       isHovered
-                        ? colors.labelHover
+                        ? masteryBg(node.mastery)
                         : isLinked
-                          ? colors.labelLinked
-                          : colors.labelDefault
+                          ? masteryBg(node.mastery)
+                          : colors.circleFill
                     }
-                    opacity={labelOpacity}
-                    style={{ transition: "opacity 200ms" }}
-                  >
-                    {line}
-                  </text>
-                ))}
-              </g>
-            );
-          })}
-
-          {hoveredSlug &&
-            (() => {
-              const hn = simNodes.find((n) => n.slug === hoveredSlug);
-              if (!hn) return null;
-              const labelWidth = Math.max(hn.name.length * 7, 100);
-              const tx = Math.min(Math.max(hn.x, labelWidth / 2 + 8), VB_W - labelWidth / 2 - 8);
-              const ty = hn.y - 50;
-              const lines = [
-                hn.name,
-                hn.mastery !== null
-                  ? `Mastery ${Math.round(hn.mastery * 100)}% · ${hn.attempts} attempts`
-                  : "Not yet reviewed",
-              ];
-              const boxH = lines.length * 14 + 20;
-              return (
-                <g>
-                  <rect
-                    x={tx - labelWidth / 2 - 10}
-                    y={ty - boxH + 10}
-                    width={labelWidth + 20}
-                    height={boxH}
-                    rx={6}
-                    fill={colors.tooltipBg}
-                    stroke={colors.tooltipBorder}
-                    strokeWidth={1}
+                    stroke={masteryColor(node.mastery)}
+                    strokeWidth={strokeW}
+                    filter={isHovered ? "url(#neon-glow)" : undefined}
+                    style={{ transition: "r 200ms, stroke-width 200ms" }}
                   />
-                  {lines.map((l, i) => (
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={r}
+                    fill="none"
+                    stroke={masteryColor(node.mastery)}
+                    strokeWidth={1.5}
+                    strokeDasharray={`${(node.mastery ?? 0) * 2 * Math.PI * r} ${2 * Math.PI * r}`}
+                    strokeLinecap="round"
+                    opacity={node.mastery !== null ? 0.4 : 0}
+                    style={{
+                      transform: "rotate(-90deg)",
+                      transformOrigin: `${node.x}px ${node.y}px`,
+                      transition: "opacity 200ms",
+                    }}
+                  />
+                  {labelLines.map((line, li) => (
                     <text
-                      key={i}
-                      x={tx}
-                      y={ty - boxH + 24 + i * 14}
+                      key={li}
+                      x={node.x}
+                      y={node.y + r + 14 + li * 11}
                       textAnchor="middle"
-                      className={i === 0 ? "text-xs font-medium" : "text-[10px] font-mono"}
-                      fill={i === 0 ? colors.tooltipTitle : colors.tooltipSub}
+                      className="text-[10px] font-mono"
+                      fill={
+                        isHovered
+                          ? colors.labelHover
+                          : isLinked
+                            ? colors.labelLinked
+                            : colors.labelDefault
+                      }
+                      opacity={labelOpacity}
+                      style={{ transition: "opacity 200ms" }}
                     >
-                      {l}
+                      {line}
                     </text>
                   ))}
                 </g>
               );
-            })()}
-        </g>
-      </svg>
+            })}
 
-      <div className="absolute top-3 right-3 flex gap-1 z-10">
-        <button
-          type="button"
-          onClick={zoomIn}
-          className="inline-flex items-center justify-center size-7 rounded-md bg-card/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-card/90 transition"
-          title="Zoom in"
-        >
-          <ZoomIn className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={zoomOut}
-          className="inline-flex items-center justify-center size-7 rounded-md bg-card/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-card/90 transition"
-          title="Zoom out"
-        >
-          <ZoomOut className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={resetView}
-          className="inline-flex items-center justify-center size-7 rounded-md bg-card/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-card/90 transition"
-          title="Reset view"
-        >
-          <Maximize2 className="size-3.5" />
-        </button>
+            {hoveredSlug &&
+              (() => {
+                const hn = simNodes.find((n) => n.slug === hoveredSlug);
+                if (!hn) return null;
+                const labelWidth = Math.max(hn.name.length * 7, 100);
+                const tx = Math.min(Math.max(hn.x, labelWidth / 2 + 8), VB_W - labelWidth / 2 - 8);
+                const ty = hn.y - 50;
+                const lines = [
+                  hn.name,
+                  hn.mastery !== null
+                    ? `Mastery ${Math.round(hn.mastery * 100)}% · ${hn.attempts} attempts`
+                    : "Not yet reviewed",
+                ];
+                const boxH = lines.length * 14 + 20;
+                return (
+                  <g>
+                    <rect
+                      x={tx - labelWidth / 2 - 10}
+                      y={ty - boxH + 10}
+                      width={labelWidth + 20}
+                      height={boxH}
+                      rx={6}
+                      fill={colors.tooltipBg}
+                      stroke={colors.tooltipBorder}
+                      strokeWidth={1}
+                    />
+                    {lines.map((l, i) => (
+                      <text
+                        key={i}
+                        x={tx}
+                        y={ty - boxH + 24 + i * 14}
+                        textAnchor="middle"
+                        className={i === 0 ? "text-xs font-medium" : "text-[10px] font-mono"}
+                        fill={i === 0 ? colors.tooltipTitle : colors.tooltipSub}
+                      >
+                        {l}
+                      </text>
+                    ))}
+                  </g>
+                );
+              })()}
+          </g>
+        </svg>
+
+        <div className="absolute top-3 right-3 flex gap-1 z-10">
+          <button
+            type="button"
+            onClick={zoomIn}
+            className="inline-flex items-center justify-center size-7 rounded-md bg-card/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-card/90 transition"
+            title="Zoom in"
+          >
+            <ZoomIn className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={zoomOut}
+            className="inline-flex items-center justify-center size-7 rounded-md bg-card/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-card/90 transition"
+            title="Zoom out"
+          >
+            <ZoomOut className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={resetView}
+            className="inline-flex items-center justify-center size-7 rounded-md bg-card/70 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground hover:bg-card/90 transition"
+            title="Reset view"
+          >
+            <Maximize2 className="size-3.5" />
+          </button>
+        </div>
+
+        {!dragging && simNodes.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
+            Loading graph…
+          </div>
+        )}
+
+        {hasProgress && (
+          <div className="absolute bottom-3 left-3 flex items-center gap-3 bg-card/70 backdrop-blur-sm border border-border rounded-md px-3 py-1.5 z-10">
+            <LegendItem color="oklch(0.48 0.02 65)" label="Starting" />
+            <LegendItem color="oklch(0.7 0.16 35)" label="Growing" />
+            <LegendItem color="oklch(0.68 0.13 150)" label="Mastered" />
+            <LegendItem color="oklch(0.38 0.01 60 / 0.6)" label="Untouched" />
+          </div>
+        )}
       </div>
-
-      {!dragging && simNodes.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
-          Loading graph…
-        </div>
-      )}
-
-      {hasProgress && (
-        <div className="absolute bottom-3 left-3 flex items-center gap-3 bg-card/70 backdrop-blur-sm border border-border rounded-md px-3 py-1.5 z-10">
-          <LegendItem color="oklch(0.48 0.02 65)" label="Starting" />
-          <LegendItem color="oklch(0.7 0.16 35)" label="Growing" />
-          <LegendItem color="oklch(0.68 0.13 150)" label="Mastered" />
-          <LegendItem color="oklch(0.38 0.01 60 / 0.6)" label="Untouched" />
-        </div>
-      )}
-    </div>
     </ErrorBoundary>
   );
 }

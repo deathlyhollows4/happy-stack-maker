@@ -50,6 +50,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const onGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -66,6 +67,11 @@ function LoginPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
+    if (!email.trim() || !password.trim()) {
+      setFormError("Enter your email and password to sign in.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
@@ -76,7 +82,7 @@ function LoginPage() {
 
   return (
     <AuthShell title="Welcome back" subtitle="Sign in to keep reviewing.">
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} noValidate className="space-y-4">
         <Field label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" />
         <Field
           label="Password"
@@ -93,6 +99,7 @@ function LoginPage() {
             Forgot password?
           </Link>
         </div>
+        {formError && <p className="text-sm text-destructive">{formError}</p>}
         <button
           disabled={loading}
           className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:bg-primary/90 transition disabled:opacity-50"

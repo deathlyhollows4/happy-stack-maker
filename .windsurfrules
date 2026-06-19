@@ -1,0 +1,16 @@
+# Windsurf Rules | CodeWise
+
+Use `CLAUDE.md` plus `.claude/rules/` as the primary repo context.
+
+Quick map:
+- `src/routes/` - file-based routes and API-like handlers
+- `src/lib/` - server functions and domain logic
+- `src/integrations/supabase/` - auth middleware, clients, generated DB types
+- `supabase/migrations/` - schema and policy history
+- `tests/` - unit and Playwright coverage
+
+Important:
+- Keep repo-specific GitNexus rules from `CLAUDE.md`.
+- Use `.claude/rules/models.md` for tables and quota RPCs.
+- Use `.claude/rules/api.md` for route groups and server functions.
+- Use `.claude/rules/gotchas.md` for package-manager and memory caveats.

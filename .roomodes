@@ -1,0 +1,17 @@
+# Roo Code Rules | CodeWise
+
+Primary context:
+- `CLAUDE.md`
+- `.claude/rules/architecture.md`
+- `.claude/rules/stack.md`
+- `.claude/rules/modules.md`
+- `.claude/rules/models.md`
+- `.claude/rules/api.md`
+- `.claude/rules/conventions.md`
+- `.claude/rules/gotchas.md`
+
+Summary:
+- CodeWise is a Supabase-backed TanStack Start app for AI-assisted DSA learning.
+- Review and practice flows are implemented as server functions in `src/lib/`.
+- Billing is Paddle-based and environment-aware.
+- The refined `.claude/rules/` files are the best generated memory surface in this repo.

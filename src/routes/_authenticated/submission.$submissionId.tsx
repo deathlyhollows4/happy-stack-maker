@@ -9,29 +9,7 @@ import { Markdown } from "@/components/markdown";
 import { toast } from "sonner";
 import { ArrowLeft, Share2, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const CONCEPT_NAMES: Record<string, string> = {
-  arrays: "Arrays",
-  strings: "Strings",
-  hashing: "Hashing",
-  "linked-lists": "Linked Lists",
-  stacks: "Stacks",
-  queues: "Queues",
-  trees: "Trees",
-  bst: "BST",
-  heaps: "Heaps",
-  graphs: "Graphs",
-  "two-pointers": "Two Pointers",
-  "sliding-window": "Sliding Window",
-  "binary-search": "Binary Search",
-  sorting: "Sorting",
-  recursion: "Recursion",
-  backtracking: "Backtracking",
-  dp: "Dynamic Programming",
-  greedy: "Greedy",
-  "bit-manipulation": "Bit Manipulation",
-  complexity: "Complexity Analysis",
-};
+import { normalizeTopicSlug, topicDisplayName } from "@/lib/topics";
 
 export const Route = createFileRoute("/_authenticated/submission/$submissionId")({
   head: ({ params }) => ({
@@ -46,6 +24,16 @@ export const Route = createFileRoute("/_authenticated/submission/$submissionId")
   component: SubmissionDetail,
 });
 
+interface ReviewIssue {
+  id: string;
+  severity: "error" | "warning" | "info";
+  concept_slug: string | null;
+  title: string;
+  explanation: string;
+  fix_hint: string | null;
+  line: number | null;
+}
+
 function SubmissionDetail() {
   const { submissionId } = useParams({ from: "/_authenticated/submission/$submissionId" });
   const fn = useServerFn(getSubmission);
@@ -58,7 +46,7 @@ function SubmissionDetail() {
   });
 
   const submission = data?.submission ?? null;
-  const issues = data?.issues ?? [];
+  const issues = (data?.issues ?? []) as ReviewIssue[];
   const lang = (submission?.language as Lang) ?? "python";
 
   return (
@@ -68,7 +56,9 @@ function SubmissionDetail() {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Workspace
           </p>
-          <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Submission Detail</h1>
+          <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">
+            Submission Detail
+          </h1>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
             {submission
               ? `${LANG_LABELS[lang]} - ${new Date(submission.created_at).toLocaleDateString()}`
@@ -188,12 +178,13 @@ function SubmissionDetail() {
   );
 }
 
-function WhatsNext({ issues }: { issues: any[] }) {
+function WhatsNext({ issues }: { issues: ReviewIssue[] }) {
   const weakConcepts = Array.from(
     new Set(
       issues
         .filter((issue) => issue.severity === "error" && issue.concept_slug)
-        .map((issue) => issue.concept_slug as string),
+        .map((issue) => normalizeTopicSlug(issue.concept_slug))
+        .filter((slug): slug is string => !!slug),
     ),
   );
   const firstConcept = weakConcepts[0] ?? null;
@@ -203,10 +194,14 @@ function WhatsNext({ issues }: { issues: any[] }) {
   return (
     <section
       className={`rounded-lg border p-4 md:p-5 ${
-        hasWeakConcepts ? "border-amber-500/20 bg-amber-50/10" : "border-emerald-500/20 bg-emerald-50/10"
+        hasWeakConcepts
+          ? "border-amber-500/20 bg-amber-50/10"
+          : "border-emerald-500/20 bg-emerald-50/10"
       }`}
     >
-      <h4 className={`font-display text-xl md:text-2xl mb-2 ${hasWeakConcepts ? "text-amber-500" : "text-emerald-500"}`}>
+      <h4
+        className={`font-display text-xl md:text-2xl mb-2 ${hasWeakConcepts ? "text-amber-500" : "text-emerald-500"}`}
+      >
         What's next?
       </h4>
       {hasWeakConcepts ? (
@@ -270,10 +265,10 @@ function WhatsNext({ issues }: { issues: any[] }) {
 }
 
 function conceptName(slug: string) {
-  return CONCEPT_NAMES[slug] ?? slug.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return topicDisplayName(slug);
 }
 
-function IssueCard({ issue }: { issue: any }) {
+function IssueCard({ issue }: { issue: ReviewIssue }) {
   const isError = issue.severity === "error";
   const isWarning = issue.severity === "warning";
   const Icon = isError ? AlertCircle : isWarning ? AlertTriangle : CheckCircle2;

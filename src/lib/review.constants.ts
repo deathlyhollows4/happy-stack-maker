@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { CANONICAL_TOPIC_SLUGS } from "@/lib/topics";
+export { VALID_TOPIC_SLUGS } from "@/lib/topics";
 
 // ---------------------------------------------------------------------------
 // Supported languages
@@ -29,33 +31,6 @@ export const ReviewResponseSchema = z
   .passthrough();
 
 // ---------------------------------------------------------------------------
-// Valid topic slugs for concept mapping
-// ---------------------------------------------------------------------------
-
-export const VALID_TOPIC_SLUGS = new Set([
-  "arrays",
-  "strings",
-  "hashing",
-  "linked-lists",
-  "stacks",
-  "queues",
-  "recursion",
-  "two-pointers",
-  "sliding-window",
-  "binary-search",
-  "sorting",
-  "trees",
-  "bst",
-  "heaps",
-  "graphs",
-  "dp",
-  "greedy",
-  "backtracking",
-  "bit-manipulation",
-  "complexity",
-]);
-
-// ---------------------------------------------------------------------------
 // SYSTEM_PROMPT for AI review
 // ---------------------------------------------------------------------------
 
@@ -68,9 +43,7 @@ Do NOT use em dashes, filler phrases (e.g. "delve", "firstly", "moreover"), mark
 For every issue you raise:
 - explain WHY it's an issue in terms of the underlying CS concept
 - map it to ONE concept_slug from this list (use null if no good match):
-  arrays, strings, hashing, linked-lists, stacks, queues, recursion,
-  two-pointers, sliding-window, binary-search, sorting, trees, bst,
-  heaps, graphs, dp, greedy, backtracking, bit-manipulation, complexity
+  ${CANONICAL_TOPIC_SLUGS.join(", ")}
 - give a concrete fix_hint (no full rewrites, guide them)
 - severity: "error" = breaks correctness, "warning" = correctness/efficiency risk, "info" = style/clarity
 

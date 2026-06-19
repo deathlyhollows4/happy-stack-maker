@@ -50,6 +50,7 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const onGoogleSignUp = async () => {
     setGoogleLoading(true);
@@ -66,6 +67,15 @@ function SignupPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError("");
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setFormError("Enter your name, email, and password to create an account.");
+      return;
+    }
+    if (password.length < 6) {
+      setFormError("Use at least 6 characters for your password.");
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -82,11 +92,12 @@ function SignupPage() {
   };
 
   return (
-    <AuthShell
-      title="Create your account"
-      subtitle="Start reviewing your code."
-    >
-      <form onSubmit={onSubmit} className="space-y-4">
+    <AuthShell title="Create your account" subtitle="Start free with 50 code reviews per month.">
+      <div className="mb-5 rounded-md border border-accent/30 bg-accent/10 p-3 text-xs leading-relaxed text-muted-foreground">
+        No credit card required. Submitted code is used to create your review and saved to your
+        account so you can track mastery. You can export or delete your data from settings.
+      </div>
+      <form onSubmit={onSubmit} noValidate className="space-y-4">
         <Field label="Name" type="text" value={name} onChange={setName} autoComplete="name" />
         <Field label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" />
         <Field
@@ -96,6 +107,7 @@ function SignupPage() {
           onChange={setPassword}
           autoComplete="new-password"
         />
+        {formError && <p className="text-sm text-destructive">{formError}</p>}
         <button
           disabled={loading}
           className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:bg-primary/90 transition disabled:opacity-50"

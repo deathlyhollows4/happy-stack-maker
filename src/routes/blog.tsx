@@ -32,8 +32,7 @@ export const Route = createFileRoute("/blog")({
       { title: "Blog | CodeWise" },
       {
         name: "description",
-        content:
-          "Resources for CS students on DSA patterns, code review, and learning strategies.",
+        content: "Resources for CS students on DSA patterns, code review, and learning strategies.",
       },
       { property: "og:title", content: "Blog | CodeWise" },
       {
@@ -83,7 +82,9 @@ function BlogList({ posts }: { posts: BlogPost[] }) {
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Resources for CS students
           </p>
-          <h1 className="mt-4 font-display text-4xl tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">Blog</h1>
+          <h1 className="mt-4 font-display text-4xl tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+            Blog
+          </h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Articles on CS concepts, DSA patterns, and learning strategies for students.
           </p>
@@ -93,9 +94,7 @@ function BlogList({ posts }: { posts: BlogPost[] }) {
       <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-6 py-16">
           {posts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No posts published yet. Check back soon.
-            </p>
+            <StarterResources />
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {posts.map((post) => (
@@ -121,6 +120,61 @@ function BlogList({ posts }: { posts: BlogPost[] }) {
         </div>
       </section>
     </main>
+  );
+}
+
+function StarterResources() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <StarterResourceCard
+        title="How CodeWise Reads A Two Sum Solution"
+        body="See how a simple nested loop maps to arrays, hashing, and complexity."
+        to="/demo-review"
+        label="Try the demo"
+      />
+      <StarterResourceCard
+        title="Start With Hashing"
+        body="Practice the lookup pattern behind duplicate checks, two sum, and grouping."
+        to="/learn/$slug"
+        params={{ slug: "hashing" }}
+        label="Learn hashing"
+      />
+      <StarterResourceCard
+        title="Build Complexity Instinct"
+        body="Learn how to spot the line of code that dominates runtime as input grows."
+        to="/learn/$slug"
+        params={{ slug: "complexity" }}
+        label="Learn complexity"
+      />
+    </div>
+  );
+}
+
+function StarterResourceCard({
+  title,
+  body,
+  to,
+  params,
+  label,
+}: {
+  title: string;
+  body: string;
+  to: "/demo-review" | "/learn/$slug";
+  params?: { slug: string };
+  label: string;
+}) {
+  return (
+    <Link
+      to={to}
+      params={params}
+      className="rounded-lg border border-border bg-card p-5 transition-colors hover:border-accent/40"
+    >
+      <h2 className="font-display text-xl">{title}</h2>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+      <span className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-accent">
+        {label} <ArrowRight className="h-4 w-4" />
+      </span>
+    </Link>
   );
 }
 

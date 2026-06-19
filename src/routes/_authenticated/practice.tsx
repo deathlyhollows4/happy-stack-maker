@@ -15,6 +15,13 @@ import { getPaddleEnvironment } from "@/lib/paddle";
 import { toast } from "sonner";
 import { Sparkles, ArrowLeft, Play, Send, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  normalizeTopicSlug,
+  TOPICS,
+  TOPIC_CATEGORIES,
+  topicDisplayName,
+  type TopicSlug,
+} from "@/lib/topics";
 
 const practiceSearchSchema = z.object({
   topic: z.string().optional(),
@@ -26,36 +33,31 @@ export const Route = createFileRoute("/_authenticated/practice")({
   component: Practice,
 });
 
-type TopicSlug = string;
 type PracticeStep = "topic" | "language" | "solve";
-interface TopicMeta {
-  slug: TopicSlug;
-  name: string;
-  category: string;
+
+interface PracticeProblem {
+  id: string;
+  title: string;
+  prompt: string;
+  starter_code: string | null;
+  language: string | null;
+  topic_slug: string | null;
 }
-const TOPIC_LIST: TopicMeta[] = [
-  { slug: "arrays", name: "Arrays", category: "Data Structures" },
-  { slug: "strings", name: "Strings", category: "Data Structures" },
-  { slug: "hashing", name: "Hashing", category: "Data Structures" },
-  { slug: "linked-lists", name: "Linked Lists", category: "Data Structures" },
-  { slug: "stacks", name: "Stacks", category: "Data Structures" },
-  { slug: "queues", name: "Queues", category: "Data Structures" },
-  { slug: "trees", name: "Trees", category: "Data Structures" },
-  { slug: "bst", name: "BST", category: "Data Structures" },
-  { slug: "heaps", name: "Heaps", category: "Data Structures" },
-  { slug: "graphs", name: "Graphs", category: "Data Structures" },
-  { slug: "two-pointers", name: "Two Pointers", category: "Algorithms" },
-  { slug: "sliding-window", name: "Sliding Window", category: "Algorithms" },
-  { slug: "binary-search", name: "Binary Search", category: "Algorithms" },
-  { slug: "sorting", name: "Sorting", category: "Algorithms" },
-  { slug: "recursion", name: "Recursion", category: "Algorithms" },
-  { slug: "backtracking", name: "Backtracking", category: "Algorithms" },
-  { slug: "dp", name: "Dynamic Programming", category: "Algorithms" },
-  { slug: "greedy", name: "Greedy", category: "Algorithms" },
-  { slug: "bit-manipulation", name: "Bit Manipulation", category: "Algorithms" },
-  { slug: "complexity", name: "Complexity Analysis", category: "Fundamentals" },
-];
-const TOPIC_CATEGORIES = [...new Set(TOPIC_LIST.map((t) => t.category))];
+
+interface PracticeData {
+  problems: PracticeProblem[];
+}
+
+interface GeneratePracticeResult {
+  ok: boolean;
+  error?: string;
+  problem?: PracticeProblem;
+}
+
+interface EditorSettings {
+  fontSize: number;
+  theme: string;
+}
 
 function Practice() {
   const gen = useServerFn(generatePractice);
@@ -73,14 +75,11 @@ function Practice() {
   const [lang, setLang] = useState<Lang>("python");
   const [step, setStep] = useState<PracticeStep>("topic");
   const [showAllOptions, setShowAllOptions] = useState(false);
-  const [topicSlug, setTopicSlug] = useState<string | null>(
-    search.topic && TOPIC_LIST.some((t) => t.slug === search.topic) ? search.topic : null,
-  );
+  const [topicSlug, setTopicSlug] = useState<TopicSlug | null>(normalizeTopicSlug(search.topic));
 
-  const active = data?.problems.find((p: any) => p.id === activeId) ?? null;
-  const selectedTopicName = topicSlug
-    ? TOPIC_LIST.find((t) => t.slug === topicSlug)?.name ?? topicSlug
-    : "Weakest Topic (auto)";
+  const problems = (data?.problems ?? []) as PracticeProblem[];
+  const active = problems.find((p) => p.id === activeId) ?? null;
+  const selectedTopicName = topicSlug ? topicDisplayName(topicSlug) : "Weakest Topic (auto)";
 
   useEffect(() => {
     if (!activeId && data?.problems?.[0]) setActiveId(data.problems[0].id);
@@ -92,22 +91,23 @@ function Practice() {
       const r = await gen({
         data: { language: lang, topicSlug, environment: getPaddleEnvironment() },
       });
-      if (!r.ok) {
-        toast.error(r.error);
+      const result = r as GeneratePracticeResult;
+      if (!result.ok) {
+        toast.error(result.error);
         return false;
       }
       toast.success("New problem ready");
       await refetch();
-      setActiveId((r as any).problem?.id ?? null);
+      setActiveId(result.problem?.id ?? null);
       setStep("solve");
       track("practice_generated", {
-        topic: (r as any).problem?.topic_slug ?? null,
+        topic: result.problem?.topic_slug ?? null,
         language: lang,
       });
       return true;
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("generatePractice failed:", e);
-      toast.error(e?.message || "Could not generate a problem. Try again.");
+      toast.error(e instanceof Error ? e.message : "Could not generate a problem. Try again.");
       return false;
     } finally {
       setBusy(false);
@@ -245,19 +245,19 @@ function TopicSelect({
   className = "",
 }: {
   topicSlug: string | null;
-  onChange: (slug: string | null) => void;
+  onChange: (slug: TopicSlug | null) => void;
   className?: string;
 }) {
   return (
     <select
       value={topicSlug ?? ""}
-      onChange={(e) => onChange(e.target.value || null)}
+      onChange={(e) => onChange(normalizeTopicSlug(e.target.value))}
       className={`rounded-md border border-border bg-input px-3 py-2 text-sm ${className}`}
     >
       <option value="">Weakest Topic (auto)</option>
       {TOPIC_CATEGORIES.map((cat) => (
         <optgroup key={cat} label={cat}>
-          {TOPIC_LIST.filter((t) => t.category === cat).map((t) => (
+          {TOPICS.filter((t) => t.category === cat).map((t) => (
             <option key={t.slug} value={t.slug}>
               {t.name}
             </option>
@@ -301,8 +301,8 @@ function PracticeWorkspace({
   onNewProblem,
   showNewProblem,
 }: {
-  data: any;
-  active: any;
+  data: PracticeData | undefined;
+  active: PracticeProblem | null;
   activeId: string | null;
   isLoading: boolean;
   onSelect: (id: string) => void;
@@ -340,7 +340,7 @@ function PracticeWorkspace({
       {data && data.problems.length > 0 && (
         <div className="grid lg:grid-cols-[260px_1fr] gap-4 md:gap-6 min-w-0">
           <aside className="space-y-2 w-full overflow-hidden min-w-0">
-            {data.problems.map((p: any) => (
+            {data.problems.map((p) => (
               <button
                 key={p.id}
                 onClick={() => onSelect(p.id)}
@@ -367,7 +367,17 @@ function PracticeWorkspace({
   );
 }
 
-function ProblemWorkspace({ problem }: { problem: any }) {
+function loadEditorSettings(): EditorSettings {
+  try {
+    const raw = localStorage.getItem("codewise-editor-settings");
+    if (raw) return JSON.parse(raw) as EditorSettings;
+  } catch {
+    return { fontSize: 14, theme: "monokai" };
+  }
+  return { fontSize: 14, theme: "monokai" };
+}
+
+function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const lang = (problem.language as Lang) ?? "python";
   const nav = useNavigate();
   const [code, setCode] = useState<string>(problem.starter_code || "");
@@ -378,13 +388,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
   const [output, setOutput] = useState<{ stdout: string; stderr: string; exit: number } | null>(
     null,
   );
-  const [editorSettings, setEditorSettings] = useState(() => {
-    try {
-      const raw = localStorage.getItem("codewise-editor-settings");
-      if (raw) return JSON.parse(raw);
-    } catch {}
-    return { fontSize: 14, theme: "monokai" };
-  });
+  const [editorSettings, setEditorSettings] = useState<EditorSettings>(loadEditorSettings);
   const [fullscreen, setFullscreen] = useState(false);
 
   const runFn = useServerFn(runCode);
@@ -395,7 +399,7 @@ function ProblemWorkspace({ problem }: { problem: any }) {
     setCode(problem.starter_code || "");
     setEditorLang(lang);
     setOutput(null);
-  }, [problem.id]);
+  }, [problem.id, problem.starter_code, lang]);
 
   const onRun = async () => {
     if (!code.trim()) {
