@@ -20,6 +20,13 @@ const SERVER_ENV_KEYS = [
   "RAZORPAY_LIVE_WEBHOOK_SECRET",
 ] as const;
 
+const PUBLIC_RUNTIME_ENV_KEYS = [
+  "SUPABASE_URL",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "VITE_SUPABASE_URL",
+  "VITE_SUPABASE_PUBLISHABLE_KEY",
+] as const;
+
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
@@ -41,6 +48,54 @@ function syncRuntimeEnv(env: unknown) {
       process.env[key] = value;
     }
   }
+}
+
+function readRuntimeString(env: unknown, key: string) {
+  const runtimeEnv = env && typeof env === "object" ? (env as Record<string, unknown>) : undefined;
+  const runtimeValue = runtimeEnv?.[key];
+  if (typeof runtimeValue === "string" && runtimeValue) return runtimeValue;
+
+  const processValue = process.env[key];
+  return processValue || undefined;
+}
+
+function buildPublicRuntimeEnv(env: unknown) {
+  const values: Record<string, string> = {};
+
+  for (const key of PUBLIC_RUNTIME_ENV_KEYS) {
+    const value = readRuntimeString(env, key);
+    if (value) values[key] = value;
+  }
+
+  if (!values.VITE_SUPABASE_URL && values.SUPABASE_URL) {
+    values.VITE_SUPABASE_URL = values.SUPABASE_URL;
+  }
+
+  if (!values.VITE_SUPABASE_PUBLISHABLE_KEY && values.SUPABASE_PUBLISHABLE_KEY) {
+    values.VITE_SUPABASE_PUBLISHABLE_KEY = values.SUPABASE_PUBLISHABLE_KEY;
+  }
+
+  return values;
+}
+
+function serializePublicRuntimeEnv(env: Record<string, string>) {
+  return JSON.stringify(env).replace(/</g, "\\u003c");
+}
+
+async function injectPublicRuntimeEnv(response: Response, env: unknown): Promise<Response> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/html")) return response;
+
+  const publicEnv = buildPublicRuntimeEnv(env);
+  if (!publicEnv.VITE_SUPABASE_URL || !publicEnv.VITE_SUPABASE_PUBLISHABLE_KEY) {
+    return response;
+  }
+
+  const html = await response.text();
+  const script = `<script>window.__CODEWISE_PUBLIC_ENV__=${serializePublicRuntimeEnv(publicEnv)};</script>`;
+  const body = html.includes("</head>") ? html.replace("</head>", `${script}</head>`) : `${script}${html}`;
+
+  return new Response(body, response);
 }
 
 function brandedErrorResponse(): Response {
@@ -135,10 +190,12 @@ export default {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(response);
-      return injectSecurityHeaders(normalized);
+      const withPublicEnv = await injectPublicRuntimeEnv(normalized, env);
+      return injectSecurityHeaders(withPublicEnv);
     } catch (error) {
       console.error(error);
-      return injectSecurityHeaders(brandedErrorResponse());
+      const withPublicEnv = await injectPublicRuntimeEnv(brandedErrorResponse(), env);
+      return injectSecurityHeaders(withPublicEnv);
     }
   },
 };
