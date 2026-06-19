@@ -86,6 +86,7 @@ export function useSubscription() {
       .order("created_at", { ascending: false })
       .limit(25);
     if (!activeRef.current) return;
+
     const row = chooseSubscriptionRow((data as SubscriptionRow[] | null) ?? []);
     setSubscription(
       row
