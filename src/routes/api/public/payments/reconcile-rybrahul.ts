@@ -13,6 +13,19 @@ const TARGET = {
   createdAtSeconds: 1781909612,
 };
 
+function describeError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    return (
+      [record.message, record.details, record.hint, record.code]
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        .join(" | ") || "Unknown object error"
+    );
+  }
+  return typeof error === "string" && error.trim() ? error : "Unknown reconciliation error";
+}
+
 async function reconcileCapturedPayment() {
   const payment = await fetchRazorpayPayment(TARGET.environment, TARGET.paymentId);
   const notes = payment.notes ?? {};
@@ -94,7 +107,7 @@ export const Route = createFileRoute("/api/public/payments/reconcile-rybrahul")(
           return Response.json(
             {
               ok: false,
-              reason: error instanceof Error ? error.message : "Unknown reconciliation error",
+              reason: describeError(error),
             },
             { status: 500 },
           );
