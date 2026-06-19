@@ -113,16 +113,7 @@ async function upsertSubscriptionFromWebhook(
   const { data: existing } = await supabaseAdmin
     .from("subscriptions")
     .select(
-      [
-        "id",
-        "user_id",
-        "status",
-        "provider_customer_id",
-        "provider_plan_id",
-        "billing_plan_code",
-        "currency_code",
-        "external_status_updated_at",
-      ].join(", "),
+      "id, user_id, status, provider_customer_id, provider_plan_id, billing_plan_code, currency_code, external_status_updated_at",
     )
     .eq("provider", "razorpay")
     .eq("environment", env)
