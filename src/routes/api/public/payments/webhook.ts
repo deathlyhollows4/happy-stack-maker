@@ -227,18 +227,6 @@ async function handleWebhook(req: Request, env: PaymentsEnv) {
     eventType = "invalid_json";
   }
 
-  const claimed = await claimWebhookEvent({
-    eventId,
-    eventType,
-    environment: env,
-    rawPayload,
-  });
-
-  if (!claimed) {
-    console.log("Duplicate Razorpay webhook, already processed:", eventId);
-    return;
-  }
-
   try {
     if (!signature) {
       throw new Error("Missing x-razorpay-signature header");
@@ -246,6 +234,18 @@ async function handleWebhook(req: Request, env: PaymentsEnv) {
 
     if (!verifyRazorpayWebhookSignature(rawPayload, signature, env)) {
       throw new Error("Invalid Razorpay webhook signature");
+    }
+
+    const claimed = await claimWebhookEvent({
+      eventId,
+      eventType,
+      environment: env,
+      rawPayload,
+    });
+
+    if (!claimed) {
+      console.log("Duplicate Razorpay webhook, already processed:", eventId);
+      return;
     }
 
     switch (eventType) {

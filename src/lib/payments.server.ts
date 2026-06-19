@@ -11,6 +11,24 @@ type RazorpaySubscriptionRequest = {
   notes?: Record<string, string>;
 };
 
+type RazorpayOrderRequest = {
+  amount: number;
+  currency: "INR";
+  receipt: string;
+  notes?: Record<string, string>;
+};
+
+export type RazorpayOrder = {
+  id: string;
+  amount: number;
+  amount_paid: number;
+  amount_due: number;
+  currency: string;
+  receipt?: string | null;
+  status: string;
+  notes?: Record<string, string>;
+};
+
 export type RazorpaySubscription = {
   id: string;
   status: string;
@@ -22,6 +40,19 @@ export type RazorpaySubscription = {
   current_end?: number | null;
   start_at?: number | null;
   ended_at?: number | null;
+};
+
+export type RazorpayPayment = {
+  id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  captured: boolean;
+  invoice_id?: string | null;
+  order_id?: string | null;
+  method?: string | null;
+  email?: string | null;
+  notes?: Record<string, string>;
 };
 
 export type RazorpayWebhookPayload = {
@@ -133,11 +164,52 @@ export function verifyRazorpayPaymentSignature(input: {
   return compareSignatures(digest, input.signature);
 }
 
+export function verifyRazorpayOrderSignature(input: {
+  env: PaymentsEnv;
+  orderId: string;
+  paymentId: string;
+  signature: string;
+}): boolean {
+  const { keySecret } = getRazorpayCredentials(input.env);
+  const digest = createHmac("sha256", keySecret)
+    .update(`${input.orderId}|${input.paymentId}`)
+    .digest("hex");
+  return compareSignatures(digest, input.signature);
+}
+
+export async function createRazorpayOrder(
+  env: PaymentsEnv,
+  payload: RazorpayOrderRequest,
+): Promise<RazorpayOrder> {
+  return requestRazorpay<RazorpayOrder>(env, "/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function createRazorpaySubscription(
   env: PaymentsEnv,
   payload: RazorpaySubscriptionRequest,
 ): Promise<RazorpaySubscription> {
   return requestRazorpay<RazorpaySubscription>(env, "/subscriptions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchRazorpayPayment(
+  env: PaymentsEnv,
+  paymentId: string,
+): Promise<RazorpayPayment> {
+  return requestRazorpay<RazorpayPayment>(env, `/payments/${paymentId}`);
+}
+
+export async function captureRazorpayPayment(
+  env: PaymentsEnv,
+  paymentId: string,
+  payload: { amount: number; currency: "INR" },
+): Promise<RazorpayPayment> {
+  return requestRazorpay<RazorpayPayment>(env, `/payments/${paymentId}/capture`, {
     method: "POST",
     body: JSON.stringify(payload),
   });

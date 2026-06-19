@@ -282,7 +282,7 @@ function normalizeCheckoutResponse(
   const successUrl =
     getFirstString(root.successUrl, root.success_url) ??
     fallbackRequest.successUrl ??
-    `${window.location.origin}/dashboard?checkout=success`;
+    `${window.location.origin}/dashboard?checkout=pending`;
 
   return {
     key: key ?? "",

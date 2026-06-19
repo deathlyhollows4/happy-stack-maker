@@ -62,8 +62,14 @@ function AuthLayout() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
-    if (url.searchParams.get("checkout") === "success") {
-      toast.success("Checkout complete. Pro access is updating.");
+    const checkout = url.searchParams.get("checkout");
+    if (checkout === "active") {
+      toast.success("Subscription active. Pro access is ready.");
+      url.searchParams.delete("checkout");
+      window.history.replaceState({}, "", url.toString());
+    }
+    if (checkout === "pending") {
+      toast.info("Payment authorization received. Pro access starts after Razorpay confirms the subscription charge.");
       url.searchParams.delete("checkout");
       window.history.replaceState({}, "", url.toString());
     }

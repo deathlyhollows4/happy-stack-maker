@@ -82,12 +82,13 @@ export function useRazorpayCheckout() {
         throw new Error("Razorpay checkout failed to load.");
       }
 
-      const successUrl =
-        request.successUrl ?? `${window.location.origin}/dashboard?checkout=success`;
+      const pendingUrl =
+        request.successUrl ?? `${window.location.origin}/dashboard?checkout=pending`;
 
       const checkout = new window.Razorpay({
         key: session.keyId,
-        subscription_id: session.subscriptionId,
+        order_id: session.orderId,
+        amount: session.amount,
         currency: session.currencyCode,
         name: "CodeWise",
         description:
@@ -107,39 +108,48 @@ export function useRazorpayCheckout() {
           color: "#1f7a8c",
         },
         handler: async (response: unknown) => {
-          const payload =
-            response && typeof response === "object" ? (response as Record<string, unknown>) : {};
-          const paymentId =
-            typeof payload.razorpay_payment_id === "string" ? payload.razorpay_payment_id : null;
-          const subscriptionId =
-            typeof payload.razorpay_subscription_id === "string"
-              ? payload.razorpay_subscription_id
-              : session.subscriptionId;
-          const signature =
-            typeof payload.razorpay_signature === "string" ? payload.razorpay_signature : null;
+          try {
+            const payload =
+              response && typeof response === "object" ? (response as Record<string, unknown>) : {};
+            const paymentId =
+              typeof payload.razorpay_payment_id === "string" ? payload.razorpay_payment_id : null;
+            const orderId =
+              typeof payload.razorpay_order_id === "string" ? payload.razorpay_order_id : session.orderId;
+            const signature =
+              typeof payload.razorpay_signature === "string" ? payload.razorpay_signature : null;
 
-          if (!paymentId || !subscriptionId || !signature) {
-            toast.error("Payment completed, but verification details were incomplete.");
-            return;
+            if (!paymentId || !orderId || !signature) {
+              toast.error("Payment completed, but verification details were incomplete.");
+              return;
+            }
+
+            const verification = await verifyCheckout({
+              data: {
+                environment,
+                razorpayPaymentId: paymentId,
+                razorpayOrderId: orderId,
+                razorpaySignature: signature,
+                billingPlanCode: session.billingPlanCode,
+                currencyCode: session.currencyCode,
+              },
+            });
+
+            if (!verification.ok) {
+              toast.error(verification.error);
+              return;
+            }
+
+            toast.info(verification.message);
+            window.location.assign(
+              verification.active
+                ? pendingUrl.replace("checkout=pending", "checkout=active")
+                : pendingUrl,
+            );
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : "Payment verification failed.";
+            toast.error(message);
           }
-
-          const verification = await verifyCheckout({
-            data: {
-              environment,
-              razorpayPaymentId: paymentId,
-              razorpaySubscriptionId: subscriptionId,
-              razorpaySignature: signature,
-              billingPlanCode: session.billingPlanCode,
-              currencyCode: session.currencyCode,
-            },
-          });
-
-          if (!verification.ok) {
-            toast.error(verification.error);
-            return;
-          }
-
-          window.location.assign(successUrl);
         },
       });
 

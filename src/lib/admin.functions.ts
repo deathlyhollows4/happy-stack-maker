@@ -34,7 +34,9 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
         .from("profiles")
         .select("id, display_name, created_at")
         .order("created_at", { ascending: false }),
-      admin.from("subscriptions").select("user_id, status, current_period_end, environment"),
+      admin
+        .from("subscriptions")
+        .select("user_id, status, current_period_end, environment, external_status_updated_at, created_at"),
       admin.from("usage_counters").select("user_id, kind, count").eq("period_key", mk),
     ]);
 
@@ -42,13 +44,34 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     const subs = subsRes.data ?? [];
     const usage = usageRes.data ?? [];
 
-    const subByUser = new Map<string, { status: string; end: string | null }>();
+    const subByUser = new Map<
+      string,
+      {
+        status: string;
+        end: string | null;
+        ts: string;
+        entitled: boolean;
+      }
+    >();
     for (const s of subs) {
+      const endMs = s.current_period_end ? new Date(s.current_period_end as string).getTime() : null;
+      const inPeriod = endMs === null || endMs > now.getTime();
+      const entitled =
+        (["active", "trialing", "past_due"].includes(s.status as string) && inPeriod) ||
+        (s.status === "canceled" && endMs !== null && endMs > now.getTime());
+      const ts = ((s.external_status_updated_at || s.created_at || "") as string) ?? "";
       const existing = subByUser.get(s.user_id);
-      if (!existing || (s.status === "active" && existing.status !== "active")) {
+      const shouldUse =
+        !existing ||
+        (entitled && !existing.entitled) ||
+        (entitled === existing.entitled && ts > existing.ts);
+
+      if (shouldUse) {
         subByUser.set(s.user_id, {
           status: s.status as string,
           end: s.current_period_end as string | null,
+          ts,
+          entitled,
         });
       }
     }
@@ -72,12 +95,7 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
     let totalPro = 0;
     const users = profiles.map((p) => {
       const s = subByUser.get(p.id);
-      const endMs = s?.end ? new Date(s.end).getTime() : null;
-      const inPeriod = endMs === null || endMs > now.getTime();
-      const isPro =
-        !!s &&
-        ((["active", "trialing", "past_due"].includes(s.status) && inPeriod) ||
-          (s.status === "canceled" && endMs !== null && endMs > now.getTime()));
+      const isPro = !!s?.entitled;
 
       const reviews = reviewCountByUser.get(p.id) ?? 0;
       const roadmaps = roadmapCountByUser.get(p.id) ?? 0;

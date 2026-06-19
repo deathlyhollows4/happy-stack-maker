@@ -60,7 +60,9 @@ export const generatePractice = createServerFn({ method: "POST" })
 
     // Entitlement check
     const { plan } = await getUserPlan(userId, data.environment);
-    const limit = (await getPlanQuotas())[plan].problemsPerDay;
+    const planQuotas = await getPlanQuotas();
+    const limit = planQuotas[plan].problemsPerDay;
+    const proLimit = planQuotas.pro.problemsPerDay;
     const allowed = await consumeQuota(userId, "roadmap", limit, dayKey());
     if (!allowed) {
       return {
@@ -68,7 +70,7 @@ export const generatePractice = createServerFn({ method: "POST" })
         error:
           plan === "pro"
             ? `You've used all ${limit} practice problems today. Resets at UTC midnight.`
-            : `Free plan limit reached (${limit} practice problems / day). Upgrade to Pro for 150/day.`,
+            : `Free plan limit reached (${limit} practice problems / day). Upgrade to Pro for ${proLimit}/day.`,
         upgradeRequired: plan === "free",
       };
     }

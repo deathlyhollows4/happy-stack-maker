@@ -42,7 +42,9 @@ export const reviewCode = createServerFn({ method: "POST" })
 
     // Entitlement check
     const { plan } = await getUserPlan(userId, data.environment);
-    const limit = (await getPlanQuotas())[plan].reviewsPerMonth;
+    const planQuotas = await getPlanQuotas();
+    const limit = planQuotas[plan].reviewsPerMonth;
+    const proLimit = planQuotas.pro.reviewsPerMonth;
     const allowed = await consumeQuota(userId, "review", limit, monthKey());
     if (!allowed) {
       return {
@@ -50,7 +52,7 @@ export const reviewCode = createServerFn({ method: "POST" })
         error:
           plan === "pro"
             ? `You've used all ${limit} reviews this month. Quota resets on the 1st.`
-            : `Free plan limit reached (${limit} reviews / month). Upgrade to Pro for 1500/month.`,
+            : `Free plan limit reached (${limit} reviews / month). Upgrade to Pro for ${proLimit}/month.`,
         upgradeRequired: plan === "free",
       };
     }

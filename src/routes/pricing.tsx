@@ -65,7 +65,7 @@ function PricingPage() {
         priceId,
         customerEmail: user.email,
         userId: user.id,
-        successUrl: `${window.location.origin}/dashboard?checkout=success`,
+        successUrl: `${window.location.origin}/dashboard?checkout=pending`,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Checkout could not be started.";

@@ -73,9 +73,10 @@ export const getEntitlements = createServerFn({ method: "POST" })
     const { userId } = context;
     const { plan, status, pastDue } = await getUserPlan(userId, data.environment);
     const quotas = (await getPlanQuotas())[plan];
-    const [reviewsUsed, roadmapsUsed] = await Promise.all([
+    const [reviewsUsed, roadmapsUsed, codeRunsUsed] = await Promise.all([
       readUsage(userId, "review", monthKey()),
       readUsage(userId, "roadmap", dayKey()),
+      readUsage(userId, "code_run", dayKey()),
     ]);
     return {
       plan,
@@ -85,6 +86,8 @@ export const getEntitlements = createServerFn({ method: "POST" })
       reviewsLimit: quotas.reviewsPerMonth,
       roadmapsUsed,
       problemsLimit: quotas.problemsPerDay,
+      codeRunsUsed,
+      codeRunsLimit: quotas.codeRunsPerDay,
     };
   });
 

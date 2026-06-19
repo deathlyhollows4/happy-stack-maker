@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/use-subscription";
-import { cancelSubscription, getCustomerPortalUrl } from "@/lib/billing.functions";
+import { cancelSubscription } from "@/lib/billing.functions";
 import {
   DEFAULT_PRICING_CONFIG,
   formatInr,
@@ -17,7 +17,6 @@ import {
 } from "@/lib/payments";
 import {
   ArrowLeft,
-  ExternalLink,
   XCircle,
   Sparkles,
   CheckCircle2,
@@ -33,8 +32,7 @@ function BillingPage() {
   const { subscription, isActive, loading, environment } = useSubscription();
   const getPricingConfig = useServerFn(getPublicPricingConfig);
   const cancelFn = useServerFn(cancelSubscription);
-  const portalFn = useServerFn(getCustomerPortalUrl);
-  const [busy, setBusy] = useState<"cancel" | "portal" | null>(null);
+  const [busy, setBusy] = useState<"cancel" | null>(null);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const { data } = useQuery({
     queryKey: ["publicPricingConfig"],
@@ -43,20 +41,7 @@ function BillingPage() {
   });
   const pricing = data?.ok ? data.config : DEFAULT_PRICING_CONFIG;
   const providerLabel = getBillingProviderLabel();
-
-  const onPortal = async () => {
-    setBusy("portal");
-    try {
-      const result = await portalFn({ data: { environment } });
-      if (!result.ok) {
-        toast.error(result.error);
-        return;
-      }
-      window.open(result.overviewUrl, "_blank", "noopener,noreferrer");
-    } finally {
-      setBusy(null);
-    }
-  };
+  const canCancelRenewal = subscription?.provider_subscription_id?.startsWith("sub_") ?? false;
 
   const onCancel = async () => {
     setBusy("cancel");
@@ -98,20 +83,11 @@ function BillingPage() {
           <div className="rounded-lg border border-border bg-card p-6">
             <h2 className="mb-4 font-display text-2xl">Actions</h2>
             <p className="mb-4 text-sm text-muted-foreground">
-              Billing runs through {providerLabel}. Prices are billed in INR. Use the billing
-              portal for invoices and payment method updates. Contact support if anything looks off
-              after migration.
+              Billing runs through {providerLabel}. Prices are billed in INR. Contact support if
+              anything looks off after migration.
             </p>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={onPortal}
-                disabled={busy !== null}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm hover:bg-accent/10 disabled:opacity-50"
-              >
-                <ExternalLink className="size-4" />
-                {busy === "portal" ? "Opening..." : "Open billing portal"}
-              </button>
-              {isActive && subscription.status !== "canceled" && (
+              {isActive && subscription.status !== "canceled" && canCancelRenewal && (
                 <>
                   {!confirmCancel ? (
                     <button
@@ -141,6 +117,11 @@ function BillingPage() {
                     </div>
                   )}
                 </>
+              )}
+              {isActive && subscription.status !== "canceled" && !canCancelRenewal && (
+                <span className="text-sm text-muted-foreground">
+                  This purchase does not renew automatically.
+                </span>
               )}
             </div>
           </div>

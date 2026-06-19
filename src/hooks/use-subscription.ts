@@ -22,6 +22,8 @@ export type SubscriptionRow = {
   paddle_customer_id?: string | null;
   razorpay_subscription_id?: string | null;
   razorpay_customer_id?: string | null;
+  external_status_updated_at?: string | null;
+  created_at?: string | null;
   [key: string]: string | boolean | null | undefined;
 };
 
@@ -32,6 +34,30 @@ function firstString(...values: unknown[]): string | null {
     }
   }
   return null;
+}
+
+function isEntitledSubscription(row: SubscriptionRow, now = Date.now()): boolean {
+  const periodEndMs = row.current_period_end ? new Date(row.current_period_end).getTime() : null;
+  const stillInPeriod = periodEndMs === null || periodEndMs > now;
+  return (
+    (["active", "trialing", "past_due"].includes(row.status) && stillInPeriod) ||
+    (row.status === "canceled" && periodEndMs !== null && periodEndMs > now)
+  );
+}
+
+function chooseSubscriptionRow(rows: SubscriptionRow[]): SubscriptionRow | null {
+  const now = Date.now();
+  return (
+    [...rows].sort((left, right) => {
+      const leftEntitled = isEntitledSubscription(left, now);
+      const rightEntitled = isEntitledSubscription(right, now);
+      if (leftEntitled !== rightEntitled) return leftEntitled ? -1 : 1;
+
+      const leftTs = firstString(left.external_status_updated_at, left.created_at) ?? "";
+      const rightTs = firstString(right.external_status_updated_at, right.created_at) ?? "";
+      return rightTs.localeCompare(leftTs);
+    })[0] ?? null
+  );
 }
 
 export function useSubscription() {
@@ -50,6 +76,7 @@ export function useSubscription() {
     }
 
     let active = true;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     const fetchSub = async () => {
       const { data } = await supabase
@@ -57,11 +84,11 @@ export function useSubscription() {
         .select("*")
         .eq("user_id", user.id)
         .eq("environment", env)
+        .order("external_status_updated_at", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(25);
       if (!active) return;
-      const row = (data as SubscriptionRow | null) ?? null;
+      const row = chooseSubscriptionRow(((data as SubscriptionRow[] | null) ?? []));
       setSubscription(
         row
           ? {
@@ -101,7 +128,18 @@ export function useSubscription() {
         () => fetchSub(),
       )
       .subscribe((status) => {
-        if (status !== "SUBSCRIBED") {
+        if (status === "SUBSCRIBED") {
+          channelRef.current = channel;
+          return;
+        }
+
+        if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+          fetchSub();
+          if (retryTimer) clearTimeout(retryTimer);
+          retryTimer = setTimeout(() => {
+            if (active) fetchSub();
+          }, 5000);
+          supabase.removeChannel(channel);
           channelRef.current = null;
         }
       });
@@ -110,6 +148,7 @@ export function useSubscription() {
 
     return () => {
       active = false;
+      if (retryTimer) clearTimeout(retryTimer);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
@@ -118,15 +157,7 @@ export function useSubscription() {
   }, [user, env]);
 
   const now = Date.now();
-  const periodEndMs = subscription?.current_period_end
-    ? new Date(subscription.current_period_end).getTime()
-    : null;
-  const stillInPeriod = periodEndMs === null || periodEndMs > now;
-
-  const isActive =
-    !!subscription &&
-    ((["active", "trialing", "past_due"].includes(subscription.status) && stillInPeriod) ||
-      (subscription.status === "canceled" && periodEndMs !== null && periodEndMs > now));
+  const isActive = !!subscription && isEntitledSubscription(subscription, now);
 
   return {
     subscription,

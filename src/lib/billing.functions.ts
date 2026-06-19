@@ -51,6 +51,13 @@ export const cancelSubscription = createServerFn({ method: "POST" })
       };
     }
 
+    if (!sub.provider_subscription_id.startsWith("sub_")) {
+      return {
+        ok: false as const,
+        error: "This plan is a fixed-period purchase and does not renew automatically.",
+      };
+    }
+
     try {
       await cancelRazorpaySubscription(data.environment, sub.provider_subscription_id);
     } catch (error) {
