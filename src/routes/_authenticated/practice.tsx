@@ -11,7 +11,7 @@ import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.funct
 import { Markdown } from "@/components/markdown";
 import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
-import { getPaddleEnvironment } from "@/lib/paddle";
+import { getBillingEnvironment } from "@/lib/payments";
 import { toast } from "sonner";
 import { Sparkles, ArrowLeft, Play, Send, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -89,7 +89,7 @@ function Practice() {
     setBusy(true);
     try {
       const r = await gen({
-        data: { language: lang, topicSlug, environment: getPaddleEnvironment() },
+        data: { language: lang, topicSlug, environment: getBillingEnvironment() },
       });
       const result = r as GeneratePracticeResult;
       if (!result.ok) {
@@ -410,7 +410,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
     setOutput(null);
     try {
       const r = await runFn({
-        data: { code, language: editorLang, stdin, environment: getPaddleEnvironment() },
+        data: { code, language: editorLang, stdin, environment: getBillingEnvironment() },
       });
       if (!r.ok) {
         toast.error(r.error);
@@ -430,7 +430,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
     setReviewing(true);
     try {
       const r = await reviewFn({
-        data: { code, language: editorLang, environment: getPaddleEnvironment() },
+        data: { code, language: editorLang, environment: getBillingEnvironment() },
       });
       if (!r.ok) {
         toast.error(r.error);

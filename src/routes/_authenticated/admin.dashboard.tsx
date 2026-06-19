@@ -81,7 +81,7 @@ function AdminDashboard() {
           </p>
           <h1 className="mt-2 font-display text-5xl tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            All users, subscriptions, and usage overview.
+            All users, billing status, and usage overview.
           </p>
         </div>
         <Link
@@ -146,8 +146,8 @@ function AdminDashboard() {
           <QuickLink
             to="/admin/update-price"
             icon={<RefreshCw className="size-4" />}
-            label="Update Price"
-            desc="Sync Paddle yearly price"
+            label="Billing Prices"
+            desc="Review INR billing values"
           />
           <QuickLink
             to="/admin/research"

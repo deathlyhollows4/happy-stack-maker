@@ -10,7 +10,7 @@ import { runCode } from "@/lib/code-exec.functions";
 import { Markdown } from "@/components/markdown";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { useTelemetry } from "@/hooks/use-telemetry";
-import { getPaddleEnvironment } from "@/lib/paddle";
+import { getBillingEnvironment } from "@/lib/payments";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -97,7 +97,7 @@ function Review() {
     setBusy(true);
     setException(null);
     try {
-      const r = await fn({ data: { code, language: lang, environment: getPaddleEnvironment() } });
+      const r = await fn({ data: { code, language: lang, environment: getBillingEnvironment() } });
       setResult(r);
       if (r.ok) {
         track("review_submitted", {
@@ -123,7 +123,7 @@ function Review() {
     setRunOutput(null);
     try {
       const r = await runFn({
-        data: { code, language: lang, stdin: "", environment: getPaddleEnvironment() },
+        data: { code, language: lang, stdin: "", environment: getBillingEnvironment() },
       });
       if (!r.ok) {
         toast.error(r.error);

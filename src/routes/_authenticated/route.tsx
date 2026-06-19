@@ -6,7 +6,7 @@ import {
   useNavigate,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/hooks/use-subscription";
@@ -63,17 +63,16 @@ function AuthLayout() {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (url.searchParams.get("checkout") === "success") {
-      toast.success("You're subscribed. Welcome to Pro 🎉");
+      toast.success("Checkout complete. Pro access is updating.");
       url.searchParams.delete("checkout");
       window.history.replaceState({}, "", url.toString());
     }
   }, [search]);
 
-  // Close user menu on outside click
   useEffect(() => {
     if (!userMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+    const handler = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setUserMenuOpen(false);
       }
     };
@@ -81,17 +80,17 @@ function AuthLayout() {
     return () => document.removeEventListener("mousedown", handler);
   }, [userMenuOpen]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [path]);
 
-  if (loading || !user)
+  if (loading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Loading…
+      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
+        Loading...
       </div>
     );
+  }
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -101,47 +100,42 @@ function AuthLayout() {
   const isActive = (to: string) => path === to || path.startsWith(to + "/");
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* Top nav bar */}
+    <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-40 border-b border-border bg-background/95">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 h-14">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+          <Link to="/" className="flex shrink-0 items-center gap-2">
             <span className="font-display text-xl">CodeWise</span>
             <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
               beta
             </span>
           </Link>
 
-          {/* Desktop nav: centered */}
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-            {NAV_ITEMS.map((it) => (
+          <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
+            {NAV_ITEMS.map((item) => (
               <Link
-                key={it.to}
-                to={it.to}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  isActive(it.to)
+                key={item.to}
+                to={item.to}
+                className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                  isActive(item.to)
                     ? "bg-accent/15 text-accent"
-                    : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
                 }`}
               >
-                <it.icon className="size-4" />
-                {it.label}
+                <item.icon className="size-4" />
+                {item.label}
               </Link>
             ))}
           </nav>
 
-          {/* Right side: user menu + mobile hamburger */}
           <div className="flex items-center gap-2">
-            {/* Desktop user dropdown */}
-            <div className="hidden md:block relative" ref={userMenuRef}>
+            <div className="relative hidden md:block" ref={userMenuRef}>
               <button
-                onClick={() => setUserMenuOpen((v) => !v)}
-                className="flex items-center gap-2 px-2 py-1 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                onClick={() => setUserMenuOpen((value) => !value)}
+                className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
               >
                 <Avatar className="size-8">
                   <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? user.email ?? ""} />
-                  <AvatarFallback className="text-[10px] bg-accent/20 text-accent">
+                  <AvatarFallback className="bg-accent/20 text-[10px] text-accent">
                     {(displayName ?? user.email ?? "U").slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -150,15 +144,15 @@ function AuthLayout() {
                 />
               </button>
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-56 rounded-md border border-border bg-popover shadow-lg z-50">
-                  <div className="px-3 py-2 border-b border-border">
-                    <p className="text-sm font-medium truncate">{displayName ?? "User"}</p>
-                    <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
+                <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-md border border-border bg-popover shadow-lg">
+                  <div className="border-b border-border px-3 py-2">
+                    <p className="truncate text-sm font-medium">{displayName ?? "User"}</p>
+                    <p className="truncate text-xs font-mono text-muted-foreground">{user.email}</p>
                   </div>
                   <Link
                     to="/settings"
                     onClick={() => setUserMenuOpen(false)}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                   >
                     <SettingsIcon className="size-4" /> Settings
                   </Link>
@@ -166,7 +160,7 @@ function AuthLayout() {
                     <Link
                       to="/admin/dashboard"
                       onClick={() => setUserMenuOpen(false)}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                     >
                       <Shield className="size-4" /> Admin
                     </Link>
@@ -174,14 +168,14 @@ function AuthLayout() {
                   <Link
                     to="/billing"
                     onClick={() => setUserMenuOpen(false)}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                   >
                     <CreditCard className="size-4" /> Billing
                   </Link>
                   <div className="border-t border-border" />
                   <button
                     onClick={signOut}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                   >
                     <LogOut className="size-4" /> Sign out
                   </button>
@@ -189,10 +183,9 @@ function AuthLayout() {
               )}
             </div>
 
-            {/* Mobile hamburger */}
             <button
-              onClick={() => setMobileOpen((v) => !v)}
-              className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+              onClick={() => setMobileOpen((value) => !value)}
+              className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground md:hidden"
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -200,63 +193,59 @@ function AuthLayout() {
           </div>
         </div>
 
-        {/* Mobile nav panel */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-border bg-background">
-            <nav className="px-4 py-3 space-y-1">
-              {NAV_ITEMS.map((it) => (
+          <div className="border-t border-border bg-background md:hidden">
+            <nav className="space-y-1 px-4 py-3">
+              {NAV_ITEMS.map((item) => (
                 <Link
-                  key={it.to}
-                  to={it.to}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                    isActive(it.to)
+                  key={item.to}
+                  to={item.to}
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                    isActive(item.to)
                       ? "bg-accent/15 text-accent"
-                      : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent"
+                      : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
                   }`}
                 >
-                  <it.icon className="size-4" />
-                  {it.label}
+                  <item.icon className="size-4" />
+                  {item.label}
                 </Link>
               ))}
-              <div className="pt-3 mt-3 border-t border-border">
-                <div className="flex items-center gap-3 px-3 mb-2">
+              <div className="mt-3 border-t border-border pt-3">
+                <div className="mb-2 flex items-center gap-3 px-3">
                   <Avatar className="size-9">
-                    <AvatarImage
-                      src={avatarUrl ?? undefined}
-                      alt={displayName ?? user.email ?? ""}
-                    />
-                    <AvatarFallback className="text-[10px] bg-accent/20 text-accent">
+                    <AvatarImage src={avatarUrl ?? undefined} alt={displayName ?? user.email ?? ""} />
+                    <AvatarFallback className="bg-accent/20 text-[10px] text-accent">
                       {(displayName ?? user.email ?? "U").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="text-sm font-medium">{displayName ?? "User"}</p>
-                    <p className="text-xs font-mono text-muted-foreground truncate">{user.email}</p>
+                    <p className="truncate text-xs font-mono text-muted-foreground">{user.email}</p>
                   </div>
                 </div>
                 <Link
                   to="/settings"
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                 >
                   <SettingsIcon className="size-4" /> Settings
                 </Link>
                 {isAdmin && (
                   <Link
                     to="/admin/dashboard"
-                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                   >
                     <Shield className="size-4" /> Admin
                   </Link>
                 )}
                 <Link
                   to="/billing"
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                 >
                   <CreditCard className="size-4" /> Billing
                 </Link>
                 <button
                   onClick={signOut}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
                 >
                   <LogOut className="size-4" /> Sign out
                 </button>
@@ -266,28 +255,24 @@ function AuthLayout() {
         )}
       </header>
 
-      {/* Past-due banner */}
       {subscription?.status === "past_due" && (
-        <div className="bg-warning/15 border-b border-warning/30 px-6 py-2.5 text-sm text-warning-foreground flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-warning/30 bg-warning/15 px-6 py-2.5 text-sm text-warning-foreground">
           <span className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-warning" />
-            Your last payment failed. Update your card to keep Pro access.
+            Your last payment did not complete. Update your billing details to keep Pro access.
           </span>
           <Link to="/billing" className="font-medium underline underline-offset-4">
-            Fix billing →
+            Open billing
           </Link>
         </div>
       )}
 
-      {/* Research consent banner */}
       <ConsentBanner />
 
-      {/* Main content */}
       <main className="flex-1">
         <Outlet />
       </main>
 
-      {/* Site footer */}
       <SiteFooter />
     </div>
   );

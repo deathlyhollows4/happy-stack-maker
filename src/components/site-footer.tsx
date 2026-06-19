@@ -47,7 +47,7 @@ export function SiteFooter() {
         ))}
       </div>
       <p className="font-mono text-xs text-muted-foreground">
-        CodeWise - AI code review for CS students.
+        CodeWise | AI code review for CS students. Paid plans are billed in INR.
       </p>
     </footer>
   );

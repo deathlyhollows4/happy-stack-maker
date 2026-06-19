@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -25,7 +25,7 @@ function PrivacyPage() {
 
       <div className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="font-display text-4xl">Privacy Notice</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: May 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: June 2026</p>
 
         <div className="mt-10 space-y-6 text-sm leading-relaxed text-foreground/90">
           <section>
@@ -41,28 +41,30 @@ function PrivacyPage() {
             <h2 className="font-display text-2xl">2. What data we collect</h2>
             <ul className="ml-6 list-disc space-y-1">
               <li>
-                <strong>Account data</strong>: name (display name), email address, hashed password /
-                OAuth identifier.
+                <strong>Account data</strong>: name (display name), email address, hashed password
+                or OAuth identifier.
               </li>
               <li>
                 <strong>User content</strong>: code you submit, prompts, generated reviews, practice
-                problems, mastery scores.
+                problems, and mastery scores.
               </li>
               <li>
                 <strong>Usage data</strong>: pages visited, features used, timestamps, approximate
-                location and device info.
+                location, and device info.
               </li>
               <li>
                 <strong>Support data</strong>: messages you send us.
               </li>
               <li>
                 <strong>Cookies and identifiers</strong>: essential cookies for sign-in; we may use
-                analytics cookies (see below).
+                analytics cookies as described below.
               </li>
             </ul>
             <p className="mt-2">
-              Payment information (card numbers etc.) is collected and processed directly by{" "}
-              <strong>Paddle</strong> as Merchant of Record. We do not see or store your card data.
+              Payment information, including card, netbanking, wallet, or UPI credentials, is
+              collected and processed directly by <strong>Razorpay</strong>. We do not store full
+              payment instrument details. We may receive limited billing metadata such as payment
+              IDs, invoice references, subscription status, amount, and currency.
             </p>
           </section>
 
@@ -70,27 +72,27 @@ function PrivacyPage() {
             <h2 className="font-display text-2xl">3. Why we use your data (and our legal basis)</h2>
             <ul className="ml-6 list-disc space-y-1">
               <li>
-                <strong>To provide the service</strong>, create your account, run reviews, track
+                <strong>To provide the service</strong>, create your account, run reviews, and track
                 mastery (contract performance).
               </li>
               <li>
-                <strong>To bill you and manage subscriptions</strong>, via Paddle (contract).
+                <strong>To bill you and manage subscriptions</strong>, via Razorpay (contract).
               </li>
               <li>
                 <strong>To keep the service secure</strong>, prevent fraud and abuse (legitimate
                 interests).
               </li>
               <li>
-                <strong>To improve the product</strong>, analytics, aggregated usage (legitimate
-                interests).
+                <strong>To improve the product</strong>, analytics and aggregated usage
+                (legitimate interests).
               </li>
               <li>
-                <strong>To support you</strong>, respond to questions (legitimate interests /
+                <strong>To support you</strong>, respond to questions (legitimate interests or
                 contract).
               </li>
               <li>
                 <strong>To send important notices</strong>, billing or service messages (legal
-                obligation / legitimate interests).
+                obligation or legitimate interests).
               </li>
               <li>
                 <strong>Marketing</strong>, only with your consent, and you can opt out at any time.
@@ -102,15 +104,15 @@ function PrivacyPage() {
             <h2 className="font-display text-2xl">4. Who we share data with</h2>
             <ul className="ml-6 list-disc space-y-1">
               <li>
-                <strong>Service providers / subprocessors</strong>: hosting, database, AI inference,
-                analytics, and support tooling, under contract.
+                <strong>Service providers and subprocessors</strong>: hosting, database, AI
+                inference, analytics, and support tooling, under contract.
               </li>
               <li>
-                <strong>Paddle</strong>, our Merchant of Record, for sale of the product,
-                subscription management, payments, tax compliance, and invoicing.
+                <strong>Razorpay</strong>, for checkout, subscription management, invoicing, and
+                payment processing.
               </li>
               <li>
-                <strong>Professional advisers</strong> (legal, accounting) where necessary.
+                <strong>Professional advisers</strong> (legal and accounting) where necessary.
               </li>
               <li>
                 <strong>Authorities</strong> where required by law.
@@ -141,8 +143,8 @@ function PrivacyPage() {
             <h2 className="font-display text-2xl">7. Your rights</h2>
             <p>
               Depending on where you live, you may have rights to access, rectify, erase, restrict,
-              port, or object to processing of your personal data, and to withdraw consent. EU/UK
-              users have the right to complain to a supervisory authority. We will respond to
+              port, or object to processing of your personal data, and to withdraw consent. EU or
+              UK users have the right to complain to a supervisory authority. We will respond to
               verified requests within one month.
             </p>
           </section>
@@ -160,8 +162,8 @@ function PrivacyPage() {
           <section>
             <h2 className="font-display text-2xl">9. Cookies</h2>
             <p>
-              We use <strong>essential</strong> cookies for sign-in and security. We may use
-              <strong> analytics</strong> cookies to understand how the product is used; you can
+              We use <strong>essential</strong> cookies for sign-in and security. We may use{" "}
+              <strong>analytics</strong> cookies to understand how the product is used; you can
               manage cookie preferences through your browser settings.
             </p>
           </section>

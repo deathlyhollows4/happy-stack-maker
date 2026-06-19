@@ -1,14 +1,12 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { toast } from "sonner";
-import { updateProYearlyPrice } from "@/lib/billing.functions";
-import { getPaddleEnvironment } from "@/lib/paddle";
+import { getPublicPricingConfig, formatInr, getBillingEnvironment } from "@/lib/payments";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, RefreshCw } from "lucide-react";
+import { Shield, RefreshCw, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/update-price")({
-  head: () => ({ meta: [{ title: "Update Paddle Price | CodeWise" }] }),
+  head: () => ({ meta: [{ title: "Billing Prices | CodeWise" }] }),
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
@@ -23,53 +21,69 @@ export const Route = createFileRoute("/_authenticated/admin/update-price")({
 });
 
 function UpdatePricePage() {
-  const fn = useServerFn(updateProYearlyPrice);
-  const [busy, setBusy] = useState(false);
-  const env = getPaddleEnvironment();
-
-  const handleUpdate = async () => {
-    setBusy(true);
-    try {
-      const r = await fn({ data: { environment: env } });
-      if (r.ok) toast.success(r.message);
-      else toast.error(r.error);
-    } catch {
-      toast.error("Request failed.");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const getPricingConfig = useServerFn(getPublicPricingConfig);
+  const { data } = useQuery({
+    queryKey: ["publicPricingConfig"],
+    queryFn: () => getPricingConfig(),
+    staleTime: 60 * 1000,
+  });
+  const pricing = data?.config;
+  const environment = getBillingEnvironment();
 
   return (
-    <div className="p-8 max-w-xl mx-auto">
+    <div className="mx-auto max-w-2xl p-8">
       <Link
-        to="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+        to="/admin/dashboard"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        ← Back to Dashboard
+        <ArrowLeft className="size-3.5" /> Back to admin
       </Link>
 
       <div className="rounded-lg border border-border bg-card p-6">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="mb-4 flex items-center gap-2">
           <Shield className="size-5 text-accent" />
-          <h2 className="font-display text-xl">Admin: Update Pro Yearly Price</h2>
+          <h2 className="font-display text-xl">Billing price checklist</h2>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-4">
-          Updates the Paddle{" "}
-          <code className="font-mono text-xs bg-muted px-1 rounded">pro_yearly</code> price to{" "}
-          <strong>$199.00 USD/year</strong> in the{" "}
-          <span className="font-mono text-xs bg-muted px-1 rounded">{env}</span> environment.
+        <p className="mb-4 text-sm text-muted-foreground">
+          Public pricing uses admin-config values. Checkout amounts in Razorpay should match the
+          same monthly and yearly INR values before you switch traffic.
         </p>
 
-        <button
-          onClick={handleUpdate}
-          disabled={busy}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-md border border-border bg-background p-4">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+              Monthly
+            </p>
+            <p className="mt-2 font-display text-3xl">
+              {pricing ? formatInr(pricing.proMonthlyInr) : "--"}
+            </p>
+          </div>
+          <div className="rounded-md border border-border bg-background p-4">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+              Yearly
+            </p>
+            <p className="mt-2 font-display text-3xl">
+              {pricing ? formatInr(pricing.proYearlyInr) : "--"}
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <p>
+            Active environment: <span className="font-mono text-foreground">{environment}</span>
+          </p>
+          <p>1. Update the public display amounts in Admin Settings if the INR price changes.</p>
+          <p>2. Confirm the Razorpay plan or order amount matches those values.</p>
+          <p>3. Run one test checkout in sandbox before updating live traffic.</p>
+        </div>
+
+        <Link
+          to="/admin/settings"
+          className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          <RefreshCw className={`size-4 ${busy ? "animate-spin" : ""}`} />
-          {busy ? "Updating…" : "Update to $199/yr"}
-        </button>
+          <RefreshCw className="size-4" /> Review site settings
+        </Link>
       </div>
     </div>
   );

@@ -76,7 +76,7 @@ function LandingPage() {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     if (url.searchParams.get("checkout") === "success") {
-      toast.success("You're subscribed. Welcome to Pro");
+      toast.success("Checkout complete. Pro access is updating.");
       url.searchParams.delete("checkout");
       window.history.replaceState({}, "", url.toString());
     }
@@ -277,7 +277,8 @@ function LandingPage() {
             <Sparkles className="mx-auto h-6 w-6 text-accent" />
             <h2 className="mt-4 font-display text-5xl">Ready when you are.</h2>
             <p className="mt-4 text-muted-foreground">
-              Start free with 50 code reviews per month. No credit card.
+              Start free with 50 code reviews per month. Paid plans are billed in INR through
+              Razorpay.
             </p>
             <Link
               to="/signup"

@@ -78,12 +78,12 @@ const securityHeaders: Record<string, string> = {
 // CSP applied only to HTML responses
 const csp =
   "default-src 'self'; " +
-  "script-src 'self' 'unsafe-inline' https://js.stripe.com https://plausible.io; " +
+  "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://plausible.io; " +
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
   "font-src 'self' https://fonts.gstatic.com; " +
   "img-src 'self' data: https:; " +
-  "connect-src 'self' https://*.supabase.co https://api.paddle.com https://plausible.io; " +
-  "frame-src 'self' https://js.stripe.com https://accounts.google.com;";
+  "connect-src 'self' https://*.supabase.co https://api.razorpay.com https://plausible.io; " +
+  "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://accounts.google.com;";
 
 function injectSecurityHeaders(response: Response): Response {
   // Clone the response so we can safely mutate headers

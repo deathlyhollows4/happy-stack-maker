@@ -42,8 +42,8 @@ const CONFIG_FIELDS = [
   {
     label: "Plan Price Display",
     fields: [
-      { key: "plan_price_pro_monthly", label: "Pro Monthly ($/mo)" },
-      { key: "plan_price_pro_yearly", label: "Pro Yearly ($/yr)" },
+      { key: "plan_price_pro_monthly", label: "Pro Monthly (INR / month)" },
+      { key: "plan_price_pro_yearly", label: "Pro Yearly (INR / year)" },
     ],
   },
 ];
@@ -136,6 +136,12 @@ function AdminSettingsPage() {
             <h3 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-4">
               {group.label}
             </h3>
+            {group.label === "Plan Price Display" && (
+              <p className="mb-4 text-sm text-muted-foreground">
+                Store whole-number INR amounts. These values drive the public pricing page and
+                billing labels.
+              </p>
+            )}
             <div className="space-y-3">
               {group.fields.map((field) => (
                 <div key={field.key} className="flex items-center gap-4">
@@ -161,14 +167,13 @@ function AdminSettingsPage() {
             className="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-            {saving ? "Saving…" : "Save settings"}
+            {saving ? "Saving..." : "Save settings"}
           </button>
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          Changes take effect immediately. Limits apply on the next quota check. Pricing display
-          values are shown on the /pricing page; actual Paddle prices must be updated via the Paddle
-          dashboard or the Update Price tool.
+          Changes take effect immediately. Limits apply on the next quota check. Keep these values
+          aligned with the active Razorpay billing amounts used by checkout.
         </p>
       </form>
     </div>

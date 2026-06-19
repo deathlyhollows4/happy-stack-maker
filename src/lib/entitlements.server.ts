@@ -1,5 +1,5 @@
 // Server-only entitlement helpers. Determines a user's plan + consumes quota.
-import type { PaddleEnv } from "@/lib/paddle.server";
+import type { PaymentsEnv } from "@/lib/payments.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type Plan = "free" | "pro";
@@ -48,26 +48,39 @@ export type QuotaKind = "review" | "roadmap" | "code_run";
 /** Determines plan from the subscriptions table, env-scoped. */
 export async function getUserPlan(
   userId: string,
-  env: PaddleEnv,
+  env: PaymentsEnv,
 ): Promise<{ plan: Plan; status: string | null; pastDue: boolean }> {
   const { data } = await supabaseAdmin
     .from("subscriptions")
-    .select("status, current_period_end")
+    .select("status, current_period_end, external_status_updated_at, created_at")
     .eq("user_id", userId)
-    .eq("environment", env)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .eq("environment", env);
 
-  if (!data) return { plan: "free", status: null, pastDue: false };
+  const rows = data ?? [];
+  if (!rows.length) return { plan: "free", status: null, pastDue: false };
+
+  const sortedRows = [...rows].sort((left, right) => {
+    const leftTs = left.external_status_updated_at || left.created_at || "";
+    const rightTs = right.external_status_updated_at || right.created_at || "";
+    return rightTs.localeCompare(leftTs);
+  });
 
   const now = Date.now();
-  const endMs = data.current_period_end
-    ? new Date(data.current_period_end as string).getTime()
+  const activeRow =
+    sortedRows.find((row) => {
+      const endMs = row.current_period_end ? new Date(row.current_period_end).getTime() : null;
+      const inPeriod = endMs === null || endMs > now;
+      return (
+        (["active", "trialing", "past_due"].includes(row.status) && inPeriod) ||
+        (row.status === "canceled" && endMs !== null && endMs > now)
+      );
+    }) || sortedRows[0];
+
+  const endMs = activeRow.current_period_end
+    ? new Date(activeRow.current_period_end as string).getTime()
     : null;
   const inPeriod = endMs === null || endMs > now;
-
-  const status = data.status as string;
+  const status = activeRow.status as string;
   const isPro =
     (["active", "trialing", "past_due"].includes(status) && inPeriod) ||
     (status === "canceled" && endMs !== null && endMs > now);

@@ -25,7 +25,7 @@ function TermsPage() {
 
       <div className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="font-display text-4xl">Terms & Conditions</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: May 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: June 2026</p>
 
         <div className="prose prose-invert mt-10 max-w-none space-y-6 text-sm leading-relaxed text-foreground/90">
           <section>
@@ -76,8 +76,8 @@ function TermsPage() {
                 limits;
               </li>
               <li>
-                misuse AI outputs (e.g. generating illegal content, harassment, deepfakes, or
-                content that violates third-party rights).
+                misuse AI outputs (for example generating illegal content, harassment, deepfakes,
+                or content that violates third-party rights).
               </li>
             </ul>
             <p>
@@ -109,19 +109,14 @@ function TermsPage() {
           <section>
             <h2 className="font-display text-2xl">8. Payments, billing and refunds</h2>
             <p>
-              Our order process is conducted by our online reseller <strong>Paddle.com</strong>.
-              Paddle.com is the Merchant of Record for all our orders. Paddle provides all customer
-              service inquiries and handles returns. Payment, billing, taxes, cancellation, and
-              refund mechanics are governed by{" "}
-              <a
-                className="underline"
-                href="https://www.paddle.com/legal/checkout-buyer-terms"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Paddle's Buyer Terms
-              </a>
-              . See our{" "}
+              Paid plans are billed in INR through <strong>Razorpay</strong>. By starting a paid
+              subscription, you authorize recurring charges until you cancel. Checkout, renewal
+              records, invoices, taxes, and payment method updates are handled through Razorpay and
+              the payment methods available there.
+            </p>
+            <p>
+              If you cancel, the subscription stops at the next renewal and you keep access for the
+              remaining active period plus any grace window we show in the product. See our{" "}
               <Link className="underline" to="/refunds">
                 Refund Policy
               </Link>
@@ -142,11 +137,12 @@ function TermsPage() {
           <section>
             <h2 className="font-display text-2xl">10. Warranties and liability</h2>
             <p>
-              To the fullest extent permitted by law, we disclaim all implied warranties (including
-              merchantability and fitness for purpose). Our aggregate liability is capped at the
-              fees you paid in the 12 months before the claim. We are not liable for indirect,
-              consequential or special damages (e.g. loss of profits, data, or goodwill). Nothing
-              limits liability for fraud, death, or personal injury where the law forbids it.
+              To the fullest extent permitted by law, we disclaim all implied warranties, including
+              merchantability and fitness for purpose. Our aggregate liability is capped at the fees
+              you paid in the 12 months before the claim. We are not liable for indirect,
+              consequential, or special damages, for example loss of profits, data, or goodwill.
+              Nothing limits liability for fraud, death, or personal injury where the law forbids
+              it.
             </p>
           </section>
 

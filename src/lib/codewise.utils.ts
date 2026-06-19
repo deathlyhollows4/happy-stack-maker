@@ -1,8 +1,8 @@
 import { z, type ZodType } from "zod";
-import type { PaddleEnv } from "@/lib/paddle.server";
+import type { PaymentsEnv } from "@/lib/payments.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const envInput = z.enum(["sandbox", "live"]).default("sandbox") as z.ZodType<PaddleEnv>;
+export const envInput = z.enum(["sandbox", "live"]).default("sandbox") as ZodType<PaymentsEnv>;
 
 export function extractJson(raw: string): string {
   const trimmed = raw.trim();

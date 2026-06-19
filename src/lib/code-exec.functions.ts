@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getUserPlan, consumeQuota, getPlanQuotas, dayKey } from "@/lib/entitlements.server";
-import type { PaddleEnv } from "@/lib/paddle.server";
+import type { PaymentsEnv } from "@/lib/payments.server";
 
 const LANGS = ["python", "javascript", "java", "cpp"] as const;
 type Lang = (typeof LANGS)[number];
@@ -15,7 +15,7 @@ const PISTON: Record<Lang, { language: string; version: string; filename: string
   cpp: { language: "c++", version: "10.2.0", filename: "main.cpp" },
 };
 
-const envInput = z.enum(["sandbox", "live"]).default("sandbox") as z.ZodType<PaddleEnv>;
+const envInput = z.enum(["sandbox", "live"]).default("sandbox") as z.ZodType<PaymentsEnv>;
 
 export const runCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

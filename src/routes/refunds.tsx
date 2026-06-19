@@ -9,7 +9,7 @@ export const Route = createFileRoute("/refunds")({
       {
         name: "description",
         content:
-          "CodeWise offers a 30-day money-back refund on Pro subscriptions. Read the full refund policy and how to request one.",
+          "CodeWise offers a 30-day refund window on Pro subscriptions. Read the refund policy and the information needed for a request.",
       },
       { property: "og:url", content: "https://happy-stack-maker.lovable.app/refunds" },
     ],
@@ -25,42 +25,30 @@ function RefundsPage() {
 
       <div className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="font-display text-4xl">Refund Policy</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: May 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: June 2026</p>
 
         <div className="mt-10 space-y-6 text-sm leading-relaxed text-foreground/90">
           <p>
-            We offer a <strong>30-day money-back guarantee</strong>. If you're not satisfied with
-            your CodeWise purchase, you can request a full refund within 30 days of your order date,
-            no questions asked.
+            We offer a <strong>30-day refund window</strong> for CodeWise Pro. If the product is
+            not a fit, request a refund within 30 days of the original charge date.
           </p>
 
           <h2 className="font-display text-2xl">How to request a refund</h2>
           <p>
-            Refunds are processed by our payment provider, <strong>Paddle</strong>, who acts as
-            Merchant of Record for all CodeWise purchases. To request a refund:
+            Payments are processed through <strong>Razorpay</strong>. To request a refund, contact
+            us through the in-app support channel and include the billing email plus any Razorpay
+            payment ID, order ID, or invoice reference you received at checkout.
           </p>
-          <ul className="ml-6 list-disc space-y-1">
-            <li>
-              Visit{" "}
-              <a
-                className="underline"
-                href="https://paddle.net"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                paddle.net
-              </a>{" "}
-              and enter the email address you used to purchase, then follow the prompts; or
-            </li>
-            <li>
-              Contact us through the in-app support channel and we'll forward your request to
-              Paddle.
-            </li>
-          </ul>
+
+          <h2 className="font-display text-2xl">How refunds are issued</h2>
+          <p>
+            Approved refunds are returned to the original payment method through Razorpay. Bank,
+            card, or UPI settlement times depend on the payment method and issuing institution.
+          </p>
 
           <h2 className="font-display text-2xl">After the 30-day period</h2>
           <p>
-            After 30 days we generally don't issue refunds, but you can cancel at any time to stop
+            After 30 days we generally do not issue refunds, but you can cancel at any time to stop
             future billing. On cancellation you keep access for 7 more days as a grace period.
           </p>
 

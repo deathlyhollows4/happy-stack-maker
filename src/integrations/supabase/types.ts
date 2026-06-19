@@ -32,6 +32,42 @@ export type Database = {
         }
         Relationships: []
       }
+      billing_plan_mappings: {
+        Row: {
+          billing_plan_code: string
+          created_at: string
+          currency_code: string
+          environment: string
+          id: string
+          metadata: Json
+          provider: string
+          provider_plan_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_plan_code: string
+          created_at?: string
+          currency_code: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          provider: string
+          provider_plan_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_plan_code?: string
+          created_at?: string
+          currency_code?: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          provider?: string
+          provider_plan_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           author: string
@@ -307,46 +343,70 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_plan_code: string | null
           cancel_at_period_end: boolean | null
           created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
+          currency_code: string | null
           environment: string
+          external_status_updated_at: string | null
           id: string
-          paddle_customer_id: string
-          paddle_subscription_id: string
+          metadata: Json
+          paddle_customer_id: string | null
+          paddle_subscription_id: string | null
           price_id: string
           product_id: string
+          provider: string
+          provider_customer_id: string | null
+          provider_plan_id: string | null
+          provider_subscription_id: string | null
           status: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          billing_plan_code?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          currency_code?: string | null
           environment?: string
+          external_status_updated_at?: string | null
           id?: string
-          paddle_customer_id: string
-          paddle_subscription_id: string
+          metadata?: Json
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
           price_id: string
           product_id: string
+          provider?: string
+          provider_customer_id?: string | null
+          provider_plan_id?: string | null
+          provider_subscription_id?: string | null
           status?: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          billing_plan_code?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          currency_code?: string | null
           environment?: string
+          external_status_updated_at?: string | null
           id?: string
-          paddle_customer_id?: string
-          paddle_subscription_id?: string
+          metadata?: Json
+          paddle_customer_id?: string | null
+          paddle_subscription_id?: string | null
           price_id?: string
           product_id?: string
+          provider?: string
+          provider_customer_id?: string | null
+          provider_plan_id?: string | null
+          provider_subscription_id?: string | null
           status?: string
           updated_at?: string | null
           user_id?: string
@@ -464,21 +524,36 @@ export type Database = {
       webhook_events: {
         Row: {
           created_at: string
+          environment: string | null
           event_id: string
           event_type: string
           id: number
+          processed_at: string | null
+          processing_error: string | null
+          provider: string
+          raw_payload: string | null
         }
         Insert: {
           created_at?: string
+          environment?: string | null
           event_id: string
           event_type: string
           id?: number
+          processed_at?: string | null
+          processing_error?: string | null
+          provider?: string
+          raw_payload?: string | null
         }
         Update: {
           created_at?: string
+          environment?: string | null
           event_id?: string
           event_type?: string
           id?: number
+          processed_at?: string | null
+          processing_error?: string | null
+          provider?: string
+          raw_payload?: string | null
         }
         Relationships: []
       }

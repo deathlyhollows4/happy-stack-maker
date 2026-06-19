@@ -1,11 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Check, ArrowRight } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useSubscription } from "@/hooks/use-subscription";
-import { usePaddleCheckout } from "@/hooks/use-paddle-checkout";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowRight, Check } from "lucide-react";
+import { toast } from "sonner";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { useAuth } from "@/hooks/use-auth";
+import { useRazorpayCheckout } from "@/hooks/use-razorpay-checkout";
+import { useSubscription } from "@/hooks/use-subscription";
+import {
+  DEFAULT_PRICING_CONFIG,
+  formatInr,
+  getFreePlanFeatures,
+  getProPlanFeatures,
+  getPublicPricingConfig,
+} from "@/lib/payments";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -14,13 +24,13 @@ export const Route = createFileRoute("/pricing")({
       {
         name: "description",
         content:
-          "CodeWise Pro: 1500 code reviews per month and 150 practice problems per day. Cancel anytime.",
+          "CodeWise pricing for CS students, with free and paid plans, usage limits, and cancellation terms.",
       },
       { property: "og:title", content: "Pricing | CodeWise" },
       {
         property: "og:description",
         content:
-          "CodeWise Pro: 1500 code reviews per month and 150 practice problems per day. Cancel anytime.",
+          "CodeWise pricing for CS students, with free and paid plans, usage limits, and cancellation terms.",
       },
       { property: "og:url", content: "https://happy-stack-maker.lovable.app/pricing" },
     ],
@@ -29,23 +39,19 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-const FREE_FEATURES = [
-  "50 code reviews / month",
-  "Mastery tracking across DSA topics",
-  "25 practice problems / day",
-  "100 code runs / day",
-];
-
-const PRO_FEATURES = [
-  "1500 code reviews / month",
-  "150 practice problems / day",
-  "Priority support",
-];
-
 function PricingPage() {
   const { user } = useAuth();
   const { isActive, loading: subLoading } = useSubscription();
-  const { openCheckout, loading } = usePaddleCheckout();
+  const getPricingConfig = useServerFn(getPublicPricingConfig);
+  const { data } = useQuery({
+    queryKey: ["publicPricingConfig"],
+    queryFn: () => getPricingConfig(),
+    staleTime: 60 * 1000,
+  });
+  const pricing = data?.ok ? data.config : DEFAULT_PRICING_CONFIG;
+  const freeFeatures = getFreePlanFeatures(pricing);
+  const proFeatures = getProPlanFeatures(pricing);
+  const { openCheckout, loading } = useRazorpayCheckout();
   const navigate = useNavigate();
 
   const handleSubscribe = async (priceId: "pro_monthly" | "pro_yearly") => {
@@ -53,12 +59,18 @@ function PricingPage() {
       navigate({ to: "/signup" });
       return;
     }
-    await openCheckout({
-      priceId,
-      customerEmail: user.email,
-      customData: { userId: user.id },
-      successUrl: `${window.location.origin}/dashboard?checkout=success`,
-    });
+
+    try {
+      await openCheckout({
+        priceId,
+        customerEmail: user.email,
+        userId: user.id,
+        successUrl: `${window.location.origin}/dashboard?checkout=success`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Checkout could not be started.";
+      toast.error(message);
+    }
   };
 
   return (
@@ -84,19 +96,18 @@ function PricingPage() {
         )}
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Free */}
           <div className="rounded-lg border border-border bg-card/40 p-6">
             <h2 className="font-display text-2xl">Free</h2>
             <p className="mt-1 text-sm text-muted-foreground">Get a feel for it.</p>
             <div className="mt-6">
-              <span className="font-display text-5xl">$0</span>
+              <span className="font-display text-5xl">Free</span>
               <span className="ml-1 text-muted-foreground">/mo</span>
             </div>
             <ul className="mt-6 space-y-2 text-sm">
-              {FREE_FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2">
+              {freeFeatures.map((feature) => (
+                <li key={feature} className="flex items-start gap-2">
                   <Check className="mt-0.5 h-4 w-4 text-accent" />
-                  <span>{f}</span>
+                  <span>{feature}</span>
                 </li>
               ))}
             </ul>
@@ -108,22 +119,21 @@ function PricingPage() {
             </Link>
           </div>
 
-          {/* Pro monthly */}
-          <div className="rounded-lg border-2 border-accent bg-card/40 p-6 relative">
+          <div className="relative rounded-lg border-2 border-accent bg-card/40 p-6">
             <span className="absolute -top-3 left-6 rounded-sm bg-accent px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent-foreground">
               Most popular
             </span>
             <h2 className="font-display text-2xl">Pro Monthly</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Full access, billed monthly.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Full access, billed monthly in INR.</p>
             <div className="mt-6">
-              <span className="font-display text-5xl">$20</span>
+              <span className="font-display text-5xl">{formatInr(pricing.proMonthlyInr)}</span>
               <span className="ml-1 text-muted-foreground">/mo</span>
             </div>
             <ul className="mt-6 space-y-2 text-sm">
-              {PRO_FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2">
+              {proFeatures.map((feature) => (
+                <li key={feature} className="flex items-start gap-2">
                   <Check className="mt-0.5 h-4 w-4 text-accent" />
-                  <span>{f}</span>
+                  <span>{feature}</span>
                 </li>
               ))}
             </ul>
@@ -135,7 +145,7 @@ function PricingPage() {
               {isActive ? (
                 "You're subscribed"
               ) : loading ? (
-                "Loading…"
+                "Loading..."
               ) : (
                 <>
                   Subscribe <ArrowRight className="h-4 w-4" />
@@ -144,24 +154,28 @@ function PricingPage() {
             </button>
           </div>
 
-          {/* Pro yearly */}
           <div className="rounded-lg border border-border bg-card/40 p-6">
             <h2 className="font-display text-2xl">Pro Yearly</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Full access, billed yearly in INR.</p>
             <div className="mt-6">
-              <span className="font-display text-5xl">$199</span>
+              <span className="font-display text-5xl">{formatInr(pricing.proYearlyInr)}</span>
               <span className="ml-1 text-muted-foreground">/yr</span>
             </div>
-            <div className="mt-1 flex items-center gap-2">
-              <span className="text-sm line-through text-muted-foreground/60">$240</span>
-              <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
-                Save 17%
-              </span>
-            </div>
+            {pricing.yearlySavingsPercent > 0 && (
+              <div className="mt-1 flex items-center gap-2">
+                <span className="text-sm line-through text-muted-foreground/60">
+                  {formatInr(pricing.compareAtYearlyInr)}
+                </span>
+                <span className="rounded-sm bg-accent/15 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-accent">
+                  Save {pricing.yearlySavingsPercent}%
+                </span>
+              </div>
+            )}
             <ul className="mt-6 space-y-2 text-sm">
-              {PRO_FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2">
+              {proFeatures.map((feature) => (
+                <li key={feature} className="flex items-start gap-2">
                   <Check className="mt-0.5 h-4 w-4 text-accent" />
-                  <span>{f}</span>
+                  <span>{feature}</span>
                 </li>
               ))}
             </ul>
@@ -170,14 +184,14 @@ function PricingPage() {
               disabled={loading || isActive}
               className="mt-8 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-accent/10 disabled:opacity-50"
             >
-              {isActive ? "You're subscribed" : loading ? "Loading…" : "Subscribe yearly"}
+              {isActive ? "You're subscribed" : loading ? "Loading..." : "Subscribe yearly"}
             </button>
           </div>
         </div>
 
         <p className="mt-12 text-center text-xs text-muted-foreground">
-          Payments handled by Paddle, our merchant of record. Cancel anytime, you'll keep access for
-          7 days after cancellation. See our{" "}
+          Paid plans are billed in INR through Razorpay. Cancel anytime and keep access for 7 days
+          after cancellation. See our{" "}
           <Link to="/terms" className="underline">
             Terms
           </Link>

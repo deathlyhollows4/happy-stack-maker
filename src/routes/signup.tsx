@@ -92,10 +92,14 @@ function SignupPage() {
   };
 
   return (
-    <AuthShell title="Create your account" subtitle="Start free with 50 code reviews per month.">
+    <AuthShell
+      title="Create your account"
+      subtitle="Start free with 50 code reviews per month. Upgrade later with INR billing."
+    >
       <div className="mb-5 rounded-md border border-accent/30 bg-accent/10 p-3 text-xs leading-relaxed text-muted-foreground">
         No credit card required. Submitted code is used to create your review and saved to your
-        account so you can track mastery. You can export or delete your data from settings.
+        account so you can track mastery. Paid plans are billed in INR through Razorpay. You can
+        export or delete your data from settings.
       </div>
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         <Field label="Name" type="text" value={name} onChange={setName} autoComplete="name" />
@@ -112,7 +116,7 @@ function SignupPage() {
           disabled={loading}
           className="w-full rounded-md bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:bg-primary/90 transition disabled:opacity-50"
         >
-          {loading ? "Creating account…" : "Create account"}
+          {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
       <div className="relative my-6">
@@ -147,7 +151,7 @@ function SignupPage() {
             fill="#EA4335"
           />
         </svg>
-        {googleLoading ? "Redirecting…" : "Google"}
+        {googleLoading ? "Redirecting..." : "Google"}
       </button>
       <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
