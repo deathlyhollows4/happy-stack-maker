@@ -50,7 +50,7 @@ function AuthLayout() {
   const search = useRouterState({
     select: (s) => s.location.search as Record<string, unknown>,
   });
-  const { subscription } = useSubscription();
+  const { subscription, refresh: refreshSubscription } = useSubscription();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -64,16 +64,18 @@ function AuthLayout() {
     const url = new URL(window.location.href);
     const checkout = url.searchParams.get("checkout");
     if (checkout === "active") {
+      void refreshSubscription();
       toast.success("Subscription active. Pro access is ready.");
       url.searchParams.delete("checkout");
       window.history.replaceState({}, "", url.toString());
     }
     if (checkout === "pending") {
+      void refreshSubscription();
       toast.info("Payment authorization received. Pro access starts after Razorpay confirms the subscription charge.");
       url.searchParams.delete("checkout");
       window.history.replaceState({}, "", url.toString());
     }
-  }, [search]);
+  }, [search, refreshSubscription]);
 
   useEffect(() => {
     if (!userMenuOpen) return;
