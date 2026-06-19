@@ -14,6 +14,6 @@ insert into public.app_config (key, value) values
   ('plan_quota_pro_reviews', '1500'),
   ('plan_quota_pro_problems', '15'),
   ('plan_quota_pro_code_runs', '100'),
-  ('plan_price_pro_monthly', '20'),
-  ('plan_price_pro_yearly', '199')
+  ('plan_price_pro_monthly', '899'),
+  ('plan_price_pro_yearly', '8954')
 on conflict (key) do nothing;

@@ -98,7 +98,7 @@ export const updateProYearlyPrice = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("app_config").upsert(
       {
         key: "plan_price_pro_yearly",
-        value: "16990",
+        value: "8954",
         updated_at: new Date().toISOString(),
       },
       { onConflict: "key" },
@@ -114,6 +114,6 @@ export const updateProYearlyPrice = createServerFn({ method: "POST" })
 
     return {
       ok: true as const,
-      message: "Pro yearly price config is set to INR 16990/year.",
+      message: "Pro yearly price config is set to INR 8954/year.",
     };
   });

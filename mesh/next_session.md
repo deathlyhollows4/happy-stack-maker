@@ -1,78 +1,51 @@
-# Next Session
+# Razorpay Pricing Integration Handoff
 
 ## Objective
-Plan and execute the CodeWise billing migration from Paddle to Razorpay, including billing UI, backend payment flows, Supabase schema changes, and India-market pricing analysis.
+Fix missing Razorpay plan mappings on the pricing page, update Pro pricing to INR 899 monthly with a matching annual price that keeps a yearly discount, and provide migration code.
 
 ## Current status
-- Agent Mesh routing is active for this mission.
-- Backend and frontend migration code is in place for Razorpay.
-- The checkout flow now creates Razorpay subscriptions through server functions, opens `checkout.js`, and verifies the signed payment response before redirecting.
-- Provider-neutral subscription fields, webhook idempotency fields, and `billing_plan_mappings` were added in `supabase/migrations/20260619193000_razorpay_migration_core.sql`.
-- Pricing, billing, admin pricing guidance, refund policy, privacy notice, and terms were updated for INR and Razorpay.
-- Local verification passed:
-  - `npm run build`
-  - `npm test`
-- GitNexus `detect-changes` reported `critical`, but that result reflects the full in-flight working tree across 33 files, including non-billing edits already present in the repo.
+- Routed through Agent Mesh file-backed lanes because no real subagent tool is available in this turn.
+- Created @Scout, @Forge, @Sentinel, and @Cipher lane files under `mesh/tasks/`.
+- Updated pricing defaults to INR 899 monthly and INR 8954 yearly.
+- Added migration `supabase/migrations/20260619203000_update_pro_pricing_and_razorpay_mappings.sql` with app config updates and Razorpay plan mapping template.
+- Build passed after rerunning outside the sandbox.
 
 ## Commands run
-- `Get-ChildItem -Force`
-- `rg -n "billing|subscription|plan|razorpay|payment|credits|usage|limit|pro plan" src supabase tests package.json README.md`
-- `Get-Content -Raw README.md`
-- `Get-Content -Raw src/lib/billing.functions.ts`
-- `Get-Content -Raw src/routes/_authenticated/billing.tsx`
-- `Get-Content -Raw src/routes/api/public/payments/webhook.ts`
-- `Get-Content -Raw src/routes/pricing.tsx`
-- `Get-Content -Raw src/lib/paddle.ts`
-- `Get-Content -Raw src/lib/payments.functions.ts`
-- `Get-Content -Raw .env.example`
-- `npx gitnexus analyze`
-- `npx gitnexus impact -r "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker" ...`
+- `Get-Content C:\Users\brawl\.agents\skills\agent-mesh\SKILL.md`
+- `Get-Content C:\Users\brawl\.agents\skills\agent-mesh\references\dispatch-patterns.md`
+- `Get-Content C:\Users\brawl\.agents\skills\agent-mesh\references\worker-summary-contract.md`
+- `Get-Content C:\Users\brawl\.agents\skills\agent-mesh\references\verification-checklist.md`
+- `npx gitnexus impact PricingPage --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact DEFAULT_PRICING_CONFIG --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact normalizePricingConfig --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact "Function:src/lib/payments.functions.ts:createSubscriptionCheckout" --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact useRazorpayCheckout --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact "Function:src/lib/billing.functions.ts:updateProYearlyPrice" --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
 - `npm run build`
-- `npm test`
-- `npx gitnexus detect-changes -r "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
 
 ## Changed files
+- `mesh/tasks/scout-razorpay-pricing-research.md`
+- `mesh/tasks/forge-razorpay-checkout.md`
+- `mesh/tasks/sentinel-razorpay-verification.md`
+- `mesh/tasks/cipher-razorpay-security-review.md`
 - `mesh/next_session.md`
-- `mesh/tasks/scout-billing-ux-research.md`
-- `mesh/tasks/scout-billing-backend-research.md`
-- `mesh/tasks/scout-unit-economics-research.md`
-- `mesh/tasks/forge-razorpay-migration.md`
-- `mesh/tasks/sentinel-billing-verification.md`
-- `supabase/migrations/20260619193000_razorpay_migration_core.sql`
-- `src/lib/payments.server.ts`
-- `src/lib/payments.ts`
-- `src/lib/payments.functions.ts`
-- `src/lib/billing.functions.ts`
-- `src/lib/entitlements.server.ts`
-- `src/lib/code-exec.functions.ts`
-- `src/lib/codewise.utils.ts`
-- `src/hooks/use-razorpay-checkout.ts`
-- `src/hooks/use-subscription.ts`
-- `src/routes/pricing.tsx`
-- `src/routes/_authenticated/billing.tsx`
-- `src/routes/_authenticated/practice.tsx`
-- `src/routes/_authenticated/review.tsx`
-- `src/routes/_authenticated/admin.settings.tsx`
-- `src/routes/_authenticated/admin.update-price.tsx`
-- `src/routes/api/public/payments/webhook.ts`
-- `src/routes/terms.tsx`
-- `src/routes/refunds.tsx`
-- `src/routes/privacy.tsx`
-- `src/components/PaymentTestModeBanner.tsx`
-- `src/integrations/supabase/types.ts`
+- `mesh/notes/scout-razorpay-pricing-research.md`
+- `mesh/notes/sentinel-razorpay-verification.md`
+- `mesh/notes/cipher-razorpay-security-review.md`
 - `.env.example`
-- `src/server.ts`
+- `src/lib/payments.ts`
+- `src/lib/billing.functions.ts`
+- `supabase/migrations/20260518000000_app_config.sql`
+- `supabase/migrations/20260619203000_update_pro_pricing_and_razorpay_mappings.sql`
 
 ## Open risks
-- The Supabase migration has been added but not applied from this session.
-- `billing_plan_mappings` must be seeded with real Razorpay plan IDs for each environment before checkout can succeed.
-- Razorpay webhook configuration must point to `/api/public/payments/webhook?env=sandbox` or `?env=live` with the matching secret.
-- Legacy Paddle files may still exist on disk, but the active billing UI and server flows have been migrated. Remove any now-dead files and dependencies in a cleanup pass after the rollout is stable.
-- GitNexus change detection is broad because the working tree already contains other in-flight edits outside the core Razorpay lane.
+- `gitnexus detect-changes` could not complete because `npx` attempted npm cache or registry access, and unsandboxed execution was rejected for safety.
+- Real Razorpay plan IDs must be created or copied from Razorpay and inserted into `billing_plan_mappings`.
+- Razorpay account display or business profile must be configured as CodeWise in the Razorpay dashboard so hosted payment surfaces do not show the personal name.
 
 ## Resume steps
-1. Apply `supabase/migrations/20260619193000_razorpay_migration_core.sql` to the target Supabase project.
-2. Seed `billing_plan_mappings` with the real Razorpay plan IDs for `pro_monthly` and `pro_yearly` in `sandbox` and `live`.
-3. Set all Razorpay env vars in deployment, including webhook secrets and `VITE_RAZORPAY_KEY_ID`.
-4. Configure the Razorpay webhook endpoint and run one sandbox checkout end to end.
-5. After production confirmation, remove dead Paddle files and any unused dependency entries in a separate cleanup change.
+1. Replace the placeholder plan IDs in the provided migration SQL with real Razorpay plan IDs.
+2. Apply the migration.
+3. Configure production `VITE_RAZORPAY_KEY_ID` to the live key ID and server Razorpay live secrets.
+4. Configure the Razorpay webhook URL and secret.
+5. Run `gitnexus detect-changes` from a trusted local install before commit if available.

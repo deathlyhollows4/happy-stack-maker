@@ -76,9 +76,9 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   proReviews: 1500,
   proProblems: 150,
   proCodeRuns: 100,
-  proMonthlyInr: 1699,
-  proYearlyInr: 16990,
-  compareAtYearlyInr: 1699 * 12,
+  proMonthlyInr: 899,
+  proYearlyInr: 8954,
+  compareAtYearlyInr: 899 * 12,
   yearlySavingsPercent: 17,
   currency: "INR",
 };

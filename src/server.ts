@@ -7,6 +7,19 @@ type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
+const SERVER_ENV_KEYS = [
+  "SUPABASE_URL",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_PUBLISHABLE_KEY",
+  "LOVABLE_API_KEY",
+  "RAZORPAY_SANDBOX_KEY_ID",
+  "RAZORPAY_SANDBOX_KEY_SECRET",
+  "RAZORPAY_SANDBOX_WEBHOOK_SECRET",
+  "RAZORPAY_LIVE_KEY_ID",
+  "RAZORPAY_LIVE_KEY_SECRET",
+  "RAZORPAY_LIVE_WEBHOOK_SECRET",
+] as const;
+
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
@@ -16,6 +29,18 @@ async function getServerEntry(): Promise<ServerEntry> {
     );
   }
   return serverEntryPromise;
+}
+
+function syncRuntimeEnv(env: unknown) {
+  if (!env || typeof env !== "object") return;
+
+  const runtimeEnv = env as Record<string, unknown>;
+  for (const key of SERVER_ENV_KEYS) {
+    const value = runtimeEnv[key];
+    if (typeof value === "string" && value && !process.env[key]) {
+      process.env[key] = value;
+    }
+  }
 }
 
 function brandedErrorResponse(): Response {
@@ -106,6 +131,7 @@ function injectSecurityHeaders(response: Response): Response {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      syncRuntimeEnv(env);
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(response);
