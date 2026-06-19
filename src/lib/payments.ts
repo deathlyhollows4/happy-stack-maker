@@ -52,6 +52,12 @@ export type RazorpayCheckoutSession = {
   };
 };
 
+declare global {
+  interface Window {
+    __CODEWISE_PUBLIC_ENV__?: Record<string, string | undefined>;
+  }
+}
+
 const PUBLIC_PRICING_KEYS = [
   "plan_quota_free_reviews",
   "plan_quota_free_problems",
@@ -119,6 +125,11 @@ function getNestedObject(value: unknown): Record<string, unknown> {
   return {};
 }
 
+function readPublicRuntimeEnv(key: string) {
+  if (typeof window === "undefined") return undefined;
+  return window.__CODEWISE_PUBLIC_ENV__?.[key];
+}
+
 export function normalizePricingConfig(rawConfig?: Record<string, string>): PricingConfig {
   const monthly = toPositiveInt(rawConfig?.plan_price_pro_monthly, DEFAULT_PRICING_CONFIG.proMonthlyInr);
   const yearly = toPositiveInt(rawConfig?.plan_price_pro_yearly, DEFAULT_PRICING_CONFIG.proYearlyInr);
@@ -169,7 +180,7 @@ export const getPublicPricingConfig = createServerFn({ method: "GET" }).handler(
 });
 
 export function getBillingEnvironment(): BillingEnvironment {
-  const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
+  const razorpayKeyId = getRazorpayKeyId();
   if (razorpayKeyId?.startsWith("rzp_test_")) return "sandbox";
   if (razorpayKeyId) return "live";
 
@@ -189,7 +200,11 @@ export function getBillingProviderLabel(): string {
 }
 
 export function getRazorpayKeyId(): string | undefined {
-  const keyId = import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined;
+  const keyId =
+    (import.meta.env.VITE_RAZORPAY_KEY_ID as string | undefined) ||
+    readPublicRuntimeEnv("VITE_RAZORPAY_KEY_ID") ||
+    readPublicRuntimeEnv("RAZORPAY_LIVE_KEY_ID") ||
+    readPublicRuntimeEnv("RAZORPAY_SANDBOX_KEY_ID");
   return keyId?.trim() || undefined;
 }
 

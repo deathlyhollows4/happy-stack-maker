@@ -25,6 +25,9 @@ const PUBLIC_RUNTIME_ENV_KEYS = [
   "SUPABASE_PUBLISHABLE_KEY",
   "VITE_SUPABASE_URL",
   "VITE_SUPABASE_PUBLISHABLE_KEY",
+  "RAZORPAY_SANDBOX_KEY_ID",
+  "RAZORPAY_LIVE_KEY_ID",
+  "VITE_RAZORPAY_KEY_ID",
 ] as const;
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
@@ -73,6 +76,10 @@ function buildPublicRuntimeEnv(env: unknown) {
 
   if (!values.VITE_SUPABASE_PUBLISHABLE_KEY && values.SUPABASE_PUBLISHABLE_KEY) {
     values.VITE_SUPABASE_PUBLISHABLE_KEY = values.SUPABASE_PUBLISHABLE_KEY;
+  }
+
+  if (!values.VITE_RAZORPAY_KEY_ID) {
+    values.VITE_RAZORPAY_KEY_ID = values.RAZORPAY_LIVE_KEY_ID ?? values.RAZORPAY_SANDBOX_KEY_ID;
   }
 
   return values;
