@@ -449,7 +449,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                     <text
                       key={li}
                       x={node.x}
-                      y={node.y + r + 14 + li * 11}
+                      y={(node.y ?? 0) + r + 14 + li * 11}
                       textAnchor="middle"
                       className="text-[10px] font-mono"
                       fill={
