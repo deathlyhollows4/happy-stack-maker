@@ -171,7 +171,7 @@ async function upsertSubscriptionFromWebhook(
     updatePayload.external_status_updated_at = occurredAt;
   }
 
-  await supabaseAdmin.from("subscriptions").upsert(updatePayload, {
+  await supabaseAdmin.from("subscriptions").upsert(updatePayload as never, {
     onConflict: "provider,environment,provider_subscription_id",
   });
 }
