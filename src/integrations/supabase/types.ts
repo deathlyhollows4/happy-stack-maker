@@ -346,9 +346,9 @@ export type Database = {
           billing_plan_code: string | null
           cancel_at_period_end: boolean | null
           created_at: string | null
+          currency_code: string | null
           current_period_end: string | null
           current_period_start: string | null
-          currency_code: string | null
           environment: string
           external_status_updated_at: string | null
           id: string
@@ -369,9 +369,9 @@ export type Database = {
           billing_plan_code?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
+          currency_code?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
-          currency_code?: string | null
           environment?: string
           external_status_updated_at?: string | null
           id?: string
@@ -392,9 +392,9 @@ export type Database = {
           billing_plan_code?: string | null
           cancel_at_period_end?: boolean | null
           created_at?: string | null
+          currency_code?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
-          currency_code?: string | null
           environment?: string
           external_status_updated_at?: string | null
           id?: string
