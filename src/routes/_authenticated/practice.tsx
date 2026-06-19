@@ -516,7 +516,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
             value={code}
             onChange={setCode}
             extensions={[langExt(editorLang)]}
-            theme={editorTheme(editorSettings.theme)}
+            theme={editorTheme(editorSettings.theme as Parameters<typeof editorTheme>[0])}
             height={fullscreen ? "100vh" : "42vh"}
             basicSetup={{ lineNumbers: true, foldGutter: true }}
           />

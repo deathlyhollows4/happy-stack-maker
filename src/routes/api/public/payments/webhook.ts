@@ -113,16 +113,7 @@ async function upsertSubscriptionFromWebhook(
   const { data: existing } = await supabaseAdmin
     .from("subscriptions")
     .select(
-      [
-        "id",
-        "user_id",
-        "status",
-        "provider_customer_id",
-        "provider_plan_id",
-        "billing_plan_code",
-        "currency_code",
-        "external_status_updated_at",
-      ].join(", "),
+      "id, user_id, status, provider_customer_id, provider_plan_id, billing_plan_code, currency_code, external_status_updated_at",
     )
     .eq("provider", "razorpay")
     .eq("environment", env)
@@ -180,7 +171,7 @@ async function upsertSubscriptionFromWebhook(
     updatePayload.external_status_updated_at = occurredAt;
   }
 
-  await supabaseAdmin.from("subscriptions").upsert(updatePayload, {
+  await supabaseAdmin.from("subscriptions").upsert(updatePayload as never, {
     onConflict: "provider,environment,provider_subscription_id",
   });
 }

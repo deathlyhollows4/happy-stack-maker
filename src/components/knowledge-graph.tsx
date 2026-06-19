@@ -449,7 +449,7 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                     <text
                       key={li}
                       x={node.x}
-                      y={node.y + r + 14 + li * 11}
+                      y={(node.y ?? 0) + r + 14 + li * 11}
                       textAnchor="middle"
                       className="text-[10px] font-mono"
                       fill={
@@ -474,8 +474,8 @@ export function KnowledgeGraph({ topics, progress }: Props) {
                 const hn = simNodes.find((n) => n.slug === hoveredSlug);
                 if (!hn) return null;
                 const labelWidth = Math.max(hn.name.length * 7, 100);
-                const tx = Math.min(Math.max(hn.x, labelWidth / 2 + 8), VB_W - labelWidth / 2 - 8);
-                const ty = hn.y - 50;
+                const tx = Math.min(Math.max(hn.x ?? 0, labelWidth / 2 + 8), VB_W - labelWidth / 2 - 8);
+                const ty = (hn.y ?? 0) - 50;
                 const lines = [
                   hn.name,
                   hn.mastery !== null
