@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getBillingEnvironment, getBillingProviderLabel } from "@/lib/payments";
@@ -65,10 +65,54 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState<SubscriptionRow | null>(null);
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const activeRef = useRef(false);
 
   const env = getBillingEnvironment();
 
+  const refresh = useCallback(async () => {
+    if (!user) {
+      setSubscription(null);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const { data } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("environment", env)
+      .order("external_status_updated_at", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(25);
+    if (!activeRef.current) return;
+    const row = chooseSubscriptionRow((data as SubscriptionRow[] | null) ?? []);
+    setSubscription(
+      row
+        ? {
+            ...row,
+            provider:
+              firstString(row.provider, row.payment_provider, row.billing_provider) ??
+              getBillingProviderLabel().toLowerCase(),
+            provider_subscription_id: firstString(
+              row.provider_subscription_id,
+              row.razorpay_subscription_id,
+              row.paddle_subscription_id,
+            ),
+            provider_customer_id: firstString(
+              row.provider_customer_id,
+              row.razorpay_customer_id,
+              row.paddle_customer_id,
+            ),
+            price_id: firstString(row.price_id) ?? "pro_monthly",
+          }
+        : null,
+    );
+    setLoading(false);
+  }, [user, env]);
+
   useEffect(() => {
+    activeRef.current = true;
     if (!user) {
       setSubscription(null);
       setLoading(false);
@@ -78,42 +122,7 @@ export function useSubscription() {
     let active = true;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const fetchSub = async () => {
-      const { data } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("environment", env)
-        .order("external_status_updated_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false })
-        .limit(25);
-      if (!active) return;
-      const row = chooseSubscriptionRow(((data as SubscriptionRow[] | null) ?? []));
-      setSubscription(
-        row
-          ? {
-              ...row,
-              provider:
-                firstString(row.provider, row.payment_provider, row.billing_provider) ??
-                getBillingProviderLabel().toLowerCase(),
-              provider_subscription_id: firstString(
-                row.provider_subscription_id,
-                row.razorpay_subscription_id,
-                row.paddle_subscription_id,
-              ),
-              provider_customer_id: firstString(
-                row.provider_customer_id,
-                row.razorpay_customer_id,
-                row.paddle_customer_id,
-              ),
-              price_id: firstString(row.price_id) ?? "pro_monthly",
-            }
-          : null,
-      );
-      setLoading(false);
-    };
-
-    fetchSub();
+    refresh();
 
     const channel = supabase
       .channel(`subscriptions:${user.id}:${Date.now()}`)
@@ -125,7 +134,7 @@ export function useSubscription() {
           table: "subscriptions",
           filter: `user_id=eq.${user.id}`,
         },
-        () => fetchSub(),
+        () => refresh(),
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -134,10 +143,10 @@ export function useSubscription() {
         }
 
         if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
-          fetchSub();
+          refresh();
           if (retryTimer) clearTimeout(retryTimer);
           retryTimer = setTimeout(() => {
-            if (active) fetchSub();
+            if (active) refresh();
           }, 5000);
           supabase.removeChannel(channel);
           channelRef.current = null;
@@ -148,13 +157,14 @@ export function useSubscription() {
 
     return () => {
       active = false;
+      activeRef.current = false;
       if (retryTimer) clearTimeout(retryTimer);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [user, env]);
+  }, [user, env, refresh]);
 
   const now = Date.now();
   const isActive = !!subscription && isEntitledSubscription(subscription, now);
@@ -163,6 +173,7 @@ export function useSubscription() {
     subscription,
     isActive,
     loading,
+    refresh,
     environment: env,
     provider: subscription?.provider ?? getBillingProviderLabel().toLowerCase(),
   };

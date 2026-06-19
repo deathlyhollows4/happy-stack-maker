@@ -2,10 +2,77 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   type PaymentsEnv,
+  type RazorpayOrder,
+  type RazorpayPayment,
   type RazorpayWebhookPayload,
   unixSecondsToIso,
   verifyRazorpayWebhookSignature,
 } from "@/lib/payments.server";
+
+const PLAN_CONFIG_KEYS = {
+  pro_monthly: "plan_price_pro_monthly",
+  pro_yearly: "plan_price_pro_yearly",
+} as const;
+
+type ProBillingPlanCode = keyof typeof PLAN_CONFIG_KEYS;
+
+function isProBillingPlanCode(value: string | null | undefined): value is ProBillingPlanCode {
+  return value === "pro_monthly" || value === "pro_yearly";
+}
+
+function addBillingPeriod(start: Date, billingPlanCode: ProBillingPlanCode): Date {
+  const end = new Date(start);
+  if (billingPlanCode === "pro_yearly") {
+    end.setFullYear(end.getFullYear() + 1);
+  } else {
+    end.setMonth(end.getMonth() + 1);
+  }
+  return end;
+}
+
+function firstString(...values: unknown[]): string | null {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function normalizeCurrencyCode(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length === 3 ? value.trim().toUpperCase() : null;
+}
+
+function toPositiveNumber(value: unknown): number | null {
+  const amount = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+async function getPlanAmountInPaise(billingPlanCode: string): Promise<number | null> {
+  if (!isProBillingPlanCode(billingPlanCode)) return null;
+
+  const { data } = await supabaseAdmin
+    .from("app_config")
+    .select("value")
+    .eq("key", PLAN_CONFIG_KEYS[billingPlanCode])
+    .maybeSingle();
+  const amountInr = Number.parseInt(data?.value ?? "", 10);
+  if (!Number.isFinite(amountInr) || amountInr <= 0) return null;
+  return amountInr * 100;
+}
+
+function isStillEntitled(row: {
+  status?: string | null;
+  current_period_end?: string | null;
+}): boolean {
+  const periodEndMs = row.current_period_end ? new Date(row.current_period_end).getTime() : null;
+  const stillInPeriod = periodEndMs === null || periodEndMs > Date.now();
+  return !!row.status && ["active", "trialing", "past_due"].includes(row.status) && stillInPeriod;
+}
 
 function normalizeSubscriptionStatus(eventType: string, fallback: string): string {
   switch (eventType) {
@@ -176,6 +243,154 @@ async function upsertSubscriptionFromWebhook(
   });
 }
 
+async function handleOrderPaymentCaptured(
+  payload: RazorpayWebhookPayload,
+  env: PaymentsEnv,
+  eventId: string,
+) {
+  const payment = payload.payload?.payment?.entity as Partial<RazorpayPayment> | undefined;
+  const order = payload.payload?.order?.entity as Partial<RazorpayOrder> | undefined;
+  const orderId = firstString(payment?.order_id, order?.id);
+
+  if (!orderId) {
+    console.warn("Skipping Razorpay payment webhook without an order id", payload.event);
+    return;
+  }
+
+  const { data: existing } = await supabaseAdmin
+    .from("subscriptions")
+    .select(
+      "id, user_id, status, provider_customer_id, provider_plan_id, billing_plan_code, price_id, product_id, currency_code, current_period_start, current_period_end, metadata",
+    )
+    .eq("provider", "razorpay")
+    .eq("environment", env)
+    .eq("provider_subscription_id", orderId)
+    .maybeSingle();
+
+  const existingMetadata = asRecord(existing?.metadata);
+  const billingPlanCode = firstString(
+    payment?.notes?.billingPlanCode,
+    order?.notes?.billingPlanCode,
+    existing?.billing_plan_code,
+    existing?.price_id,
+  );
+  const userId = firstString(payment?.notes?.userId, order?.notes?.userId, existing?.user_id);
+
+  if (!userId || !billingPlanCode) {
+    console.error("No user or plan found for Razorpay order payment webhook", {
+      eventId,
+      orderId,
+      hasExistingSubscription: !!existing,
+    });
+    return;
+  }
+
+  const paidAmount =
+    toPositiveNumber(payment?.amount) ??
+    toPositiveNumber(order?.amount_paid) ??
+    toPositiveNumber(order?.amount);
+  const expectedAmount = await getPlanAmountInPaise(billingPlanCode);
+  const recordedOrderAmount = toPositiveNumber(existingMetadata.razorpay_order_amount);
+  const currencyCode =
+    normalizeCurrencyCode(payment?.currency) ??
+    normalizeCurrencyCode(order?.currency) ??
+    normalizeCurrencyCode(existing?.currency_code);
+  const currencyMatches = !currencyCode || currencyCode === "INR";
+  const amountMatches =
+    paidAmount !== null &&
+    currencyMatches &&
+    (paidAmount === expectedAmount || paidAmount === recordedOrderAmount);
+  const paymentCaptured =
+    payment?.captured === true || payment?.status === "captured" || payload.event === "order.paid";
+
+  if (!paymentCaptured || !amountMatches || paidAmount === null) {
+    await supabaseAdmin.from("subscriptions").upsert(
+      {
+        user_id: userId,
+        provider: "razorpay",
+        provider_subscription_id: orderId,
+        provider_plan_id: existing?.provider_plan_id ?? billingPlanCode,
+        billing_plan_code: billingPlanCode,
+        price_id: billingPlanCode,
+        product_id: existing?.product_id ?? "pro",
+        status: existing?.status ?? "authenticated",
+        current_period_start: existing?.current_period_start ?? null,
+        current_period_end: existing?.current_period_end ?? null,
+        cancel_at_period_end: false,
+        currency_code: currencyCode ?? existing?.currency_code ?? null,
+        environment: env,
+        external_status_updated_at: unixSecondsToIso(payload.created_at) ?? new Date().toISOString(),
+        metadata: {
+          ...existingMetadata,
+          source: "razorpay_webhook",
+          last_razorpay_event: payload.event,
+          last_razorpay_event_id: eventId,
+          razorpay_order_id: orderId,
+          razorpay_payment_id: firstString(payment?.id, existingMetadata.razorpay_payment_id),
+          razorpay_payment_status: payment?.status ?? null,
+          razorpay_payment_amount: paidAmount,
+          razorpay_payment_captured: paymentCaptured,
+          expected_amount: expectedAmount,
+          amount_matches: amountMatches,
+          currency_matches: currencyMatches,
+        },
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "provider,environment,provider_subscription_id" },
+    );
+    return;
+  }
+
+  const existingActive = existing ? isStillEntitled(existing) : false;
+  const occurredAtIso = unixSecondsToIso(payload.created_at) ?? new Date().toISOString();
+  const periodStart = existingActive
+    ? (existing?.current_period_start ?? occurredAtIso)
+    : new Date(occurredAtIso).toISOString();
+  const periodEnd =
+    existingActive && existing?.current_period_end
+      ? existing.current_period_end
+      : isProBillingPlanCode(billingPlanCode)
+        ? addBillingPeriod(new Date(periodStart), billingPlanCode).toISOString()
+        : null;
+
+  await supabaseAdmin.from("subscriptions").upsert(
+    {
+      user_id: userId,
+      provider: "razorpay",
+      provider_subscription_id: orderId,
+      provider_customer_id: existing?.provider_customer_id ?? null,
+      provider_plan_id: existing?.provider_plan_id ?? billingPlanCode,
+      billing_plan_code: billingPlanCode,
+      price_id: billingPlanCode,
+      product_id: existing?.product_id ?? "pro",
+      status: "active",
+      current_period_start: periodStart,
+      current_period_end: periodEnd,
+      cancel_at_period_end: false,
+      currency_code: currencyCode ?? existing?.currency_code ?? null,
+      environment: env,
+      external_status_updated_at: occurredAtIso,
+      metadata: {
+        ...existingMetadata,
+        source: "razorpay_webhook",
+        checkout_mode: "order",
+        last_razorpay_event: payload.event,
+        last_razorpay_event_id: eventId,
+        razorpay_order_id: orderId,
+        razorpay_payment_id: firstString(payment?.id, existingMetadata.razorpay_payment_id),
+        razorpay_payment_status: payment?.status ?? null,
+        razorpay_payment_amount: paidAmount,
+        razorpay_payment_captured: paymentCaptured,
+        expected_amount: expectedAmount,
+        amount_matches: amountMatches,
+        currency_matches: currencyMatches,
+      },
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "provider,environment,provider_subscription_id" },
+  );
+}
+
 async function handleSubscriptionCreated(
   payload: RazorpayWebhookPayload,
   env: PaymentsEnv,
@@ -243,6 +458,10 @@ async function handleWebhook(req: Request, env: PaymentsEnv) {
       case "subscription.created":
         await handleSubscriptionCreated(payload as RazorpayWebhookPayload, env, eventId);
         break;
+      case "payment.captured":
+      case "order.paid":
+        await handleOrderPaymentCaptured(payload as RazorpayWebhookPayload, env, eventId);
+        break;
       case "subscription.cancelled":
         await handleSubscriptionCanceled(payload as RazorpayWebhookPayload, env, eventId);
         break;
@@ -257,7 +476,13 @@ async function handleWebhook(req: Request, env: PaymentsEnv) {
         await handleSubscriptionUpdated(payload as RazorpayWebhookPayload, env, eventId);
         break;
       default:
-        if (payload?.payload?.subscription?.entity?.id) {
+        if (
+          payload?.payload?.payment?.entity &&
+          (payload.payload.payment.entity.captured === true ||
+            payload.payload.payment.entity.status === "captured")
+        ) {
+          await handleOrderPaymentCaptured(payload, env, eventId);
+        } else if (payload?.payload?.subscription?.entity?.id) {
           await handleSubscriptionUpdated(payload, env, eventId);
         } else {
           console.log("Unhandled Razorpay event:", eventType);

@@ -60,11 +60,10 @@ export type RazorpayWebhookPayload = {
   created_at?: number;
   payload?: {
     payment?: {
-      entity?: {
-        id?: string;
-        currency?: string;
-        notes?: Record<string, string>;
-      };
+      entity?: Partial<RazorpayPayment>;
+    };
+    order?: {
+      entity?: Partial<RazorpayOrder>;
     };
     subscription?: {
       entity?: RazorpaySubscription;
