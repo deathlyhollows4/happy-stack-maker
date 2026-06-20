@@ -11,7 +11,7 @@ const TARGET = {
   environment: "live" as const,
   createdAtSeconds: 1781909612,
 };
-const ROUTE_VERSION = "reconcile-rybrahul-20260620-direct-upsert";
+const ROUTE_VERSION = "reconcile-rybrahul-20260620-no-upsert-v2";
 
 function describeError(error: unknown): string {
   if (error instanceof Error) return error.message;
