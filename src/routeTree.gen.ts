@@ -47,7 +47,6 @@ import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminCurriculumRouteImport } from './routes/_authenticated/admin.curriculum'
 import { Route as AuthenticatedAdminBlogRouteImport } from './routes/_authenticated/admin.blog'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
-import { Route as ApiPublicPaymentsReconcileRybrahulRouteImport } from './routes/api/public/payments/reconcile-rybrahul'
 import { Route as ApiPublicOgSubmissionIdRouteImport } from './routes/api/public/og.$submissionId'
 
 const TermsRoute = TermsRouteImport.update({
@@ -248,12 +247,6 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicPaymentsReconcileRybrahulRoute =
-  ApiPublicPaymentsReconcileRybrahulRouteImport.update({
-    id: '/api/public/payments/reconcile-rybrahul',
-    path: '/api/public/payments/reconcile-rybrahul',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicOgSubmissionIdRoute = ApiPublicOgSubmissionIdRouteImport.update({
   id: '/api/public/og/$submissionId',
   path: '/api/public/og/$submissionId',
@@ -298,7 +291,6 @@ export interface FileRoutesByFullPath {
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
-  '/api/public/payments/reconcile-rybrahul': typeof ApiPublicPaymentsReconcileRybrahulRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -338,7 +330,6 @@ export interface FileRoutesByTo {
   '/settings/export': typeof AuthenticatedSettingsExportRoute
   '/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
-  '/api/public/payments/reconcile-rybrahul': typeof ApiPublicPaymentsReconcileRybrahulRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -381,7 +372,6 @@ export interface FileRoutesById {
   '/_authenticated/settings/export': typeof AuthenticatedSettingsExportRoute
   '/_authenticated/submission/$submissionId': typeof AuthenticatedSubmissionSubmissionIdRoute
   '/api/public/og/$submissionId': typeof ApiPublicOgSubmissionIdRoute
-  '/api/public/payments/reconcile-rybrahul': typeof ApiPublicPaymentsReconcileRybrahulRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -424,7 +414,6 @@ export interface FileRouteTypes {
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
-    | '/api/public/payments/reconcile-rybrahul'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -464,7 +453,6 @@ export interface FileRouteTypes {
     | '/settings/export'
     | '/submission/$submissionId'
     | '/api/public/og/$submissionId'
-    | '/api/public/payments/reconcile-rybrahul'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -506,7 +494,6 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/export'
     | '/_authenticated/submission/$submissionId'
     | '/api/public/og/$submissionId'
-    | '/api/public/payments/reconcile-rybrahul'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -530,7 +517,6 @@ export interface RootRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
   SSubmissionIdRoute: typeof SSubmissionIdRoute
   ApiPublicOgSubmissionIdRoute: typeof ApiPublicOgSubmissionIdRoute
-  ApiPublicPaymentsReconcileRybrahulRoute: typeof ApiPublicPaymentsReconcileRybrahulRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -802,13 +788,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/payments/reconcile-rybrahul': {
-      id: '/api/public/payments/reconcile-rybrahul'
-      path: '/api/public/payments/reconcile-rybrahul'
-      fullPath: '/api/public/payments/reconcile-rybrahul'
-      preLoaderRoute: typeof ApiPublicPaymentsReconcileRybrahulRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/og/$submissionId': {
       id: '/api/public/og/$submissionId'
       path: '/api/public/og/$submissionId'
@@ -923,8 +902,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
   SSubmissionIdRoute: SSubmissionIdRoute,
   ApiPublicOgSubmissionIdRoute: ApiPublicOgSubmissionIdRoute,
-  ApiPublicPaymentsReconcileRybrahulRoute:
-    ApiPublicPaymentsReconcileRybrahulRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
