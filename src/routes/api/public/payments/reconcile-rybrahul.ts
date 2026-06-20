@@ -31,39 +31,51 @@ async function reconcileCapturedPayment() {
   const periodEnd = new Date(periodStart);
   periodEnd.setMonth(periodEnd.getMonth() + 1);
 
-  const { error } = await supabaseAdmin.from("subscriptions").upsert(
-    {
-      user_id: TARGET.userId,
-      provider: "razorpay",
-      provider_subscription_id: TARGET.orderId,
-      provider_customer_id: null,
-      provider_plan_id: TARGET.billingPlanCode,
-      billing_plan_code: TARGET.billingPlanCode,
-      price_id: TARGET.billingPlanCode,
-      product_id: "pro",
-      status: "active",
-      current_period_start: periodStart.toISOString(),
-      current_period_end: periodEnd.toISOString(),
-      cancel_at_period_end: false,
-      currency_code: TARGET.currency,
-      environment: TARGET.environment,
-      external_status_updated_at: periodStart.toISOString(),
-      metadata: {
-        source: "razorpay_server_reconciliation",
-        checkout_mode: "order",
-        razorpay_order_id: TARGET.orderId,
-        razorpay_payment_id: TARGET.paymentId,
-        razorpay_payment_status: "captured",
-        razorpay_payment_amount: TARGET.amount,
-        razorpay_payment_captured: true,
-        expected_amount: TARGET.amount,
-        amount_matches: true,
-        currency_matches: true,
-      },
-      updated_at: new Date().toISOString(),
+  const payload = {
+    user_id: TARGET.userId,
+    provider: "razorpay",
+    provider_subscription_id: TARGET.orderId,
+    provider_customer_id: null,
+    provider_plan_id: TARGET.billingPlanCode,
+    billing_plan_code: TARGET.billingPlanCode,
+    price_id: TARGET.billingPlanCode,
+    product_id: "pro",
+    status: "active",
+    current_period_start: periodStart.toISOString(),
+    current_period_end: periodEnd.toISOString(),
+    cancel_at_period_end: false,
+    currency_code: TARGET.currency,
+    environment: TARGET.environment,
+    external_status_updated_at: periodStart.toISOString(),
+    metadata: {
+      source: "razorpay_server_reconciliation",
+      checkout_mode: "order",
+      razorpay_order_id: TARGET.orderId,
+      razorpay_payment_id: TARGET.paymentId,
+      razorpay_payment_status: "captured",
+      razorpay_payment_amount: TARGET.amount,
+      razorpay_payment_captured: true,
+      expected_amount: TARGET.amount,
+      amount_matches: true,
+      currency_matches: true,
     },
-    { onConflict: "provider,environment,provider_subscription_id" },
-  );
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: existing, error: selectError } = await supabaseAdmin
+    .from("subscriptions")
+    .select("id")
+    .eq("provider", "razorpay")
+    .eq("environment", TARGET.environment)
+    .eq("provider_subscription_id", TARGET.orderId)
+    .limit(1);
+
+  if (selectError) throw selectError;
+
+  const existingId = existing?.[0]?.id;
+  const { error } = existingId
+    ? await supabaseAdmin.from("subscriptions").update(payload).eq("id", existingId)
+    : await supabaseAdmin.from("subscriptions").insert(payload);
 
   if (error) throw error;
   return {
