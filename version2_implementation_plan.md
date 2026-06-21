@@ -114,8 +114,8 @@ Session 6 evidence:
 2. ✅ Keep "Weakest Topic (auto)" but route it through the planner instead of direct lowest-topic generation.
 3. ✅ Refactor `src/lib/practice.functions.ts` to call the planner before AI generation.
 4. ✅ Replace markdown-only generation with strict JSON generation and Zod validation.
-5. Add one repair retry for missing or invalid generated fields, then return a safe error without inserting a weak problem.
-6. Add tests for manual topic bridge behavior, auto weakest topic behavior, repair success, and repair failure.
+5. ✅ Add one repair retry for missing or invalid generated fields, then return a safe error without inserting a weak problem.
+6. ✅ Add tests for manual topic bridge behavior, auto weakest topic behavior, repair success, and repair failure.
 
 Session 1 evidence:
 
@@ -154,6 +154,23 @@ Session 4 evidence:
 - Added `tests/lib/practice-structured-problem.test.ts` covering plan-aware validation, wrong-band rejection, deterministic prompt formatting, structured insert payloads, and starter-code selection.
 - GitNexus impact for `generatePractice`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `practiceSystemPrompt`: LOW risk, 1 direct caller, 0 affected processes. GitNexus impact for `practiceUserPrompt`: LOW risk, 1 direct caller, 0 affected processes. `PracticeResponseSchema` was not indexed by GitNexus.
 - Verification: `npx prettier --write src/lib/practice.functions.ts src/lib/practice-structured-problem.server.ts tests/lib/practice-structured-problem.test.ts` passed, and `npx vitest run tests\lib\practice-structured-problem.test.ts tests\lib\practice-problem-contract.test.ts` passed with 9 tests.
+
+Session 5 evidence:
+
+- Added `src/lib/practice-generation-repair.server.ts` as the structured generation repair boundary.
+- `generatePractice` now makes one strict JSON generation attempt with `maxAttempts: 1`, runs exactly one repair prompt when invalid raw content is available, and skips repair for gateway or status failures.
+- Repair failure returns the safe malformed-response error before any `practice_problems` or `practice_problem_hidden_tests` insert path runs.
+- Added `tests/lib/practice-generation-repair.test.ts` covering first-attempt success, repair success, gateway failure without repair, repair failure, and invalid-content truncation in the repair prompt.
+- GitNexus impact for `generatePractice`: LOW risk, 0 direct callers, 0 affected processes.
+- Verification: `npx prettier --write src/lib/practice.functions.ts src/lib/practice-generation-repair.server.ts tests/lib/practice-generation-repair.test.ts mesh/tasks/forge-day2-session5-repair.md mesh/tasks/sentinel-day2-session6-coverage.md mesh/next_session.md` passed, and `npx vitest run tests\lib\practice-generation-repair.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-generation-plan.test.ts` passed with 14 tests.
+
+Session 6 evidence:
+
+- Confirmed `tests/lib/practice-planner.test.ts` covers manual advanced-topic bridge behavior and auto weakest-topic behavior.
+- Confirmed `tests/lib/practice-generation-plan.test.ts` covers manual-topic bridge metadata and weakest-topic auto metadata before AI generation.
+- Confirmed `tests/lib/practice-generation-repair.test.ts` covers repair success and repair failure.
+- Agent Mesh lanes were used for this session: Kepler implemented the repair workflow and Euclid verified planner/generation coverage.
+- Verification: `npx vitest run tests\lib\practice-generation-repair.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-generation-plan.test.ts` passed with 14 tests.
 
 ## Day 3: Multi-Language Test Harness
 

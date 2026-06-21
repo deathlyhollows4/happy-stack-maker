@@ -8,6 +8,7 @@ import { LANGS } from "@/lib/review.constants";
 import { getTopicBySlug } from "@/lib/topics";
 import type { PracticePlannerResult } from "@/lib/practice-planner.server";
 import { buildPracticeGenerationPlan } from "@/lib/practice-generation-plan.server";
+import { runPracticeGenerationWithRepair } from "@/lib/practice-generation-repair.server";
 import { PRACTICE_PROBLEM_CONTRACT_VERSION } from "@/lib/practice-problem-contract";
 import type { PracticeProblemLanguage } from "@/lib/practice-problem-contract";
 import {
@@ -114,18 +115,23 @@ export const generatePractice = createServerFn({ method: "POST" })
       progressRows: progressRows ?? [],
     });
 
-    const workflow = await runJsonAiWorkflow({
-      apiKey,
-      flowName: "generatePractice",
-      systemPrompt: practiceSystemPrompt(),
-      userPrompt: practiceUserPrompt(
-        generationPlan.aiPromptTopicSlug,
-        data.language,
-        generationPlan.practicePlan,
-      ),
+    const systemPrompt = practiceSystemPrompt();
+    const userPrompt = practiceUserPrompt(
+      generationPlan.aiPromptTopicSlug,
+      data.language,
+      generationPlan.practicePlan,
+    );
+    const workflow = await runPracticeGenerationWithRepair({
+      runWorkflow: (workflowInput) =>
+        runJsonAiWorkflow({
+          apiKey,
+          flowName: "generatePractice",
+          ...workflowInput,
+        }),
+      systemPrompt,
+      userPrompt,
       schema: buildStructuredPracticeProblemSchema(generationPlan),
       malformedError: "AI returned an unexpected response. Please try again.",
-      maxAttempts: 1,
     });
 
     if (!workflow.ok) {
