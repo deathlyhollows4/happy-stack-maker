@@ -6,6 +6,11 @@ import { envInput } from "./codewise.utils";
 import { runJsonAiWorkflow } from "@/lib/ai-workflow.server";
 import { LANGS } from "@/lib/review.constants";
 import { getTopicBySlug, normalizeTopicSlug } from "@/lib/topics";
+import {
+  mapProgressRowsForPracticePlanner,
+  planPracticeSession,
+  type PracticePlannerResult,
+} from "@/lib/practice-planner.server";
 
 function practiceSystemPrompt() {
   return [
@@ -19,10 +24,25 @@ function practiceSystemPrompt() {
   ].join(" ");
 }
 
-function practiceUserPrompt(topicSlug: string, language: string) {
+function practiceUserPrompt(
+  topicSlug: string | null,
+  language: string,
+  practicePlan: PracticePlannerResult,
+) {
   const topic = getTopicBySlug(topicSlug);
   return [
-    `Topic: ${topic?.name ?? topicSlug}.`,
+    `Curriculum node: ${practicePlan.node.title}.`,
+    `Curriculum objective: ${practicePlan.node.objective}`,
+    `Mastery band: ${practicePlan.masteryBand.id} (${practicePlan.masteryBand.label}).`,
+    `Generation rule: ${practicePlan.masteryBand.generationRule}`,
+    practicePlan.node.concepts.length ? `Concepts: ${practicePlan.node.concepts.join("; ")}` : "",
+    practicePlan.node.practicePatterns.length
+      ? `Practice patterns: ${practicePlan.node.practicePatterns.join("; ")}`
+      : "",
+    practicePlan.preview
+      ? `Requested target preview: ${practicePlan.preview.node.title}. Teach the selected prerequisite first.`
+      : "",
+    `Topic: ${topic?.name ?? topicSlug ?? practicePlan.node.title}.`,
     topic?.description ? `Description: ${topic.description}` : "",
     topic?.mentalModel ? `Mental model: ${topic.mentalModel}` : "",
     topic?.commonMistakes?.length
@@ -82,21 +102,21 @@ export const generatePractice = createServerFn({ method: "POST" })
       };
     }
 
-    let topicSlug = normalizeTopicSlug(data.topicSlug);
-    if (!topicSlug) {
-      const { data: weakest } = await supabase
-        .from("progress")
-        .select("topic_slug, mastery")
-        .order("mastery", { ascending: true })
-        .limit(1);
-      topicSlug = normalizeTopicSlug(weakest?.[0]?.topic_slug) ?? "arrays";
-    }
+    const requestedTopicSlug = normalizeTopicSlug(data.topicSlug);
+    const { data: progressRows } = await supabase
+      .from("progress")
+      .select("topic_slug, mastery, attempts, next_review_date, last_reviewed, retrievability");
+    const practicePlan = planPracticeSession({
+      topicSlug: requestedTopicSlug,
+      progress: mapProgressRowsForPracticePlanner(progressRows ?? []),
+    });
+    const topicSlug = practicePlan.topicSlug ?? practicePlan.requestedTopicSlug;
 
     const workflow = await runJsonAiWorkflow({
       apiKey,
       flowName: "generatePractice",
       systemPrompt: practiceSystemPrompt(),
-      userPrompt: practiceUserPrompt(topicSlug, data.language),
+      userPrompt: practiceUserPrompt(topicSlug, data.language, practicePlan),
       schema: PracticeResponseSchema,
       malformedError: "AI returned an unexpected response. Please try again.",
     });
@@ -114,6 +134,9 @@ export const generatePractice = createServerFn({ method: "POST" })
       .insert({
         user_id: userId,
         topic_slug: topicSlug,
+        curriculum_node_id: practicePlan.node.id,
+        mastery_band: practicePlan.masteryBand.id,
+        objective: practicePlan.node.objective,
         title: parsed.title,
         prompt: parsed.prompt,
         starter_code: parsed.starter_code,

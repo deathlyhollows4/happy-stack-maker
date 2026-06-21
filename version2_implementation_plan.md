@@ -111,7 +111,7 @@ Session 6 evidence:
 ## Day 2: Planner And Generation Foundation
 
 1. ✅ Build `src/lib/practice-planner.server.ts` to choose a curriculum node from manual topic, weakest topic, prerequisites, mastery, and due review signals.
-2. Keep "Weakest Topic (auto)" but route it through the planner instead of direct lowest-topic generation.
+2. ✅ Keep "Weakest Topic (auto)" but route it through the planner instead of direct lowest-topic generation.
 3. Refactor `src/lib/practice.functions.ts` to call the planner before AI generation.
 4. Replace markdown-only generation with strict JSON generation and Zod validation.
 5. Add one repair retry for missing or invalid generated fields, then return a safe error without inserting a weak problem.
@@ -125,6 +125,17 @@ Session 1 evidence:
 - Planner maps mastery scores to supported curriculum bands and adjusts unsupported low bands to the node's lowest supported band.
 - Added `tests/lib/practice-planner.test.ts` covering true beginner start, manual advanced-topic bridge, due-review priority, weakest-topic auto selection, unsupported-band adjustment, and unknown-topic fallback.
 - Verification: `npx prettier --write src/lib/practice-planner.server.ts tests/lib/practice-planner.test.ts` passed, and `npx vitest run tests\lib\practice-planner.test.ts` passed with 6 tests.
+
+Session 2 evidence:
+
+- Kept the practice UI option label as `Weakest Topic (auto)`.
+- Replaced the direct lowest-mastery fallback inside `generatePractice` with `planPracticeSession`.
+- `generatePractice` now loads progress rows with mastery, attempts, next review date, last reviewed date, and retrievability, maps them into planner input, and lets the planner choose the auto curriculum node.
+- Legacy prompt generation now includes curriculum node, objective, mastery band, generation rule, concepts, practice patterns, and guided bridge preview context.
+- Generated practice rows now store planner metadata in `curriculum_node_id`, `mastery_band`, and `objective`.
+- Added `mapProgressRowsForPracticePlanner` and a focused unit test for Supabase progress row mapping.
+- GitNexus impact for `generatePractice`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `practiceUserPrompt`: LOW risk, 1 direct caller, 0 affected processes.
+- Verification: `npx prettier --write src/lib/practice.functions.ts src/lib/practice-planner.server.ts tests/lib/practice-planner.test.ts` passed, and `npx vitest run tests\lib\practice-planner.test.ts` passed with 7 tests.
 
 ## Day 3: Multi-Language Test Harness
 

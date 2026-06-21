@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { planPracticeSession } from "@/lib/practice-planner.server";
+import {
+  mapProgressRowsForPracticePlanner,
+  planPracticeSession,
+} from "@/lib/practice-planner.server";
 
 describe("practice planner", () => {
   it("starts true beginners at the first curriculum node", () => {
@@ -70,6 +73,30 @@ describe("practice planner", () => {
     expect(plan.node.id).toBe("arrays-basics");
     expect(plan.masteryBand.id).toBe("21-40");
     expect(plan.gateStatus.isOpen).toBe(true);
+  });
+
+  it("maps Supabase progress rows into planner progress input", () => {
+    const progress = mapProgressRowsForPracticePlanner([
+      {
+        topic_slug: "arrays",
+        mastery: 0.3,
+        attempts: 2,
+        next_review_date: "2026-06-22T00:00:00.000Z",
+        last_reviewed: "2026-06-21T00:00:00.000Z",
+        retrievability: 0.8,
+      },
+    ]);
+
+    expect(progress).toEqual([
+      {
+        topicSlug: "arrays",
+        mastery: 0.3,
+        attempts: 2,
+        nextReviewDate: "2026-06-22T00:00:00.000Z",
+        lastReviewed: "2026-06-21T00:00:00.000Z",
+        retrievability: 0.8,
+      },
+    ]);
   });
 
   it("adjusts unsupported mastery bands to the lowest band supported by the node", () => {

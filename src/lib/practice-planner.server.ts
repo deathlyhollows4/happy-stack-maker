@@ -25,6 +25,15 @@ export interface PracticePlannerProgress {
   retrievability?: number | null;
 }
 
+export interface PracticePlannerProgressRow {
+  topic_slug: string | null;
+  mastery: number | null;
+  attempts?: number | null;
+  next_review_date?: string | null;
+  last_reviewed?: string | null;
+  retrievability?: number | null;
+}
+
 export interface PracticePlannerRequest {
   topicSlug?: string | null;
   progress?: readonly PracticePlannerProgress[];
@@ -139,6 +148,19 @@ export function planPracticeSession(request: PracticePlannerRequest): PracticePl
     preview,
     rationale,
   };
+}
+
+export function mapProgressRowsForPracticePlanner(
+  rows: readonly PracticePlannerProgressRow[],
+): PracticePlannerProgress[] {
+  return rows.map((row) => ({
+    topicSlug: row.topic_slug,
+    mastery: row.mastery,
+    attempts: row.attempts,
+    nextReviewDate: row.next_review_date,
+    lastReviewed: row.last_reviewed,
+    retrievability: row.retrievability,
+  }));
 }
 
 function selectTargetNode(
