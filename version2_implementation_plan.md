@@ -46,7 +46,7 @@ Sources:
 2. ✅ Add `src/lib/dsa-curriculum.ts`: full CodeWise DSA Ladder scaffold, deep first modules for I/O, conditionals, loops, functions, arrays, strings, simple math, dry runs, and complexity.
 3. ✅ Add mastery-band model: `0-20`, `21-40`, `41-60`, `61-80`, `81-100`, with generation rules, hint rules, and promotion criteria.
 4. ✅ Add strict structured problem types and Zod schemas: title, tags, mastery band, objective, statement, examples, constraints, signature, visible tests, hidden tests, hint ladder, and success criteria.
-5. Create Supabase migration for structured practice fields and attempt/event tables.
+5. ✅ Create Supabase migration for structured practice fields and attempt/event tables.
 6. Add unit tests for curriculum node lookup, prerequisite gating, mastery-band selection, and unsupported topic/band rejection.
 
 Session 1 evidence:
@@ -98,7 +98,7 @@ Session 5 evidence:
 - Updated `src/integrations/supabase/types.ts` to match the migration.
 - GitNexus impact for the generated `Database` type returned `UNKNOWN`; GitNexus does not index that generated type.
 - Verification: `npm run build` passed. `npx prettier --write` passed for TypeScript and Markdown; Prettier has no configured SQL parser for the migration file.
-- Apply status: not applied yet. Supabase plugin access to configured project `zjdxwczuhtdllflroggd` returned `MCP error -32600: You do not have permission to perform this action`. Browser and Chrome automation both failed before page access due the browser runtime metadata error `missing field sandboxPolicy`. Direct `psql` apply is unavailable because `psql` is not installed and `.env` has no `SUPABASE_DB_URL`.
+- Apply status: completed after user confirmed the migration was applied. Supabase plugin access to configured project `zjdxwczuhtdllflroggd` still returns `MCP error -32600: You do not have permission to perform this action`, so connector-level migration-history verification is unavailable from this session.
 
 ## Day 2: Planner And Generation Foundation
 
