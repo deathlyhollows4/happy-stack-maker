@@ -5,12 +5,9 @@ import { getUserPlan, consumeQuota, getPlanQuotas, dayKey } from "@/lib/entitlem
 import { envInput } from "./codewise.utils";
 import { runJsonAiWorkflow } from "@/lib/ai-workflow.server";
 import { LANGS } from "@/lib/review.constants";
-import { getTopicBySlug, normalizeTopicSlug } from "@/lib/topics";
-import {
-  mapProgressRowsForPracticePlanner,
-  planPracticeSession,
-  type PracticePlannerResult,
-} from "@/lib/practice-planner.server";
+import { getTopicBySlug } from "@/lib/topics";
+import type { PracticePlannerResult } from "@/lib/practice-planner.server";
+import { buildPracticeGenerationPlan } from "@/lib/practice-generation-plan.server";
 
 function practiceSystemPrompt() {
   return [
@@ -102,21 +99,23 @@ export const generatePractice = createServerFn({ method: "POST" })
       };
     }
 
-    const requestedTopicSlug = normalizeTopicSlug(data.topicSlug);
     const { data: progressRows } = await supabase
       .from("progress")
       .select("topic_slug, mastery, attempts, next_review_date, last_reviewed, retrievability");
-    const practicePlan = planPracticeSession({
-      topicSlug: requestedTopicSlug,
-      progress: mapProgressRowsForPracticePlanner(progressRows ?? []),
+    const generationPlan = buildPracticeGenerationPlan({
+      topicSlug: data.topicSlug,
+      progressRows: progressRows ?? [],
     });
-    const topicSlug = practicePlan.topicSlug ?? practicePlan.requestedTopicSlug;
 
     const workflow = await runJsonAiWorkflow({
       apiKey,
       flowName: "generatePractice",
       systemPrompt: practiceSystemPrompt(),
-      userPrompt: practiceUserPrompt(topicSlug, data.language, practicePlan),
+      userPrompt: practiceUserPrompt(
+        generationPlan.aiPromptTopicSlug,
+        data.language,
+        generationPlan.practicePlan,
+      ),
       schema: PracticeResponseSchema,
       malformedError: "AI returned an unexpected response. Please try again.",
     });
@@ -133,10 +132,7 @@ export const generatePractice = createServerFn({ method: "POST" })
       .from("practice_problems")
       .insert({
         user_id: userId,
-        topic_slug: topicSlug,
-        curriculum_node_id: practicePlan.node.id,
-        mastery_band: practicePlan.masteryBand.id,
-        objective: practicePlan.node.objective,
+        ...generationPlan.problemInsertPlan,
         title: parsed.title,
         prompt: parsed.prompt,
         starter_code: parsed.starter_code,

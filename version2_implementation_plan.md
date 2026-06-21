@@ -112,7 +112,7 @@ Session 6 evidence:
 
 1. ✅ Build `src/lib/practice-planner.server.ts` to choose a curriculum node from manual topic, weakest topic, prerequisites, mastery, and due review signals.
 2. ✅ Keep "Weakest Topic (auto)" but route it through the planner instead of direct lowest-topic generation.
-3. Refactor `src/lib/practice.functions.ts` to call the planner before AI generation.
+3. ✅ Refactor `src/lib/practice.functions.ts` to call the planner before AI generation.
 4. Replace markdown-only generation with strict JSON generation and Zod validation.
 5. Add one repair retry for missing or invalid generated fields, then return a safe error without inserting a weak problem.
 6. Add tests for manual topic bridge behavior, auto weakest topic behavior, repair success, and repair failure.
@@ -136,6 +136,15 @@ Session 2 evidence:
 - Added `mapProgressRowsForPracticePlanner` and a focused unit test for Supabase progress row mapping.
 - GitNexus impact for `generatePractice`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `practiceUserPrompt`: LOW risk, 1 direct caller, 0 affected processes.
 - Verification: `npx prettier --write src/lib/practice.functions.ts src/lib/practice-planner.server.ts tests/lib/practice-planner.test.ts` passed, and `npx vitest run tests\lib\practice-planner.test.ts` passed with 7 tests.
+
+Session 3 evidence:
+
+- Added `src/lib/practice-generation-plan.server.ts` as the explicit generation-planning boundary used before AI generation.
+- `generatePractice` now builds a `generationPlan` from the selected topic and progress rows before composing the AI prompt or insert payload.
+- The generation plan carries normalized requested topic, selected AI prompt topic, planner result, and planned `practice_problems` insert metadata.
+- Added `tests/lib/practice-generation-plan.test.ts` covering manual-topic bridge metadata and weakest-topic auto metadata.
+- GitNexus impact for `generatePractice`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `practiceUserPrompt`: LOW risk, 1 direct caller, 0 affected processes.
+- Verification: `npx prettier --write src/lib/practice.functions.ts src/lib/practice-generation-plan.server.ts tests/lib/practice-generation-plan.test.ts` passed, and `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-planner.test.ts` passed with 9 tests.
 
 ## Day 3: Multi-Language Test Harness
 
