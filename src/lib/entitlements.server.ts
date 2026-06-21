@@ -1,6 +1,7 @@
 // Server-only entitlement helpers. Determines a user's plan + consumes quota.
 import type { PaymentsEnv } from "@/lib/payments.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { chooseEntitlementSubscription, deriveEntitlement } from "@/lib/entitlement-policy";
 
 export type Plan = "free" | "pro";
 
@@ -59,33 +60,14 @@ export async function getUserPlan(
   const rows = data ?? [];
   if (!rows.length) return { plan: "free", status: null, pastDue: false };
 
-  const sortedRows = [...rows].sort((left, right) => {
-    const leftTs = left.external_status_updated_at || left.created_at || "";
-    const rightTs = right.external_status_updated_at || right.created_at || "";
-    return rightTs.localeCompare(leftTs);
-  });
+  const activeRow = chooseEntitlementSubscription(rows);
+  const entitlement = deriveEntitlement(activeRow);
 
-  const now = Date.now();
-  const activeRow =
-    sortedRows.find((row) => {
-      const endMs = row.current_period_end ? new Date(row.current_period_end).getTime() : null;
-      const inPeriod = endMs === null || endMs > now;
-      return (
-        (["active", "trialing", "past_due"].includes(row.status) && inPeriod) ||
-        (row.status === "canceled" && endMs !== null && endMs > now)
-      );
-    }) || sortedRows[0];
-
-  const endMs = activeRow.current_period_end
-    ? new Date(activeRow.current_period_end as string).getTime()
-    : null;
-  const inPeriod = endMs === null || endMs > now;
-  const status = activeRow.status as string;
-  const isPro =
-    (["active", "trialing", "past_due"].includes(status) && inPeriod) ||
-    (status === "canceled" && endMs !== null && endMs > now);
-
-  return { plan: isPro ? "pro" : "free", status, pastDue: status === "past_due" };
+  return {
+    plan: entitlement.plan,
+    status: entitlement.status,
+    pastDue: entitlement.pastDue,
+  };
 }
 
 export function monthKey(d = new Date()): string {

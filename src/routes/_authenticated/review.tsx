@@ -1,10 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import CodeMirror from "@uiw/react-codemirror";
-import { langExt, type Lang, LANG_LABELS, loadEditorSettings } from "@/lib/codewise.editor";
-import { editorTheme } from "@/components/codemirror-themes";
-import { EditorSettingsPopover } from "@/components/editor-settings";
+import { type Lang, LANG_LABELS } from "@/lib/codewise.editor";
+import { CodeWorkspace, loadEditorSettings } from "@/components/code-workspace";
 import { reviewCode } from "@/lib/codewise.functions";
 import { runCode } from "@/lib/code-exec.functions";
 import { Markdown } from "@/components/markdown";
@@ -21,9 +19,6 @@ import {
   Upload,
   RefreshCw,
   Play,
-  RotateCcw,
-  Maximize2,
-  Minimize2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/review")({
@@ -154,7 +149,9 @@ function Review() {
             Workspace
           </p>
           <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Code Review</h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-2">Paste your code to get feedback mapped to CS concepts.</p>
+          <p className="text-sm md:text-base text-muted-foreground mt-2">
+            Paste your code to get feedback mapped to CS concepts.
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
           <input
@@ -206,42 +203,18 @@ function Review() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
-        <div
-          className={`rounded-lg border border-border bg-card overflow-hidden ${fullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : ""}`}
-        >
-          <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between flex-wrap gap-2">
-            <span>{LANG_LABELS[lang]}</span>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCode(DEFAULTS[lang])}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
-                title="Reset to default"
-              >
-                <RotateCcw className="size-3" /> Reset
-              </button>
-              <button
-                onClick={() => setFullscreen((v) => !v)}
-                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
-                title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
-              >
-                {fullscreen ? <Minimize2 className="size-3" /> : <Maximize2 className="size-3" />}
-              </button>
-              <EditorSettingsPopover onChange={setEditorSettings} />
-            </div>
-          </div>
-          <div style={{ fontSize: `${editorSettings.fontSize}px` }}>
-            <ErrorBoundary>
-            <CodeMirror
-              value={code}
-              onChange={setCode}
-              extensions={[langExt(lang)]}
-              theme={editorTheme(editorSettings.theme)}
-              height={fullscreen ? "100vh" : "clamp(40vh, 60vw, 60vh)"}
-              basicSetup={{ lineNumbers: true, foldGutter: true }}
-            />
-            </ErrorBoundary>
-          </div>
-        </div>
+        <CodeWorkspace
+          value={code}
+          language={lang}
+          onChange={setCode}
+          settings={editorSettings}
+          onSettingsChange={setEditorSettings}
+          fullscreen={fullscreen}
+          onFullscreenChange={setFullscreen}
+          resetLabel="Reset to default"
+          onReset={() => setCode(DEFAULTS[lang])}
+          height="clamp(40vh, 60vw, 60vh)"
+        />
 
         {runOutput && (
           <div className="rounded-lg border border-border bg-card p-3 md:p-4">
@@ -295,46 +268,46 @@ function Review() {
 
           {result?.ok && (
             <ErrorBoundary>
-            <div className="space-y-5">
-              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
-                <h2 className="font-display text-xl md:text-2xl mb-2">Summary</h2>
-                <Markdown className="text-muted-foreground">{result.summary}</Markdown>
-              </div>
-              {result.concepts.length > 0 && (
+              <div className="space-y-5">
+                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+                  <h2 className="font-display text-xl md:text-2xl mb-2">Summary</h2>
+                  <Markdown className="text-muted-foreground">{result.summary}</Markdown>
+                </div>
+                {result.concepts.length > 0 && (
+                  <div>
+                    <h3 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
+                      Concepts touched
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {result.concepts.map((c) => (
+                        <span
+                          key={c}
+                          className="px-2 py-1 rounded-sm bg-emerald-500/10 text-emerald-500 text-[11px] font-mono"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <h3 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
-                    Concepts touched
+                    Issues ({result.issues.length})
                   </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {result.concepts.map((c) => (
-                      <span
-                        key={c}
-                        className="px-2 py-1 rounded-sm bg-emerald-500/10 text-emerald-500 text-[11px] font-mono"
-                      >
-                        {c}
-                      </span>
-                    ))}
-                  </div>
+                  {result.issues.length === 0 ? (
+                    <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-500 flex items-center gap-2">
+                      <CheckCircle2 className="size-4" />
+                      <span className="font-medium">No issues found. Nice work.</span>
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      {result.issues.map((it, i) => (
+                        <IssueCard key={i} issue={it} />
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              )}
-              <div>
-                <h3 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2">
-                  Issues ({result.issues.length})
-                </h3>
-                {result.issues.length === 0 ? (
-                  <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-500 flex items-center gap-2">
-                    <CheckCircle2 className="size-4" />
-                    <span className="font-medium">No issues found. Nice work.</span>
-                  </div>
-                ) : (
-                  <ul className="space-y-3">
-                    {result.issues.map((it, i) => (
-                      <IssueCard key={i} issue={it} />
-                    ))}
-                  </ul>
-                )}
               </div>
-            </div>
             </ErrorBoundary>
           )}
 
@@ -364,7 +337,11 @@ function Review() {
 
 function IssueCard({ issue }: { issue: any }) {
   const Icon =
-    issue.severity === "error" ? AlertCircle : issue.severity === "warning" ? AlertTriangle : CheckCircle2;
+    issue.severity === "error"
+      ? AlertCircle
+      : issue.severity === "warning"
+        ? AlertTriangle
+        : CheckCircle2;
   const color =
     issue.severity === "error"
       ? "text-destructive"
@@ -374,9 +351,7 @@ function IssueCard({ issue }: { issue: any }) {
   const hintColor = issue.severity === "info" ? "border-emerald-500/50" : "border-accent/50";
   const hintLabelColor = issue.severity === "info" ? "text-emerald-500" : "text-accent";
   const conceptClass =
-    issue.severity === "info"
-      ? "bg-emerald-500/10 text-emerald-500"
-      : "bg-accent/15 text-accent";
+    issue.severity === "info" ? "bg-emerald-500/10 text-emerald-500" : "bg-accent/15 text-accent";
   return (
     <li className="rounded-md border border-border p-3 md:p-4">
       <div className="flex items-start gap-3">
@@ -396,7 +371,9 @@ function IssueCard({ issue }: { issue: any }) {
           <Markdown className="text-muted-foreground">{issue.explanation}</Markdown>
           {issue.fix_hint && (
             <div className={`mt-2 text-sm border-l-2 ${hintColor} pl-3`}>
-              <span className={`font-mono text-[10px] uppercase tracking-widest ${hintLabelColor} mr-2`}>
+              <span
+                className={`font-mono text-[10px] uppercase tracking-widest ${hintLabelColor} mr-2`}
+              >
                 fix
               </span>
               <Markdown className="text-foreground/90 mt-1">{issue.fix_hint}</Markdown>

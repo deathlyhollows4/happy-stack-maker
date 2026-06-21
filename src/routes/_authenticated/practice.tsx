@@ -3,17 +3,19 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
-import CodeMirror from "@uiw/react-codemirror";
-import { langExt, type Lang, LANG_LABELS } from "@/lib/codewise.editor";
-import { editorTheme } from "@/components/codemirror-themes";
-import { EditorSettingsPopover } from "@/components/editor-settings";
+import { type Lang, LANG_LABELS } from "@/lib/codewise.editor";
+import {
+  CodeWorkspace,
+  loadEditorSettings,
+  type EditorSettings,
+} from "@/components/code-workspace";
 import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
 import { getBillingEnvironment } from "@/lib/payments";
 import { toast } from "sonner";
-import { Sparkles, ArrowLeft, Play, Send, RotateCcw, Maximize2, Minimize2 } from "lucide-react";
+import { Sparkles, ArrowLeft, Play, Send } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   normalizeTopicSlug,
@@ -52,11 +54,6 @@ interface GeneratePracticeResult {
   ok: boolean;
   error?: string;
   problem?: PracticeProblem;
-}
-
-interface EditorSettings {
-  fontSize: number;
-  theme: string;
 }
 
 function Practice() {
@@ -367,16 +364,6 @@ function PracticeWorkspace({
   );
 }
 
-function loadEditorSettings(): EditorSettings {
-  try {
-    const raw = localStorage.getItem("codewise-editor-settings");
-    if (raw) return JSON.parse(raw) as EditorSettings;
-  } catch {
-    return { fontSize: 14, theme: "monokai" };
-  }
-  return { fontSize: 14, theme: "monokai" };
-}
-
 function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const lang = (problem.language as Lang) ?? "python";
   const nav = useNavigate();
@@ -459,12 +446,21 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
         <Markdown className="text-muted-foreground mt-4">{problem.prompt}</Markdown>
       </div>
 
-      <div
-        className={`rounded-lg border border-border bg-card overflow-hidden ${fullscreen ? "fixed inset-0 z-50 m-0 rounded-none" : ""}`}
-      >
-        <div className="px-4 py-2 text-xs font-mono text-muted-foreground border-b border-border flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span>Editor</span>
+      <CodeWorkspace
+        value={code}
+        language={editorLang}
+        onChange={setCode}
+        settings={editorSettings}
+        onSettingsChange={setEditorSettings}
+        fullscreen={fullscreen}
+        onFullscreenChange={setFullscreen}
+        resetLabel="Reset to starter code"
+        onReset={() => setCode(problem.starter_code || "")}
+        height="42vh"
+        label="Editor"
+        showLanguageLabel={false}
+        rightControls={
+          <>
             <select
               value={editorLang}
               onChange={(e) => setEditorLang(e.target.value as Lang)}
@@ -476,23 +472,6 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setCode(problem.starter_code || "")}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
-              title="Reset to starter code"
-            >
-              <RotateCcw className="size-3" /> Reset
-            </button>
-            <button
-              onClick={() => setFullscreen((v) => !v)}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10"
-              title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
-            >
-              {fullscreen ? <Minimize2 className="size-3" /> : <Maximize2 className="size-3" />}
-            </button>
-            <EditorSettingsPopover onChange={setEditorSettings} />
             <div className="flex gap-1 ml-1 pl-1 border-l border-border">
               <button
                 onClick={onRun}
@@ -509,19 +488,9 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
                 <Send className="size-3" /> {reviewing ? "Reviewing..." : "Submit"}
               </button>
             </div>
-          </div>
-        </div>
-        <div style={{ fontSize: `${editorSettings.fontSize}px` }}>
-          <CodeMirror
-            value={code}
-            onChange={setCode}
-            extensions={[langExt(editorLang)]}
-            theme={editorTheme(editorSettings.theme as Parameters<typeof editorTheme>[0])}
-            height={fullscreen ? "100vh" : "42vh"}
-            basicSetup={{ lineNumbers: true, foldGutter: true }}
-          />
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="rounded-lg border border-border bg-card p-4">

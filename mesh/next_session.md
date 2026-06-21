@@ -59,3 +59,87 @@ Fix missing Razorpay plan mappings on the pricing page, update Pro pricing to IN
 4. Configure the Razorpay webhook URL and secret.
 5. Run `gitnexus detect-changes` from a trusted local install before commit if available.
 6. Exercise a real Razorpay sandbox subscription checkout and confirm the webhook updates the subscription to `active` only after `subscription.activated` or `subscription.charged`.
+
+---
+
+# Architecture Report Fix Handoff
+
+## Objective
+Fix the architecture issues identified in `C:\Users\brawl\AppData\Local\Temp\architecture-review-20260621-075455.html`.
+
+## Current status
+- Routed through Agent Mesh file-backed lanes because the user explicitly invoked `agent-mesh`.
+- Created @Scout, @Forge, and @Sentinel lane files for inspection, implementation, and verification.
+- Added shared entitlement, Razorpay lifecycle, AI workflow, admin route, and code workspace seams.
+- Wired existing server functions, hooks, admin routes, review, practice, and webhook code through those seams.
+- Added focused unit tests for entitlement policy, Razorpay lifecycle policy, and AI workflow retry/error handling.
+- GitNexus final change detection reports CRITICAL risk: 17 tracked files, 90 symbols, 48 affected processes.
+- `npm test`, `npm run build`, and touched-file Prettier checks pass.
+- Repo-wide `npm run lint` still fails on existing baseline issues, mostly CRLF/prettier errors outside this change plus a few pre-existing type lint issues.
+
+## Commands run
+- `Get-Content -LiteralPath 'C:\Users\brawl\.agents\skills\agent-mesh\SKILL.md'`
+- `Get-Content -LiteralPath 'C:\Users\brawl\.agents\skills\agent-mesh\references\dispatch-patterns.md'`
+- `Get-Content -LiteralPath 'C:\Users\brawl\.agents\skills\agent-mesh\references\worker-summary-contract.md'`
+- `Get-Content -LiteralPath 'C:\Users\brawl\.agents\skills\agent-mesh\references\verification-checklist.md'`
+- `Get-ChildItem -Force -LiteralPath 'mesh' -ErrorAction SilentlyContinue`
+- `Get-ChildItem -Force -LiteralPath 'mesh\tasks' -ErrorAction SilentlyContinue`
+- `Get-Content -LiteralPath 'mesh\next_session.md' -Tail 80`
+- `npx gitnexus impact getUserPlan --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact useSubscription --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact "Function:src/lib/payments.functions.ts:verifyRazorpaySubscriptionPayment" --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact "Function:src/lib/review.functions.ts:reviewCode" --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact "Function:src/lib/practice.functions.ts:generatePractice" --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact Review --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact Practice --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact ProblemWorkspace --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact handleOrderPaymentCaptured --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus impact upsertSubscriptionFromWebhook --direction upstream --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npx gitnexus detect-changes --repo "C:\Users\brawl\OneDrive\Documents\GOATEDDD\CodeWise\happy-stack-maker"`
+- `npm test`
+- `npm run build`
+- `npm run lint`
+- `npx prettier --check <touched files>`
+
+## Changed files
+- `mesh/tasks/scout-architecture-report-inspection.md`
+- `mesh/tasks/forge-architecture-report-fix.md`
+- `mesh/tasks/sentinel-architecture-report-verify.md`
+- `mesh/next_session.md`
+- `src/lib/entitlement-policy.ts`
+- `src/lib/razorpay-lifecycle.server.ts`
+- `src/lib/ai-workflow.server.ts`
+- `src/lib/admin-route.ts`
+- `src/components/code-workspace.tsx`
+- `src/lib/entitlements.server.ts`
+- `src/hooks/use-subscription.ts`
+- `src/lib/payments.functions.ts`
+- `src/lib/practice.functions.ts`
+- `src/lib/review.functions.ts`
+- `src/routes/api/public/payments/webhook.ts`
+- `src/routes/_authenticated/review.tsx`
+- `src/routes/_authenticated/practice.tsx`
+- `src/routes/_authenticated/admin.dashboard.tsx`
+- `src/routes/_authenticated/admin.blog.tsx`
+- `src/routes/_authenticated/admin.seats.tsx`
+- `src/routes/_authenticated/admin.settings.tsx`
+- `src/routes/_authenticated/admin.curriculum.tsx`
+- `src/routes/_authenticated/admin.research.tsx`
+- `src/routes/_authenticated/admin.export.tsx`
+- `src/routes/_authenticated/admin.update-price.tsx`
+- `tests/lib/entitlement-policy.test.ts`
+- `tests/lib/razorpay-lifecycle.test.ts`
+- `tests/lib/ai-workflow.test.ts`
+
+## Open risks
+- GitNexus final risk is CRITICAL because shared subscription, auth layout, pricing, practice workspace, and Razorpay verification flows are touched.
+- Real Razorpay webhook delivery and live payment capture were not exercised locally.
+- Playwright authenticated editor/admin flows were not run because they require a local logged-in/auth setup.
+- Repo-wide lint remains red on pre-existing formatting/type baseline outside this architecture slice.
+- `src/routeTree.gen.ts` was already modified in the working tree and was not edited by this architecture slice.
+
+## Resume steps
+1. Review the CRITICAL GitNexus change scope before committing.
+2. Run local authenticated smoke checks for review, practice, admin routes, and Razorpay sandbox checkout if credentials are available.
+3. Decide whether to accept or split this architecture slice before staging.
+4. Clean the pre-existing repo-wide lint baseline separately if lint is required as a merge gate.

@@ -2,18 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  getUserPlan,
-  consumeQuota,
-  getPlanQuotas,
-  monthKey,
-} from "@/lib/entitlements.server";
-import {
-  envInput,
-  extractJson,
-  computeFSRSGrade,
-  updateFSRS,
-} from "./codewise.utils";
+import { getUserPlan, consumeQuota, getPlanQuotas, monthKey } from "@/lib/entitlements.server";
+import { envInput, computeFSRSGrade, updateFSRS } from "./codewise.utils";
+import { runJsonAiWorkflow } from "@/lib/ai-workflow.server";
 import {
   LANGS,
   ReviewIssueSchema,
@@ -59,95 +50,22 @@ export const reviewCode = createServerFn({ method: "POST" })
 
     const userPrompt = `Language: ${data.language}\n\nStudent code:\n\`\`\`${data.language}\n${data.code}\n\`\`\`\n\nReview it.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5-mini",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const workflow = await runJsonAiWorkflow({
+      apiKey,
+      flowName: "reviewCode",
+      systemPrompt: SYSTEM_PROMPT,
+      userPrompt,
+      schema: ReviewResponseSchema,
+      malformedError: "AI returned an unexpected response. Please try again.",
     });
 
-    if (!aiRes.ok) {
-      const text = await aiRes.text();
-      console.error("AI gateway error:", aiRes.status, text.slice(0, 500));
-      if (aiRes.status === 429)
-        return { ok: false as const, error: "Rate limited. Try again in a minute." };
-      if (aiRes.status === 402)
-        return {
-          ok: false as const,
-          error: "AI credits exhausted. Add credits in Lovable settings.",
-        };
+    if (!workflow.ok) {
       return {
         ok: false as const,
-        error: "AI service is temporarily unavailable. Please try again.",
+        error: workflow.error,
       };
     }
-
-    const aiJson = await aiRes.json();
-    let content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-
-    let parsed: z.infer<typeof ReviewResponseSchema> | null = null;
-    let attempt = 0;
-    const maxAttempts = 3;
-    while (attempt < maxAttempts) {
-      attempt++;
-      try {
-        parsed = ReviewResponseSchema.parse(JSON.parse(extractJson(content)));
-        break;
-      } catch (parseErr) {
-        console.error(
-          "reviewCode parse attempt",
-          attempt,
-          "failed:",
-          parseErr,
-          "content preview:",
-          content.slice(0, 200),
-        );
-        if (attempt < maxAttempts) {
-          // Exponential backoff with jitter: 1s, 2s (+ random up to 500ms)
-          const baseDelay = Math.pow(2, attempt - 1) * 1000;
-          const jitter = Math.random() * 500;
-          await new Promise(resolve => setTimeout(resolve, baseDelay + jitter));
-
-          const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              model: "openai/gpt-5-mini",
-              messages: [
-                { role: "system", content: SYSTEM_PROMPT },
-                { role: "user", content: userPrompt },
-              ],
-              response_format: { type: "json_object" },
-            }),
-          });
-          if (!retryRes.ok) {
-            console.error("AI gateway retry error:", retryRes.status);
-            continue;
-          }
-          const retryJson = await retryRes.json();
-          content = retryJson?.choices?.[0]?.message?.content ?? "{}";
-        }
-      }
-    }
-    if (!parsed) {
-      console.error("reviewCode: malformed AI output after 3 attempts. Raw preview:", content.slice(0, 500));
-      return {
-        ok: false as const,
-        error: "AI returned an unexpected response. Please try again.",
-      };
-    }
+    const parsed = workflow.data;
 
     // persist submission
     const { data: sub, error: subErr } = await supabase
@@ -197,7 +115,7 @@ export const reviewCode = createServerFn({ method: "POST" })
         concepts.map(async (slug) => {
           // Filter issues matching this concept (null concept_slug = "general" issue counts toward all)
           const conceptIssues = parsed.issues.filter(
-            (i) => i.concept_slug === slug || i.concept_slug === null
+            (i) => i.concept_slug === slug || i.concept_slug === null,
           );
           const grade = computeFSRSGrade(conceptIssues);
           try {
@@ -205,7 +123,7 @@ export const reviewCode = createServerFn({ method: "POST" })
           } catch (fsrsErr) {
             console.error("FSRS update failed for slug", slug, ":", fsrsErr);
           }
-        })
+        }),
       );
     }
 

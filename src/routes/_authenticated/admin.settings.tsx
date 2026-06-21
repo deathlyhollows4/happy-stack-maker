@@ -1,24 +1,15 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { getAppConfig, setAppConfig } from "@/lib/codewise.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { requireAdminRoute } from "@/lib/admin-route";
 import { Shield, Settings, Loader2, Save } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   head: () => ({ meta: [{ title: "Site Settings | CodeWise" }] }),
-  beforeLoad: async () => {
-    if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login" });
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      p_user_id: data.session.user.id,
-      p_role: "admin",
-    });
-    if (!isAdmin) throw redirect({ to: "/dashboard" });
-  },
+  beforeLoad: requireAdminRoute,
   component: AdminSettingsPage,
 });
 

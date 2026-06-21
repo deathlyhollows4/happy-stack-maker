@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getBillingEnvironment, getBillingProviderLabel } from "@/lib/payments";
+import {
+  chooseEntitlementSubscription,
+  firstPresentString,
+  subscriptionHasAccess,
+} from "@/lib/entitlement-policy";
 
 export type SubscriptionRow = {
   id: string;
@@ -27,37 +32,8 @@ export type SubscriptionRow = {
   [key: string]: string | boolean | null | undefined;
 };
 
-function firstString(...values: unknown[]): string | null {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim()) {
-      return value.trim();
-    }
-  }
-  return null;
-}
-
-function isEntitledSubscription(row: SubscriptionRow, now = Date.now()): boolean {
-  const periodEndMs = row.current_period_end ? new Date(row.current_period_end).getTime() : null;
-  const stillInPeriod = periodEndMs === null || periodEndMs > now;
-  return (
-    (["active", "trialing", "past_due"].includes(row.status) && stillInPeriod) ||
-    (row.status === "canceled" && periodEndMs !== null && periodEndMs > now)
-  );
-}
-
 function chooseSubscriptionRow(rows: SubscriptionRow[]): SubscriptionRow | null {
-  const now = Date.now();
-  return (
-    [...rows].sort((left, right) => {
-      const leftEntitled = isEntitledSubscription(left, now);
-      const rightEntitled = isEntitledSubscription(right, now);
-      if (leftEntitled !== rightEntitled) return leftEntitled ? -1 : 1;
-
-      const leftTs = firstString(left.external_status_updated_at, left.created_at) ?? "";
-      const rightTs = firstString(right.external_status_updated_at, right.created_at) ?? "";
-      return rightTs.localeCompare(leftTs);
-    })[0] ?? null
-  );
+  return chooseEntitlementSubscription(rows);
 }
 
 export function useSubscription() {
@@ -93,19 +69,19 @@ export function useSubscription() {
         ? {
             ...row,
             provider:
-              firstString(row.provider, row.payment_provider, row.billing_provider) ??
+              firstPresentString(row.provider, row.payment_provider, row.billing_provider) ??
               getBillingProviderLabel().toLowerCase(),
-            provider_subscription_id: firstString(
+            provider_subscription_id: firstPresentString(
               row.provider_subscription_id,
               row.razorpay_subscription_id,
               row.paddle_subscription_id,
             ),
-            provider_customer_id: firstString(
+            provider_customer_id: firstPresentString(
               row.provider_customer_id,
               row.razorpay_customer_id,
               row.paddle_customer_id,
             ),
-            price_id: firstString(row.price_id) ?? "pro_monthly",
+            price_id: firstPresentString(row.price_id) ?? "pro_monthly",
           }
         : null,
     );
@@ -168,7 +144,7 @@ export function useSubscription() {
   }, [user, env, refresh]);
 
   const now = Date.now();
-  const isActive = !!subscription && isEntitledSubscription(subscription, now);
+  const isActive = !!subscription && subscriptionHasAccess(subscription, now);
 
   return {
     subscription,

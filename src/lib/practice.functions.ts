@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getUserPlan, consumeQuota, getPlanQuotas, dayKey } from "@/lib/entitlements.server";
-import { envInput, extractJson } from "./codewise.utils";
+import { envInput } from "./codewise.utils";
+import { runJsonAiWorkflow } from "@/lib/ai-workflow.server";
 import { LANGS } from "@/lib/review.constants";
 import { getTopicBySlug, normalizeTopicSlug } from "@/lib/topics";
 
@@ -41,6 +42,12 @@ function practiceUserPrompt(topicSlug: string, language: string) {
     .filter(Boolean)
     .join("\n");
 }
+
+const PracticeResponseSchema = z.object({
+  title: z.string().min(1).max(200),
+  prompt: z.string().min(1).max(5000),
+  starter_code: z.string().max(5000).optional().default(""),
+});
 
 export const generatePractice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -85,94 +92,22 @@ export const generatePractice = createServerFn({ method: "POST" })
       topicSlug = normalizeTopicSlug(weakest?.[0]?.topic_slug) ?? "arrays";
     }
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "openai/gpt-5-mini",
-        messages: [
-          {
-            role: "system",
-            content: practiceSystemPrompt(),
-          },
-          {
-            role: "user",
-            content: practiceUserPrompt(topicSlug, data.language),
-          },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const workflow = await runJsonAiWorkflow({
+      apiKey,
+      flowName: "generatePractice",
+      systemPrompt: practiceSystemPrompt(),
+      userPrompt: practiceUserPrompt(topicSlug, data.language),
+      schema: PracticeResponseSchema,
+      malformedError: "AI returned an unexpected response. Please try again.",
     });
 
-    if (!aiRes.ok) {
-      if (aiRes.status === 429) return { ok: false as const, error: "Rate limited." };
-      if (aiRes.status === 402) return { ok: false as const, error: "AI credits exhausted." };
-      return { ok: false as const, error: "AI error generating problem." };
-    }
-    const aiJson = await aiRes.json();
-    let content: string = aiJson?.choices?.[0]?.message?.content ?? "{}";
-
-    let parsed: { title: string; prompt: string; starter_code: string } | null = null;
-    let attempt = 0;
-    const maxAttempts = 3;
-    while (attempt < maxAttempts) {
-      attempt++;
-      try {
-        parsed = z
-          .object({
-            title: z.string().min(1).max(200),
-            prompt: z.string().min(1).max(5000),
-            starter_code: z.string().max(5000).optional().default(""),
-          })
-          .parse(JSON.parse(extractJson(content)));
-        break;
-      } catch (parseErr) {
-        console.error(
-          "generatePractice parse attempt",
-          attempt,
-          "failed:",
-          parseErr,
-          "content preview:",
-          content.slice(0, 200),
-        );
-        if (attempt < maxAttempts) {
-          const retryRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: "openai/gpt-5-mini",
-              messages: [
-                {
-                  role: "system",
-                  content: practiceSystemPrompt(),
-                },
-                {
-                  role: "user",
-                  content: practiceUserPrompt(topicSlug, data.language),
-                },
-              ],
-              response_format: { type: "json_object" },
-            }),
-          });
-          if (!retryRes.ok) {
-            console.error("AI gateway retry error:", retryRes.status);
-            continue;
-          }
-          const retryJson = await retryRes.json();
-          content = retryJson?.choices?.[0]?.message?.content ?? "{}";
-        }
-      }
-    }
-    if (!parsed) {
-      console.error(
-        "generatePracticeProblem: malformed AI output after 3 attempts. Raw preview:",
-        content.slice(0, 500),
-      );
+    if (!workflow.ok) {
       return {
         ok: false as const,
-        error: "AI returned an unexpected response. Please try again.",
+        error: workflow.error,
       };
     }
+    const parsed = workflow.data;
 
     const { data: row, error } = await supabase
       .from("practice_problems")

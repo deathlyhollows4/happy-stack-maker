@@ -11,6 +11,12 @@ import {
   verifyRazorpayPaymentSignature as verifyRazorpayPaymentSignatureValue,
 } from "@/lib/payments.server";
 import { envInput } from "@/lib/codewise.utils";
+import {
+  getPlanAmountInPaise,
+  isProBillingPlanCode,
+  resolvePaidPeriod,
+} from "@/lib/razorpay-lifecycle.server";
+import { subscriptionHasAccess } from "@/lib/entitlement-policy";
 
 const resolvePaddlePriceInput = z.object({
   priceId: z.string().min(1).max(200),
@@ -35,40 +41,6 @@ const verifySubscriptionPaymentInput = z.object({
   billingPlanCode: z.string().trim().min(1).max(100).optional(),
   currencyCode: z.string().trim().length(3).toUpperCase().optional(),
 });
-
-const PLAN_CONFIG_KEYS = {
-  pro_monthly: "plan_price_pro_monthly",
-  pro_yearly: "plan_price_pro_yearly",
-} as const;
-
-type ProBillingPlanCode = keyof typeof PLAN_CONFIG_KEYS;
-
-function isProBillingPlanCode(value: string): value is ProBillingPlanCode {
-  return value === "pro_monthly" || value === "pro_yearly";
-}
-
-function addBillingPeriod(start: Date, billingPlanCode: ProBillingPlanCode): Date {
-  const end = new Date(start);
-  if (billingPlanCode === "pro_yearly") {
-    end.setFullYear(end.getFullYear() + 1);
-  } else {
-    end.setMonth(end.getMonth() + 1);
-  }
-  return end;
-}
-
-async function getPlanAmountInPaise(billingPlanCode: string): Promise<number | null> {
-  if (!isProBillingPlanCode(billingPlanCode)) return null;
-
-  const { data } = await supabaseAdmin
-    .from("app_config")
-    .select("value")
-    .eq("key", PLAN_CONFIG_KEYS[billingPlanCode])
-    .maybeSingle();
-  const amountInr = Number.parseInt(data?.value ?? "", 10);
-  if (!Number.isFinite(amountInr) || amountInr <= 0) return null;
-  return amountInr * 100;
-}
 
 async function getBillingPlanMapping(input: {
   provider: "paddle" | "razorpay";
@@ -242,26 +214,18 @@ export const verifyRazorpaySubscriptionPayment = createServerFn({ method: "POST"
       };
     }
 
-    const existingActive =
-      !!existing &&
-      ["active", "trialing", "past_due"].includes(existing.status) &&
-      (!existing.current_period_end || new Date(existing.current_period_end).getTime() > Date.now());
+    const existingActive = !!existing && subscriptionHasAccess(existing);
     const canActivate = hasPaidCharge && amountMatches;
     const periodStart = new Date();
     const billingPlanCode = data.billingPlanCode ?? existing?.billing_plan_code ?? "pro_monthly";
-    const periodEnd = isProBillingPlanCode(billingPlanCode)
-      ? addBillingPeriod(periodStart, billingPlanCode).toISOString()
-      : null;
-    const currentPeriodStart = existingActive
-      ? existing.current_period_start
-      : canActivate
-        ? periodStart.toISOString()
-        : null;
-    const currentPeriodEnd = existingActive
-      ? existing.current_period_end
-      : canActivate
-        ? periodEnd
-        : null;
+    const { currentPeriodStart, currentPeriodEnd } = resolvePaidPeriod({
+      existingActive,
+      existingStart: existing.current_period_start,
+      existingEnd: existing.current_period_end,
+      canActivate,
+      billingPlanCode,
+      start: periodStart,
+    });
 
     await supabaseAdmin.from("subscriptions").upsert(
       {

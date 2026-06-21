@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -6,22 +6,13 @@ import {
   upsertCurriculumMapping,
   getDashboard,
 } from "@/lib/codewise.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { requireAdminRoute } from "@/lib/admin-route";
 import { Shield, Loader2, GraduationCap, Check, Pencil, X } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/admin/curriculum")({
   head: () => ({ meta: [{ title: "Curriculum Mapping | CodeWise" }] }),
-  beforeLoad: async () => {
-    if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/login" });
-    const { data: isAdmin } = await supabase.rpc("has_role", {
-      p_user_id: data.session.user.id,
-      p_role: "admin",
-    });
-    if (!isAdmin) throw redirect({ to: "/dashboard" });
-  },
+  beforeLoad: requireAdminRoute,
   component: CurriculumMapping,
 });
 

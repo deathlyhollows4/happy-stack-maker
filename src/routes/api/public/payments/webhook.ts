@@ -8,27 +8,12 @@ import {
   unixSecondsToIso,
   verifyRazorpayWebhookSignature,
 } from "@/lib/payments.server";
-
-const PLAN_CONFIG_KEYS = {
-  pro_monthly: "plan_price_pro_monthly",
-  pro_yearly: "plan_price_pro_yearly",
-} as const;
-
-type ProBillingPlanCode = keyof typeof PLAN_CONFIG_KEYS;
-
-function isProBillingPlanCode(value: string | null | undefined): value is ProBillingPlanCode {
-  return value === "pro_monthly" || value === "pro_yearly";
-}
-
-function addBillingPeriod(start: Date, billingPlanCode: ProBillingPlanCode): Date {
-  const end = new Date(start);
-  if (billingPlanCode === "pro_yearly") {
-    end.setFullYear(end.getFullYear() + 1);
-  } else {
-    end.setMonth(end.getMonth() + 1);
-  }
-  return end;
-}
+import {
+  addBillingPeriod,
+  getPlanAmountInPaise,
+  isProBillingPlanCode,
+} from "@/lib/razorpay-lifecycle.server";
+import { subscriptionHasAccess } from "@/lib/entitlement-policy";
 
 function firstString(...values: unknown[]): string | null {
   for (const value of values) {
@@ -52,26 +37,11 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-async function getPlanAmountInPaise(billingPlanCode: string): Promise<number | null> {
-  if (!isProBillingPlanCode(billingPlanCode)) return null;
-
-  const { data } = await supabaseAdmin
-    .from("app_config")
-    .select("value")
-    .eq("key", PLAN_CONFIG_KEYS[billingPlanCode])
-    .maybeSingle();
-  const amountInr = Number.parseInt(data?.value ?? "", 10);
-  if (!Number.isFinite(amountInr) || amountInr <= 0) return null;
-  return amountInr * 100;
-}
-
 function isStillEntitled(row: {
   status?: string | null;
   current_period_end?: string | null;
 }): boolean {
-  const periodEndMs = row.current_period_end ? new Date(row.current_period_end).getTime() : null;
-  const stillInPeriod = periodEndMs === null || periodEndMs > Date.now();
-  return !!row.status && ["active", "trialing", "past_due"].includes(row.status) && stillInPeriod;
+  return subscriptionHasAccess(row);
 }
 
 function normalizeSubscriptionStatus(eventType: string, fallback: string): string {
@@ -319,7 +289,8 @@ async function handleOrderPaymentCaptured(
         cancel_at_period_end: false,
         currency_code: currencyCode ?? existing?.currency_code ?? null,
         environment: env,
-        external_status_updated_at: unixSecondsToIso(payload.created_at) ?? new Date().toISOString(),
+        external_status_updated_at:
+          unixSecondsToIso(payload.created_at) ?? new Date().toISOString(),
         metadata: {
           ...existingMetadata,
           source: "razorpay_webhook",
