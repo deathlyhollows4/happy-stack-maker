@@ -8,16 +8,25 @@ import { LANGS } from "@/lib/review.constants";
 import { getTopicBySlug } from "@/lib/topics";
 import type { PracticePlannerResult } from "@/lib/practice-planner.server";
 import { buildPracticeGenerationPlan } from "@/lib/practice-generation-plan.server";
+import { PRACTICE_PROBLEM_CONTRACT_VERSION } from "@/lib/practice-problem-contract";
+import type { PracticeProblemLanguage } from "@/lib/practice-problem-contract";
+import {
+  buildStructuredPracticeHiddenTestsInsert,
+  buildStructuredPracticeProblemInsert,
+  buildStructuredPracticeProblemSchema,
+} from "@/lib/practice-structured-problem.server";
 
 function practiceSystemPrompt() {
   return [
-    "You generate small, focused CS practice problems for students.",
-    "Difficulty: easy-medium, similar to LeetCode Easy or classic CS1-CS2 assignments.",
-    'Return JSON: { "title": string, "prompt": string, "starter_code": string }.',
-    "The prompt must include examples, constraints, expected behavior, and a short rubric.",
-    "Aim the task at the student's misconception or weak concept.",
+    "You generate one beginner DSA practice problem as strict JSON only.",
+    `Return exactly one JSON object with contractVersion ${PRACTICE_PROBLEM_CONTRACT_VERSION}.`,
+    "Do not include markdown, prose outside JSON, or extra keys.",
+    "Required fields: contractVersion, curriculumNodeId, title, topicTags, prerequisiteTags, masteryBand, objective, statement, examples, constraints, functionSignature, visibleTests, hiddenTests, hiddenTestThemes, hintLadder, successCriteria.",
+    "The statement must be story-free, direct, and focused on the function behavior.",
+    "Generate function signatures and starterCode for python, javascript, java, cpp, and go.",
+    "Visible and hidden tests must use JSON values for arguments and expected.",
+    "Every hiddenTestThemes item must match at least one hidden test theme.",
     "Starter code must include TODO comments but no full solution.",
-    "No markdown fences around the JSON.",
   ].join(" ");
 }
 
@@ -54,17 +63,15 @@ function practiceUserPrompt(
       ? `Practice ladder examples: ${topic.practiceLadder.join("; ")}`
       : "",
     `Language: ${language}.`,
-    "Generate ONE practice problem aimed at strengthening this concept.",
+    `Required contractVersion: ${PRACTICE_PROBLEM_CONTRACT_VERSION}.`,
+    `Required curriculumNodeId: ${practicePlan.node.id}.`,
+    `Required objective: ${practicePlan.node.objective}`,
+    `Required masteryBand: ${practicePlan.masteryBand.id}.`,
+    "Generate one structured problem for the selected curriculum node.",
   ]
     .filter(Boolean)
     .join("\n");
 }
-
-const PracticeResponseSchema = z.object({
-  title: z.string().min(1).max(200),
-  prompt: z.string().min(1).max(5000),
-  starter_code: z.string().max(5000).optional().default(""),
-});
 
 export const generatePractice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -116,8 +123,9 @@ export const generatePractice = createServerFn({ method: "POST" })
         data.language,
         generationPlan.practicePlan,
       ),
-      schema: PracticeResponseSchema,
+      schema: buildStructuredPracticeProblemSchema(generationPlan),
       malformedError: "AI returned an unexpected response. Please try again.",
+      maxAttempts: 1,
     });
 
     if (!workflow.ok) {
@@ -130,20 +138,34 @@ export const generatePractice = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabase
       .from("practice_problems")
-      .insert({
-        user_id: userId,
-        ...generationPlan.problemInsertPlan,
-        title: parsed.title,
-        prompt: parsed.prompt,
-        starter_code: parsed.starter_code,
-        language: data.language,
-      })
+      .insert(
+        buildStructuredPracticeProblemInsert({
+          userId,
+          language: data.language as PracticeProblemLanguage,
+          generationPlan,
+          problem: parsed,
+        }),
+      )
       .select("*")
       .single();
     if (error || !row) {
       console.error("generatePractice insert failed:", error);
       return { ok: false as const, error: "Something went wrong. Please try again." };
     }
+
+    const { error: hiddenTestsError } = await supabase.from("practice_problem_hidden_tests").insert(
+      buildStructuredPracticeHiddenTestsInsert({
+        userId,
+        practiceProblemId: row.id,
+        problem: parsed,
+      }),
+    );
+    if (hiddenTestsError) {
+      console.error("generatePractice hidden tests insert failed:", hiddenTestsError);
+      await supabase.from("practice_problems").delete().eq("id", row.id).eq("user_id", userId);
+      return { ok: false as const, error: "Something went wrong. Please try again." };
+    }
+
     return { ok: true as const, problem: row };
   });
 

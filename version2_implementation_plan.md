@@ -113,7 +113,7 @@ Session 6 evidence:
 1. ✅ Build `src/lib/practice-planner.server.ts` to choose a curriculum node from manual topic, weakest topic, prerequisites, mastery, and due review signals.
 2. ✅ Keep "Weakest Topic (auto)" but route it through the planner instead of direct lowest-topic generation.
 3. ✅ Refactor `src/lib/practice.functions.ts` to call the planner before AI generation.
-4. Replace markdown-only generation with strict JSON generation and Zod validation.
+4. ✅ Replace markdown-only generation with strict JSON generation and Zod validation.
 5. Add one repair retry for missing or invalid generated fields, then return a safe error without inserting a weak problem.
 6. Add tests for manual topic bridge behavior, auto weakest topic behavior, repair success, and repair failure.
 
@@ -145,6 +145,15 @@ Session 3 evidence:
 - Added `tests/lib/practice-generation-plan.test.ts` covering manual-topic bridge metadata and weakest-topic auto metadata.
 - GitNexus impact for `generatePractice`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `practiceUserPrompt`: LOW risk, 1 direct caller, 0 affected processes.
 - Verification: `npx prettier --write src/lib/practice.functions.ts src/lib/practice-generation-plan.server.ts tests/lib/practice-generation-plan.test.ts` passed, and `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-planner.test.ts` passed with 9 tests.
+
+Session 4 evidence:
+
+- Replaced the legacy `{ title, prompt, starter_code }` AI response with the strict structured practice problem contract.
+- Added `src/lib/practice-structured-problem.server.ts` for plan-aware Zod validation, deterministic prompt formatting, requested-language starter code selection, structured insert payloads, and hidden-test insert payloads.
+- `generatePractice` now requests structured JSON only, validates curriculum node, mastery band, and objective against the planner result, stores structured fields on `practice_problems`, marks rows as `structured`, and stores generated hidden tests in `practice_problem_hidden_tests`.
+- Added `tests/lib/practice-structured-problem.test.ts` covering plan-aware validation, wrong-band rejection, deterministic prompt formatting, structured insert payloads, and starter-code selection.
+- GitNexus impact for `generatePractice`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `practiceSystemPrompt`: LOW risk, 1 direct caller, 0 affected processes. GitNexus impact for `practiceUserPrompt`: LOW risk, 1 direct caller, 0 affected processes. `PracticeResponseSchema` was not indexed by GitNexus.
+- Verification: `npx prettier --write src/lib/practice.functions.ts src/lib/practice-structured-problem.server.ts tests/lib/practice-structured-problem.test.ts` passed, and `npx vitest run tests\lib\practice-structured-problem.test.ts tests\lib\practice-problem-contract.test.ts` passed with 9 tests.
 
 ## Day 3: Multi-Language Test Harness
 
