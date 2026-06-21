@@ -57,6 +57,25 @@ export interface CurriculumNode {
   problemTemplates: CurriculumProblemTemplate[];
 }
 
+export interface CurriculumGateStatus {
+  isOpen: boolean;
+  missingPrerequisiteNodeIds: string[];
+  missingPrerequisiteTopicSlugs: TopicSlug[];
+}
+
+export type CurriculumBandSupportResult =
+  | {
+      ok: true;
+      node: CurriculumNode;
+      band: MasteryBand;
+    }
+  | {
+      ok: false;
+      reason: "unsupported-topic" | "unsupported-band";
+      message: string;
+      supportedBands: MasteryBandId[];
+    };
+
 export const MASTERY_BANDS: MasteryBand[] = [
   {
     id: "0-20",
@@ -863,4 +882,60 @@ export function getFirstCurriculumNode(): CurriculumNode {
 
 export function isSupportedBandForNode(node: CurriculumNode, bandId: MasteryBandId): boolean {
   return node.supportedBands.includes(bandId);
+}
+
+export function getCurriculumGateStatus(
+  node: CurriculumNode,
+  completedNodeIds: Iterable<string>,
+  masteredTopicSlugs: Iterable<TopicSlug>,
+): CurriculumGateStatus {
+  const completedNodes = new Set(completedNodeIds);
+  const masteredTopics = new Set(masteredTopicSlugs);
+  const missingPrerequisiteNodeIds = node.prerequisiteNodeIds.filter(
+    (nodeId) => !completedNodes.has(nodeId),
+  );
+  const missingPrerequisiteTopicSlugs = node.prerequisiteTopicSlugs.filter(
+    (topicSlug) => !masteredTopics.has(topicSlug),
+  );
+
+  return {
+    isOpen: missingPrerequisiteNodeIds.length === 0 && missingPrerequisiteTopicSlugs.length === 0,
+    missingPrerequisiteNodeIds,
+    missingPrerequisiteTopicSlugs,
+  };
+}
+
+export function validateCurriculumBandSupport(
+  topicSlug: TopicSlug,
+  bandId: MasteryBandId,
+): CurriculumBandSupportResult {
+  const topicNodes = getCurriculumNodesForTopic(topicSlug);
+
+  if (topicNodes.length === 0) {
+    return {
+      ok: false,
+      reason: "unsupported-topic",
+      message: `No curriculum node is available for topic ${topicSlug}.`,
+      supportedBands: [],
+    };
+  }
+
+  const supportedNode = topicNodes.find((node) => isSupportedBandForNode(node, bandId));
+
+  if (!supportedNode) {
+    const supportedBands = [...new Set(topicNodes.flatMap((node) => node.supportedBands))];
+
+    return {
+      ok: false,
+      reason: "unsupported-band",
+      message: `Topic ${topicSlug} does not support mastery band ${bandId}.`,
+      supportedBands,
+    };
+  }
+
+  return {
+    ok: true,
+    node: supportedNode,
+    band: getMasteryBandById(bandId),
+  };
 }

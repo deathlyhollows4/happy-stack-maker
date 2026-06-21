@@ -47,7 +47,7 @@ Sources:
 3. ✅ Add mastery-band model: `0-20`, `21-40`, `41-60`, `61-80`, `81-100`, with generation rules, hint rules, and promotion criteria.
 4. ✅ Add strict structured problem types and Zod schemas: title, tags, mastery band, objective, statement, examples, constraints, signature, visible tests, hidden tests, hint ladder, and success criteria.
 5. ✅ Create Supabase migration for structured practice fields and attempt/event tables.
-6. Add unit tests for curriculum node lookup, prerequisite gating, mastery-band selection, and unsupported topic/band rejection.
+6. ✅ Add unit tests for curriculum node lookup, prerequisite gating, mastery-band selection, and unsupported topic/band rejection.
 
 Session 1 evidence:
 
@@ -99,6 +99,14 @@ Session 5 evidence:
 - GitNexus impact for the generated `Database` type returned `UNKNOWN`; GitNexus does not index that generated type.
 - Verification: `npm run build` passed. `npx prettier --write` passed for TypeScript and Markdown; Prettier has no configured SQL parser for the migration file.
 - Apply status: completed after user confirmed the migration was applied. Supabase plugin access to configured project `zjdxwczuhtdllflroggd` still returns `MCP error -32600: You do not have permission to perform this action`, so connector-level migration-history verification is unavailable from this session.
+
+Session 6 evidence:
+
+- Added curriculum gate helpers in `src/lib/dsa-curriculum.ts` for missing prerequisite nodes, missing prerequisite topics, and open/blocked status.
+- Added topic and mastery-band support validation so unsupported curriculum requests fail with a structured reason instead of drifting into random generation.
+- Added `tests/lib/dsa-curriculum.test.ts` covering curriculum node lookup, topic node lookup, prerequisite gating, mastery-band score boundaries, supported topic-band acceptance, unsupported band rejection, and unknown-topic rejection.
+- GitNexus impact returned `UNKNOWN` for the new unindexed curriculum symbols: `getCurriculumNodeById`, `getMasteryBandForScore`, `isSupportedBandForNode`, and `CODEWISE_DSA_LADDER`; no HIGH or CRITICAL blast radius was reported.
+- Verification: `npx prettier --write src/lib/dsa-curriculum.ts tests/lib/dsa-curriculum.test.ts` passed, and `npx vitest run tests\lib\dsa-curriculum.test.ts` passed with 8 tests.
 
 ## Day 2: Planner And Generation Foundation
 
