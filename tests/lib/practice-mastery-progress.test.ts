@@ -131,6 +131,9 @@ describe("updatePracticeMasteryProgress", () => {
     expect(result.prerequisiteUpdates[0].result.signal.delta).toBeLessThan(
       result.result.signal.delta,
     );
+    expect(result.prerequisiteUpdates[0].result.signal.signalScore).toBe(
+      result.result.signal.signalScore,
+    );
     expect(upserts.map((row) => row.topic_slug)).toEqual(["arrays", "complexity"]);
   });
 
@@ -201,6 +204,10 @@ describe("updatePracticeMasteryProgress", () => {
     expect(repeated.ok).toBe(true);
     if (!firstTry.ok || firstTry.skipped || !repeated.ok || repeated.skipped) return;
     expect(repeated.result.signal.delta).toBeLessThan(firstTry.result.signal.delta);
+    expect(repeated.result.signal.failedAttemptCount).toBe(3);
+    expect(repeated.result.signal.components.attempts).toBeLessThan(
+      firstTry.result.signal.components.attempts,
+    );
     expect(repeatedClient.upserts).toHaveLength(2);
     expect(repeatedClient.upserts).toEqual(
       expect.arrayContaining([
@@ -208,5 +215,61 @@ describe("updatePracticeMasteryProgress", () => {
         expect.objectContaining({ topic_slug: "complexity", attempts: 3 }),
       ]),
     );
+  });
+
+  it("confirms spaced review retention through stored progress rows", async () => {
+    const sameDayClient = createProgressClient({
+      arrays: {
+        mastery: 0.42,
+        attempts: 4,
+        last_reviewed: "2026-06-23T08:00:00.000Z",
+        stability: 2.5,
+        difficulty: 5,
+      },
+    });
+    const spacedClient = createProgressClient({
+      arrays: {
+        mastery: 0.42,
+        attempts: 4,
+        last_reviewed: "2026-06-19T10:00:00.000Z",
+        stability: 2.5,
+        difficulty: 5,
+      },
+    });
+
+    const sameDay = await updatePracticeMasteryProgress({
+      ...baseInput(sameDayClient.client),
+      masteryBand: "41-60",
+      correctnessScore: 0.92,
+      failedAttemptCount: 1,
+      hintCount: 1,
+      reviewQualityScore: 1,
+      speedSeconds: 900,
+    });
+    const spaced = await updatePracticeMasteryProgress({
+      ...baseInput(spacedClient.client),
+      masteryBand: "41-60",
+      correctnessScore: 0.92,
+      failedAttemptCount: 1,
+      hintCount: 1,
+      reviewQualityScore: 1,
+      speedSeconds: 900,
+    });
+
+    expect(sameDay.ok).toBe(true);
+    expect(spaced.ok).toBe(true);
+    if (!sameDay.ok || sameDay.skipped || !spaced.ok || spaced.skipped) return;
+    expect(sameDay.result.signal.components.repeatPerformance).toBe(0.55);
+    expect(spaced.result.signal.components.repeatPerformance).toBe(1);
+    expect(spaced.result.signal.delta).toBeGreaterThan(sameDay.result.signal.delta);
+    expect(spaced.result.update.stability).toBeGreaterThan(sameDay.result.update.stability);
+    expect(Date.parse(spaced.result.update.next_review_date)).toBeGreaterThanOrEqual(
+      Date.parse(sameDay.result.update.next_review_date),
+    );
+    expect(spacedClient.upserts[0]).toMatchObject({
+      topic_slug: "arrays",
+      attempts: 5,
+      mastery: spaced.result.signal.nextMastery,
+    });
   });
 });

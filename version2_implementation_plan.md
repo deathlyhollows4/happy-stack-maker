@@ -363,7 +363,7 @@ Session 6 evidence:
 3. ✅ Update mastery across the primary topic plus prerequisite topics.
 4. ✅ Add conservative hidden-test contribution so hidden tests do not become the sole pass/fail gate.
 5. ✅ Update dashboard and practice surfaces to show mastery band and next recommended curriculum node.
-6. Add tests for mastery deltas, prerequisite updates, repeated attempts, and spaced review confirmation.
+6. ✅ Add tests for mastery deltas, prerequisite updates, repeated attempts, and spaced review confirmation.
 
 Session 1 evidence:
 
@@ -445,6 +445,19 @@ Session 5 evidence:
 - Full verification: `npm test` passed with 200 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes with `--scope staged` reported CRITICAL risk across 8 files and 28 symbols, affecting 18 existing dashboard and practice execution flows. The affected scope is expected because this session intentionally updates authenticated dashboard and practice recommendation surfaces.
+
+Session 6 evidence:
+
+- Inspected `src/lib/practice-mastery-scoring.ts`, `src/lib/practice-mastery-progress.server.ts`, `tests/lib/practice-mastery-scoring.test.ts`, and `tests/lib/practice-mastery-progress.test.ts` before changing coverage.
+- Strengthened `tests/lib/practice-mastery-progress.test.ts` so prerequisite topic updates assert the same derived signal score with a smaller delta, proving the existing scoring model is reused instead of duplicated.
+- Added repeated-attempt assertions for failed-attempt count and attempt-component reduction while all touched progress rows still increment attempts.
+- Added a spaced-review confirmation test through `updatePracticeMasteryProgress`, covering stored `last_reviewed` rows, repeat-performance scoring, higher mastery delta, higher stability, non-earlier next review scheduling, and persisted mastery writes.
+- GitNexus impact for exact and named mastery symbols returned `UNKNOWN` because `buildPracticeMasterySignal`, `buildPracticeMasteryProgressUpdate`, and `updatePracticeMasteryProgress` are not indexed yet. No HIGH or CRITICAL blast radius was reported before the test-only edit.
+- Focused verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts` passed with 12 tests after rerunning outside the sandbox because Vitest config loading hit a OneDrive sandbox access boundary.
+- Scoped lint verification: `npx eslint tests\lib\practice-mastery-progress.test.ts` passed.
+- Full verification: `npm test` passed with 201 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported LOW risk across 3 files and 5 markdown symbols, with 0 affected processes.
 
 ## Day 6: Integration And Reliability
 
