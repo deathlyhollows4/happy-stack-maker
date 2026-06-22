@@ -359,7 +359,7 @@ Session 6 evidence:
 ## Day 5: Mastery Analytics
 
 1. ✅ Add event logging for generation, visible test runs, hidden test checks, hint usage, submissions, completion, and review quality.
-2. Build derived mastery scoring from correctness, attempts, hint usage, review quality, speed as secondary, and repeat performance.
+2. ✅ Build derived mastery scoring from correctness, attempts, hint usage, review quality, speed as secondary, and repeat performance.
 3. Update mastery across the primary topic plus prerequisite topics.
 4. Add conservative hidden-test contribution so hidden tests do not become the sole pass/fail gate.
 5. Update dashboard and practice surfaces to show mastery band and next recommended curriculum node.
@@ -377,6 +377,23 @@ Session 1 evidence:
 - Full unit verification: `npm test` passed with 181 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - Browser verification: `$env:CODEWISE_URL='http://127.0.0.1:5177'; npx playwright test tests/e2e/practice-workspace.spec.ts --project=chromium --workers=1` passed with 2 tests.
+
+Session 2 evidence:
+
+- Added `src/lib/practice-mastery-scoring.ts` as a pure derived mastery scoring module.
+- The score combines correctness, failed attempt count, hint usage, review quality, repeat performance, and speed with speed capped as a secondary signal.
+- Added conservative mastery deltas: visible-complete attempts can grow mastery, repeated attempts and hints reduce the gain, near-pass failures do not lose mastery, and low-correctness failures only apply a small penalty.
+- Added `src/lib/practice-mastery-progress.server.ts` to read the existing `progress` row and upsert derived mastery, attempts, review scheduling, stability, difficulty, and retrievability without a new migration.
+- Updated `submitPracticeAttempt` to count failed attempts for the same practice problem, save the attempt, record analytics events, then update primary-topic progress with the derived mastery result.
+- Supabase changelog was checked; no new table or Data API exposure work is required because this session reuses the existing `progress` table and RLS policy.
+- GitNexus impact for `submitPracticeAttempt`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `buildConservativePracticeAttemptScore`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `updateFSRS`: LOW risk, 1 direct caller, 1 affected process: `reviewCode`. This session did not modify `updateFSRS`.
+- Focused verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts` passed with 7 tests.
+- Related verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts` passed with 20 tests.
+- Scoped lint verification: `npx eslint src\lib\practice-mastery-scoring.ts src\lib\practice-mastery-progress.server.ts src\lib\practice-attempt.functions.ts tests\lib\practice-mastery-scoring.test.ts` passed.
+- Full verification: `npm test` passed with 188 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 
 ## Day 6: Integration And Reliability
 

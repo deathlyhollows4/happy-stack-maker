@@ -2,30 +2,31 @@
 
 ## Objective
 
-Continue with Day 5 Session 2 after Day 5 Session 1 completion.
+Continue with Day 5 Session 3 after Day 5 Session 2 completion.
 
 ## Current Status
 
 - Day 5 Session 1 is implemented and marked complete in `version2_implementation_plan.md`.
-- `practice_events` now has typed event producers for generation, visible-test runs, hint reveals, hidden-test checks, submitted attempts, completed problems, and review-quality records.
-- `src/lib/practice-event-log.server.ts` centralizes Supabase row mapping for practice analytics events.
-- `generatePractice` records a best-effort generation event after the problem row and hidden-test row are saved.
-- `submitPracticeAttempt` stores `speed_seconds` and `review_quality_score`, then records hidden-check, submission, completion, and review-quality events without storing hidden test content in event payloads.
-- The practice workspace logs visible-test run summaries and captures optional learner notes for complexity and edge cases before submit.
-- No new Supabase migration was created in Session 1. The existing `practice_events` table and `practice_attempts` columns already support this work.
+- Day 5 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
+- `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
+- `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
+- `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability.
+- `submitPracticeAttempt` counts failed attempts for the same practice problem, saves the attempt, records analytics events, then updates primary-topic progress with the derived mastery result.
+- No new Supabase migration was created in Session 2. The existing `progress` table supports the stored fields.
 - Branch `main` is ahead of `origin/main`; do not push without explicit user approval.
 
 ## Verification
 
-- Focused lint passed for the touched source and test files.
-- `npx vitest run tests\lib\practice-event-model.test.ts` passed with 8 tests.
-- `npm test` passed with 181 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Focused scoring test: `npx vitest run tests\lib\practice-mastery-scoring.test.ts` passed with 7 tests.
+- Related analytics tests: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts` passed with 20 tests.
+- Scoped lint passed for `practice-mastery-scoring.ts`, `practice-mastery-progress.server.ts`, `practice-attempt.functions.ts`, and `practice-mastery-scoring.test.ts`.
+- `npm test` passed with 188 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
-- `$env:CODEWISE_URL='http://127.0.0.1:5177'; npx playwright test tests/e2e/practice-workspace.spec.ts --project=chromium --workers=1` passed with 2 tests.
 
 ## Resume Steps
 
-1. Start Day 5 Session 2: build derived mastery scoring from correctness, attempts, hint usage, review quality, speed as secondary, and repeat performance.
-2. Keep scoring conservative for beginners and avoid making speed a primary penalty.
-3. Add focused unit tests for mastery deltas before wiring updates into topic progress.
-4. Run GitNexus impact before editing indexed symbols, then run `npx gitnexus detect-changes --repo . --scope staged` before committing.
+1. Start Day 5 Session 3: update mastery across the primary topic plus prerequisite topics.
+2. Reuse the derived scoring result from `src/lib/practice-mastery-scoring.ts` rather than adding a second scoring model.
+3. Extend progress writes carefully so prerequisite topic updates are smaller than the primary-topic update.
+4. Add focused tests for primary-topic updates, prerequisite updates, missing prerequisite rows, and repeated attempts.
+5. Run GitNexus impact before editing indexed symbols, then run `npx gitnexus detect-changes --repo . --scope staged` before committing.

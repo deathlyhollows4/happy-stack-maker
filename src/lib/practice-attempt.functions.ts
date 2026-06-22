@@ -9,6 +9,7 @@ import {
   buildConservativePracticeAttemptScore,
   summarizePracticeTestResults,
 } from "@/lib/practice-attempt-scoring";
+import { updatePracticeMasteryProgress } from "@/lib/practice-mastery-progress.server";
 import {
   buildPracticeExecutionFailure,
   normalizePracticeExecutionResult,
@@ -219,6 +220,19 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       hidden: hiddenSummary,
       hasRunnableResults: Boolean(execution.execution.testResults),
     });
+    const { count: previousFailedAttemptCount, error: previousFailedAttemptCountError } =
+      await supabase
+        .from("practice_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("practice_problem_id", data.practiceProblemId)
+        .eq("status", "failed");
+    if (previousFailedAttemptCountError) {
+      console.error(
+        "submitPracticeAttempt failed attempt count failed:",
+        previousFailedAttemptCountError,
+      );
+    }
 
     const completedAt = new Date();
     const now = completedAt.toISOString();
@@ -287,6 +301,34 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       logContext: "submitPracticeAttempt",
     });
 
+    const masteryProgress = await updatePracticeMasteryProgress({
+      supabase,
+      userId,
+      topicSlug: problem.topic_slug,
+      correctnessScore: score.correctnessScore,
+      status: score.status,
+      failedAttemptCount: (previousFailedAttemptCount ?? 0) + (score.status === "failed" ? 1 : 0),
+      hintCount: data.hintCount,
+      reviewQualityScore: reviewQuality.score,
+      speedSeconds,
+      masteryBand: problem.mastery_band,
+      now: completedAt,
+    });
+    if (!masteryProgress.ok) {
+      console.error("submitPracticeAttempt mastery update failed:", masteryProgress.error);
+    }
+    const masteryUpdate =
+      masteryProgress.ok && !masteryProgress.skipped
+        ? {
+            topicSlug: masteryProgress.topicSlug,
+            previousMastery: masteryProgress.result.signal.previousMastery,
+            nextMastery: masteryProgress.result.signal.nextMastery,
+            delta: masteryProgress.result.signal.delta,
+            signalScore: masteryProgress.result.signal.signalScore,
+            failedAttemptCount: masteryProgress.result.signal.failedAttemptCount,
+          }
+        : null;
+
     return {
       ok: true as const,
       attemptId: attempt.id,
@@ -297,5 +339,6 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       executionStatus: execution.execution.testSummary.status,
       reviewQualityScore: reviewQuality.score,
       speedSeconds,
+      masteryUpdate,
     };
   });
