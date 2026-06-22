@@ -53,6 +53,7 @@ import {
   buildPracticeProblemView,
   getPracticeProblemBody,
   getPracticeLanguageSignature,
+  type PracticeProblemListItem,
   type PracticeProblemView,
 } from "@/lib/practice-problem-view";
 import type { PracticeRecommendationView } from "@/lib/practice-recommendation-view";
@@ -111,6 +112,7 @@ interface PracticeProblem {
 
 interface PracticeData {
   problems: PracticeProblem[];
+  practiceHistory?: PracticeProblemListItem[];
   recommendation?: PracticeRecommendationView | null;
 }
 
@@ -142,6 +144,14 @@ interface PracticeAttemptResult {
 
 function getDisplayTopic(problem: PracticeProblem) {
   return problem.topic_slug ? topicDisplayName(normalizeTopicSlug(problem.topic_slug)) : null;
+}
+
+function formatAttemptSpeed(seconds: number | null) {
+  if (seconds === null) return null;
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return remainingSeconds ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
 }
 
 function Pill({
@@ -996,6 +1006,9 @@ function PracticeWorkspace({
           <aside className="space-y-2 w-full overflow-hidden min-w-0">
             {data.problems.map((p) => {
               const view = buildPracticeProblemView(p);
+              const historyItem = data.practiceHistory?.find((item) => item.id === p.id) ?? null;
+              const latestAttempt = historyItem?.latestAttempt ?? null;
+              const attemptSpeed = formatAttemptSpeed(latestAttempt?.speedSeconds ?? null);
               return (
                 <button
                   key={p.id}
@@ -1008,10 +1021,44 @@ function PracticeWorkspace({
                 >
                   <div className="text-sm font-medium truncate min-w-0 max-w-full">{p.title}</div>
                   <div className="mt-2 flex flex-wrap gap-1">
-                    {view.masteryBand && <Pill tone="success">{view.masteryBand}</Pill>}
-                    {view.curriculumNodeId && <Pill tone="accent">{view.curriculumNodeId}</Pill>}
-                    {!view.masteryBand && p.topic_slug && <Pill>{p.topic_slug}</Pill>}
+                    {historyItem?.masteryBand ? (
+                      <Pill tone="success">{historyItem.masteryBand}</Pill>
+                    ) : (
+                      view.masteryBand && <Pill tone="success">{view.masteryBand}</Pill>
+                    )}
+                    {historyItem?.curriculumNodeId ? (
+                      <Pill tone="accent">{historyItem.curriculumNodeId}</Pill>
+                    ) : (
+                      view.curriculumNodeId && <Pill tone="accent">{view.curriculumNodeId}</Pill>
+                    )}
+                    {!historyItem?.masteryBand && !view.masteryBand && p.topic_slug && (
+                      <Pill>{p.topic_slug}</Pill>
+                    )}
                   </div>
+                  {historyItem?.objective && (
+                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                      {historyItem.objective}
+                    </p>
+                  )}
+                  {historyItem && (
+                    <div className="mt-2 space-y-1 text-[11px] leading-4 text-muted-foreground">
+                      <p>
+                        {historyItem.visibleTestCount} visible{" "}
+                        {historyItem.visibleTestCount === 1 ? "test" : "tests"},{" "}
+                        {historyItem.hintCount} {historyItem.hintCount === 1 ? "hint" : "hints"}
+                      </p>
+                      {latestAttempt ? (
+                        <p>
+                          Last: {latestAttempt.status}, {latestAttempt.visible.passed}/
+                          {latestAttempt.visible.total} visible, {latestAttempt.correctnessPercent}%
+                          score
+                          {attemptSpeed ? `, ${attemptSpeed}` : ""}
+                        </p>
+                      ) : (
+                        <p>No attempts yet.</p>
+                      )}
+                    </div>
+                  )}
                 </button>
               );
             })}

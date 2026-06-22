@@ -39,8 +39,12 @@ const planningContextSchema = z.object({
 });
 
 export interface PracticeProblemViewInput {
-  prompt?: string | null;
+  id?: string | null;
+  title?: string | null;
+  language?: string | null;
   topic_slug?: string | null;
+  created_at?: string | null;
+  prompt?: string | null;
   planning_context?: unknown;
   contract_version?: string | null;
   curriculum_node_id?: string | null;
@@ -100,6 +104,64 @@ export interface PracticeVisibleTestRunInput {
   visibleTests: PracticeProblemView["visibleTests"];
 }
 
+export interface PracticeAttemptSummaryInput {
+  id?: string | null;
+  practice_problem_id?: string | null;
+  language?: string | null;
+  status?: string | null;
+  visible_tests_passed?: number | null;
+  visible_tests_total?: number | null;
+  hidden_tests_passed?: number | null;
+  hidden_tests_total?: number | null;
+  correctness_score?: number | null;
+  hint_count?: number | null;
+  review_quality_score?: number | null;
+  speed_seconds?: number | null;
+  completed_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface PracticeAttemptSummary {
+  id: string;
+  practiceProblemId: string;
+  language: string | null;
+  status: "completed" | "failed" | "unknown";
+  visible: {
+    passed: number;
+    total: number;
+    failed: number;
+  };
+  hiddenChecksRun: boolean;
+  correctnessPercent: number;
+  hintCount: number;
+  reviewQualityScore: number | null;
+  speedSeconds: number | null;
+  completedAt: string | null;
+}
+
+export interface PracticeProblemListItem {
+  id: string;
+  title: string;
+  topicSlug: string | null;
+  topicLabel: string | null;
+  language: string | null;
+  createdAt: string | null;
+  isStructured: boolean;
+  curriculumNodeId: string | null;
+  masteryBand: PracticeProblemMasteryBand | null;
+  masteryBandLabel: string | null;
+  objective: string | null;
+  topicTags: PracticeProblemTag[];
+  prerequisiteTags: PracticeProblemTag[];
+  visibleTestCount: number;
+  hiddenThemeCount: number;
+  hintCount: number;
+  attemptCount: number;
+  completedAttemptCount: number;
+  attempts: PracticeAttemptSummary[];
+  latestAttempt: PracticeAttemptSummary | null;
+}
+
 function parseArray<T>(schema: z.ZodType<T[]>, input: unknown): T[] {
   const result = schema.safeParse(input);
   return result.success ? result.data : [];
@@ -113,6 +175,29 @@ function parseText(input: string | null | undefined): string | null {
 function parseMasteryBand(input: string | null | undefined): PracticeProblemMasteryBand | null {
   const result = PracticeProblemMasteryBandSchema.safeParse(input);
   return result.success ? result.data : null;
+}
+
+function nonNegativeInteger(input: number | null | undefined): number {
+  if (!Number.isFinite(input)) return 0;
+  return Math.max(0, Math.floor(input));
+}
+
+function clampedPercent(input: number | null | undefined): number {
+  if (!Number.isFinite(input)) return 0;
+  return Math.round(Math.min(1, Math.max(0, input ?? 0)) * 100);
+}
+
+function attemptTime(input: PracticeAttemptSummaryInput) {
+  return parseText(input.completed_at) ?? parseText(input.created_at);
+}
+
+function timestampMs(input: string | null) {
+  const ms = Date.parse(input ?? "");
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function compareAttemptSummary(a: PracticeAttemptSummary, b: PracticeAttemptSummary) {
+  return timestampMs(b.completedAt) - timestampMs(a.completedAt);
 }
 
 function buildBridgePreview(input: PracticeProblemViewInput, currentNodeId: string | null) {
@@ -228,4 +313,100 @@ export function buildPracticeVisibleTestRunInput(
     functionName,
     visibleTests: view.visibleTests,
   };
+}
+
+export function buildPracticeAttemptSummary(
+  input: PracticeAttemptSummaryInput,
+): PracticeAttemptSummary | null {
+  const id = parseText(input.id);
+  const practiceProblemId = parseText(input.practice_problem_id);
+  if (!id || !practiceProblemId) return null;
+
+  const visibleTotal = nonNegativeInteger(input.visible_tests_total);
+  const visiblePassed = Math.min(nonNegativeInteger(input.visible_tests_passed), visibleTotal);
+  const hiddenTotal = nonNegativeInteger(input.hidden_tests_total);
+  const status =
+    input.status === "completed" || input.status === "failed" ? input.status : "unknown";
+
+  return {
+    id,
+    practiceProblemId,
+    language: parseText(input.language),
+    status,
+    visible: {
+      passed: visiblePassed,
+      total: visibleTotal,
+      failed: Math.max(0, visibleTotal - visiblePassed),
+    },
+    hiddenChecksRun: hiddenTotal > 0 || nonNegativeInteger(input.hidden_tests_passed) > 0,
+    correctnessPercent: clampedPercent(input.correctness_score),
+    hintCount: nonNegativeInteger(input.hint_count),
+    reviewQualityScore: Number.isFinite(input.review_quality_score)
+      ? Math.min(1, Math.max(0, input.review_quality_score ?? 0))
+      : null,
+    speedSeconds: Number.isFinite(input.speed_seconds)
+      ? nonNegativeInteger(input.speed_seconds)
+      : null,
+    completedAt: attemptTime(input),
+  };
+}
+
+export function buildPracticeProblemListItem(
+  problem: PracticeProblemViewInput,
+  attempts: PracticeAttemptSummaryInput[] = [],
+): PracticeProblemListItem | null {
+  const id = parseText(problem.id);
+  if (!id) return null;
+
+  const view = buildPracticeProblemView(problem);
+  const attemptSummaries = attempts
+    .map(buildPracticeAttemptSummary)
+    .filter((summary): summary is PracticeAttemptSummary => Boolean(summary))
+    .filter((summary) => summary.practiceProblemId === id)
+    .sort(compareAttemptSummary);
+  const topicSlug = normalizeTopicSlug(problem.topic_slug);
+
+  return {
+    id,
+    title: parseText(problem.title) ?? "Untitled practice problem",
+    topicSlug,
+    topicLabel: topicSlug ? topicDisplayName(topicSlug) : null,
+    language: parseText(problem.language),
+    createdAt: parseText(problem.created_at),
+    isStructured: view.isStructured,
+    curriculumNodeId: view.curriculumNodeId,
+    masteryBand: view.masteryBand,
+    masteryBandLabel: view.masteryBandLabel,
+    objective: view.objective,
+    topicTags: view.topicTags,
+    prerequisiteTags: view.prerequisiteTags,
+    visibleTestCount: view.visibleTests.length,
+    hiddenThemeCount: view.hiddenTestThemes.length,
+    hintCount: view.hintLadder.length,
+    attemptCount: attemptSummaries.length,
+    completedAttemptCount: attemptSummaries.filter((attempt) => attempt.status === "completed")
+      .length,
+    attempts: attemptSummaries,
+    latestAttempt: attemptSummaries[0] ?? null,
+  };
+}
+
+export function buildPracticeHistoryView(input: {
+  problems: PracticeProblemViewInput[];
+  attempts?: PracticeAttemptSummaryInput[];
+}): PracticeProblemListItem[] {
+  const attemptsByProblemId = new Map<string, PracticeAttemptSummaryInput[]>();
+  for (const attempt of input.attempts ?? []) {
+    const practiceProblemId = parseText(attempt.practice_problem_id);
+    if (!practiceProblemId) continue;
+    const current = attemptsByProblemId.get(practiceProblemId) ?? [];
+    current.push(attempt);
+    attemptsByProblemId.set(practiceProblemId, current);
+  }
+
+  return input.problems
+    .map((problem) =>
+      buildPracticeProblemListItem(problem, attemptsByProblemId.get(problem.id ?? "") ?? []),
+    )
+    .filter((item): item is PracticeProblemListItem => Boolean(item));
 }

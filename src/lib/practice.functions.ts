@@ -20,6 +20,7 @@ import {
 import { buildPracticeProblemGeneratedEvent } from "@/lib/practice-event-model";
 import { insertPracticeEvent } from "@/lib/practice-event-log.server";
 import { buildPracticeRecommendationView } from "@/lib/practice-recommendation-view";
+import { buildPracticeHistoryView } from "@/lib/practice-problem-view";
 
 function practiceSystemPrompt() {
   return [
@@ -222,8 +223,44 @@ export const listPractice = createServerFn({ method: "GET" })
         .from("progress")
         .select("topic_slug, mastery, attempts, next_review_date, last_reviewed, retrievability"),
     ]);
+    const problems = data ?? [];
+    const problemIds = problems.map((problem) => problem.id);
+    const { data: attemptRows, error: attemptError } = problemIds.length
+      ? await context.supabase
+          .from("practice_attempts")
+          .select(
+            [
+              "id",
+              "practice_problem_id",
+              "language",
+              "status",
+              "visible_tests_passed",
+              "visible_tests_total",
+              "hidden_tests_passed",
+              "hidden_tests_total",
+              "correctness_score",
+              "hint_count",
+              "review_quality_score",
+              "speed_seconds",
+              "completed_at",
+              "created_at",
+            ].join(", "),
+          )
+          .eq("user_id", context.userId)
+          .in("practice_problem_id", problemIds)
+          .order("created_at", { ascending: false })
+          .limit(100)
+      : { data: [], error: null };
+    if (attemptError) {
+      console.error("listPractice attempt summary lookup failed:", attemptError);
+    }
+
     return {
-      problems: data ?? [],
+      problems,
+      practiceHistory: buildPracticeHistoryView({
+        problems,
+        attempts: attemptError ? [] : (attemptRows ?? []),
+      }),
       recommendation: buildPracticeRecommendationView({
         progressRows: progressRows ?? [],
         topicSlug: input?.topicSlug ?? null,

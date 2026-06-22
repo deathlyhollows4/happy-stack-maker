@@ -461,12 +461,27 @@ Session 6 evidence:
 
 ## Day 6: Integration And Reliability
 
-1. Update `listPractice` and practice history to include structured fields and attempt summaries.
+1. ✅ Update `listPractice` and practice history to include structured fields and attempt summaries.
 2. Update review submission flow so practice attempts can feed review quality and topic mastery.
 3. Add admin/export compatibility for new practice fields and event logs.
 4. Add migration backfill behavior for old markdown-only `practice_problems`.
 5. Run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
 6. Run `npm run build`, touched-file Prettier, and GitNexus detect-changes.
+
+Session 1 evidence:
+
+- Inspected `src/lib/practice.functions.ts`, `src/lib/practice-problem-view.ts`, `src/routes/_authenticated/practice.tsx`, `src/lib/practice-attempt.functions.ts`, and the Supabase attempt table types before changing behavior.
+- Added practice history view helpers that map structured problem fields into list metadata: mastery band, curriculum node, objective, tags, visible-test count, hidden-theme count, hint count, normalized attempt summaries, latest attempt, and completed attempt count.
+- Updated `listPractice` to keep returning raw `problems` while also returning `practiceHistory` with recent attempt summaries for the listed problems.
+- Updated the authenticated practice sidebar to show structured history metadata, latest visible-test progress, correctness score, hint count, speed, and attempt status without exposing hidden test cases or hidden pass/fail details.
+- Added focused tests in `tests/lib/practice-problem-view.test.ts` for structured problem listing, attempt summary mapping, hidden-boundary preservation, latest-attempt selection, and completed-attempt counts.
+- GitNexus impact for `listPractice` reported LOW risk with 0 direct callers and 0 affected processes. GitNexus impact for `PracticeWorkspace` reported LOW risk with 1 direct caller and 1 affected process: `Practice`.
+- Focused verification: `npx vitest run tests\lib\practice-problem-view.test.ts` passed with 13 tests.
+- Scoped lint verification: `npx eslint src\lib\practice-problem-view.ts src\lib\practice.functions.ts src\routes\_authenticated\practice.tsx tests\lib\practice-problem-view.test.ts` passed.
+- Review pass found one scope gap before staging: history rows carried only the latest attempt. Fixed by returning the normalized attempt summaries array while keeping hidden pass/fail details out of the learner-facing shape.
+- Full verification: `npm test` passed with 204 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported HIGH risk across 6 files and 19 symbols, affecting 12 existing practice execution flows. The affected scope is expected because this session intentionally updates `listPractice`, shared practice-problem view helpers, and the authenticated practice workspace history surface.
 
 ## Day 7: Product Verification And Release Checklist
 

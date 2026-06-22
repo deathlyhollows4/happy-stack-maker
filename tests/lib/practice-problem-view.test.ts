@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPracticeAttemptSummary,
+  buildPracticeHistoryView,
+  buildPracticeProblemListItem,
   buildPracticeVisibleTestRunInput,
   buildPracticeProblemView,
   getPracticeProblemBody,
@@ -232,5 +235,134 @@ describe("practice problem view", () => {
     expect(view.examples).toEqual([]);
     expect(view.visibleTests).toEqual([]);
     expect(view.isStructured).toBe(true);
+  });
+
+  it("maps structured problem fields into a practice history list item", () => {
+    const item = buildPracticeProblemListItem({
+      ...structuredProblemRow(),
+      id: "11111111-1111-4111-8111-111111111111",
+      title: "Count Positive Numbers",
+      language: "python",
+      topic_slug: "arrays",
+      created_at: "2026-06-23T09:00:00.000Z",
+    });
+
+    expect(item).toMatchObject({
+      id: "11111111-1111-4111-8111-111111111111",
+      title: "Count Positive Numbers",
+      topicSlug: "arrays",
+      topicLabel: "Arrays",
+      language: "python",
+      createdAt: "2026-06-23T09:00:00.000Z",
+      isStructured: true,
+      curriculumNodeId: "foundation-loops",
+      masteryBand: "0-20",
+      masteryBandLabel: "Concept drill",
+      objective: "Count values greater than zero using one loop.",
+      visibleTestCount: 1,
+      hiddenThemeCount: 1,
+      hintCount: 2,
+      attemptCount: 0,
+      completedAttemptCount: 0,
+      attempts: [],
+      latestAttempt: null,
+    });
+    expect(item?.topicTags).toEqual([{ slug: "loops", label: "Loops" }]);
+    expect(item?.prerequisiteTags).toEqual([{ slug: "conditions", label: "Conditionals" }]);
+  });
+
+  it("normalizes attempt summaries without exposing hidden test pass details", () => {
+    const summary = buildPracticeAttemptSummary({
+      id: "22222222-2222-4222-8222-222222222222",
+      practice_problem_id: "11111111-1111-4111-8111-111111111111",
+      language: "python",
+      status: "completed",
+      visible_tests_passed: 2,
+      visible_tests_total: 3,
+      hidden_tests_passed: 4,
+      hidden_tests_total: 5,
+      correctness_score: 0.82,
+      hint_count: 1,
+      review_quality_score: 0.75,
+      speed_seconds: 370,
+      completed_at: "2026-06-23T09:12:00.000Z",
+      created_at: "2026-06-23T09:11:00.000Z",
+    });
+
+    expect(summary).toEqual({
+      id: "22222222-2222-4222-8222-222222222222",
+      practiceProblemId: "11111111-1111-4111-8111-111111111111",
+      language: "python",
+      status: "completed",
+      visible: {
+        passed: 2,
+        total: 3,
+        failed: 1,
+      },
+      hiddenChecksRun: true,
+      correctnessPercent: 82,
+      hintCount: 1,
+      reviewQualityScore: 0.75,
+      speedSeconds: 370,
+      completedAt: "2026-06-23T09:12:00.000Z",
+    });
+    expect(summary).not.toHaveProperty("hiddenTestsPassed");
+    expect(summary).not.toHaveProperty("hiddenTestsTotal");
+    expect(summary).not.toHaveProperty("hidden");
+  });
+
+  it("maps practice history with latest attempt and completed attempt count", () => {
+    const history = buildPracticeHistoryView({
+      problems: [
+        {
+          ...structuredProblemRow(),
+          id: "11111111-1111-4111-8111-111111111111",
+          title: "Count Positive Numbers",
+          language: "python",
+          topic_slug: "arrays",
+          created_at: "2026-06-23T09:00:00.000Z",
+        },
+      ],
+      attempts: [
+        {
+          id: "22222222-2222-4222-8222-222222222222",
+          practice_problem_id: "11111111-1111-4111-8111-111111111111",
+          status: "failed",
+          visible_tests_passed: 1,
+          visible_tests_total: 2,
+          correctness_score: 0.4,
+          hint_count: 2,
+          created_at: "2026-06-23T09:05:00.000Z",
+        },
+        {
+          id: "33333333-3333-4333-8333-333333333333",
+          practice_problem_id: "11111111-1111-4111-8111-111111111111",
+          status: "completed",
+          visible_tests_passed: 2,
+          visible_tests_total: 2,
+          correctness_score: 1,
+          hint_count: 0,
+          completed_at: "2026-06-23T09:15:00.000Z",
+        },
+      ],
+    });
+
+    expect(history).toHaveLength(1);
+    expect(history[0]?.attemptCount).toBe(2);
+    expect(history[0]?.completedAttemptCount).toBe(1);
+    expect(history[0]?.attempts.map((attempt) => attempt.id)).toEqual([
+      "33333333-3333-4333-8333-333333333333",
+      "22222222-2222-4222-8222-222222222222",
+    ]);
+    expect(history[0]?.latestAttempt).toMatchObject({
+      id: "33333333-3333-4333-8333-333333333333",
+      status: "completed",
+      visible: {
+        passed: 2,
+        total: 2,
+        failed: 0,
+      },
+      correctnessPercent: 100,
+    });
   });
 });
