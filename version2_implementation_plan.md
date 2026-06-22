@@ -362,7 +362,7 @@ Session 6 evidence:
 2. ✅ Build derived mastery scoring from correctness, attempts, hint usage, review quality, speed as secondary, and repeat performance.
 3. ✅ Update mastery across the primary topic plus prerequisite topics.
 4. ✅ Add conservative hidden-test contribution so hidden tests do not become the sole pass/fail gate.
-5. Update dashboard and practice surfaces to show mastery band and next recommended curriculum node.
+5. ✅ Update dashboard and practice surfaces to show mastery band and next recommended curriculum node.
 6. Add tests for mastery deltas, prerequisite updates, repeated attempts, and spaced review confirmation.
 
 Session 1 evidence:
@@ -426,6 +426,25 @@ Session 4 evidence:
 - Full verification: `npm test` passed with 196 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes with `--scope staged` reported LOW risk across 4 files and 9 symbols, with 0 affected processes.
+
+Session 5 evidence:
+
+- Added `src/lib/practice-recommendation-view.ts` as a pure view-model boundary for current mastery band, next recommended curriculum node, planner source, and manual-topic bridge preview.
+- Extended `getDashboard` to return `practiceRecommendation` from the existing `progress` read path.
+- Extended `listPractice` to accept an optional selected topic and return `recommendation` from the same planner-backed progress rows used by generation.
+- Updated the authenticated dashboard so the next best action and topic mastery list show mastery band and the next curriculum node.
+- Updated the practice topic, language, and solve surfaces with a compact recommendation panel that shows current mastery and next node without exposing hidden-test detail.
+- Added `tests/lib/practice-recommendation-view.test.ts` covering true beginner start, weakest-topic auto selection, due-review priority, and manual-topic bridge preview.
+- GitNexus impact for `getDashboard`, `listPractice`, `Dashboard`, and `Practice`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `NextBestAction`: LOW risk, 1 direct caller, 1 affected process: `Dashboard`.
+- GitNexus impact for `PracticeWorkspace`: LOW risk, 1 direct caller, 1 affected process: `Practice`.
+- GitNexus impact for `exportUserData`: LOW risk, 0 direct callers, 0 affected processes. This session only tightened a local export row type after scoped lint surfaced an existing `any`.
+- Focused verification: `npx vitest run tests\lib\practice-recommendation-view.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-problem-view.test.ts` passed with 21 tests.
+- Scoped lint verification: `npx eslint src\lib\practice-recommendation-view.ts src\lib\dashboard.functions.ts src\lib\practice.functions.ts src\routes\_authenticated\dashboard.tsx src\routes\_authenticated\practice.tsx tests\lib\practice-recommendation-view.test.ts` passed.
+- Content-style scan for touched source found no banned phrases or em dashes.
+- Full verification: `npm test` passed with 200 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported CRITICAL risk across 8 files and 28 symbols, affecting 18 existing dashboard and practice execution flows. The affected scope is expected because this session intentionally updates authenticated dashboard and practice recommendation surfaces.
 
 ## Day 6: Integration And Reliability
 

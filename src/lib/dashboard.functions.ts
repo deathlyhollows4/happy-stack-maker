@@ -2,14 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import {
-  getUserPlan,
-  getPlanQuotas,
-  readUsage,
-  monthKey,
-  dayKey,
-} from "@/lib/entitlements.server";
+import { getUserPlan, getPlanQuotas, readUsage, monthKey, dayKey } from "@/lib/entitlements.server";
 import { envInput } from "./codewise.utils";
+import { buildPracticeRecommendationView } from "@/lib/practice-recommendation-view";
 
 export const getDueReviews = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -36,7 +31,9 @@ export const getDashboard = createServerFn({ method: "GET" })
         .limit(10),
       supabase
         .from("progress")
-        .select("topic_slug, mastery, attempts, last_reviewed, retrievability, next_review_date, difficulty, stability")
+        .select(
+          "topic_slug, mastery, attempts, last_reviewed, retrievability, next_review_date, difficulty, stability",
+        )
         .eq("user_id", userId),
       supabase.from("topics").select("slug, name, category"),
     ]);
@@ -44,6 +41,9 @@ export const getDashboard = createServerFn({ method: "GET" })
       submissions: subs ?? [],
       progress: progress ?? [],
       topics: topics ?? [],
+      practiceRecommendation: buildPracticeRecommendationView({
+        progressRows: progress ?? [],
+      }),
     };
   });
 
@@ -54,7 +54,9 @@ export const getTopicBySlug = createServerFn({ method: "GET" })
     const [{ data: topic }, { data: related }] = await Promise.all([
       supabase
         .from("topics")
-        .select("slug, name, category, description, overview, operations, common_patterns, when_to_use, when_to_avoid, maang_frequency, prerequisites")
+        .select(
+          "slug, name, category, description, overview, operations, common_patterns, when_to_use, when_to_avoid, maang_frequency, prerequisites",
+        )
         .eq("slug", data.slug)
         .maybeSingle(),
       supabase.from("topics").select("slug, name, category, description"),
@@ -115,7 +117,16 @@ export const exportUserData = createServerFn({ method: "GET" })
     const submissions = submissionsRes.data ?? [];
     const submissionIds = submissions.map((s) => s.id);
 
-    let issues: any[] = [];
+    let issues: Array<{
+      id: string;
+      submission_id: string | null;
+      line: number | null;
+      severity: string | null;
+      concept_slug: string | null;
+      title: string | null;
+      explanation: string | null;
+      fix_hint: string | null;
+    }> = [];
     if (submissionIds.length > 0) {
       const { data: issuesData } = await supabase
         .from("review_issues")

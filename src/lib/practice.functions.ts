@@ -19,6 +19,7 @@ import {
 } from "@/lib/practice-structured-problem.server";
 import { buildPracticeProblemGeneratedEvent } from "@/lib/practice-event-model";
 import { insertPracticeEvent } from "@/lib/practice-event-log.server";
+import { buildPracticeRecommendationView } from "@/lib/practice-recommendation-view";
 
 function practiceSystemPrompt() {
   return [
@@ -202,11 +203,30 @@ export const generatePractice = createServerFn({ method: "POST" })
 
 export const listPractice = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data } = await context.supabase
-      .from("practice_problems")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20);
-    return { problems: data ?? [] };
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        topicSlug: z.string().nullable().optional(),
+      })
+      .optional()
+      .parse(input),
+  )
+  .handler(async ({ data: input, context }) => {
+    const [{ data }, { data: progressRows }] = await Promise.all([
+      context.supabase
+        .from("practice_problems")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      context.supabase
+        .from("progress")
+        .select("topic_slug, mastery, attempts, next_review_date, last_reviewed, retrievability"),
+    ]);
+    return {
+      problems: data ?? [],
+      recommendation: buildPracticeRecommendationView({
+        progressRows: progressRows ?? [],
+        topicSlug: input?.topicSlug ?? null,
+      }),
+    };
   });

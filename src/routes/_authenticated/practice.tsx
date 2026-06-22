@@ -55,6 +55,7 @@ import {
   getPracticeLanguageSignature,
   type PracticeProblemView,
 } from "@/lib/practice-problem-view";
+import type { PracticeRecommendationView } from "@/lib/practice-recommendation-view";
 import {
   buildPracticeRunOutputState,
   formatPracticeTestValue,
@@ -110,6 +111,7 @@ interface PracticeProblem {
 
 interface PracticeData {
   problems: PracticeProblem[];
+  recommendation?: PracticeRecommendationView | null;
 }
 
 interface GeneratePracticeResult {
@@ -607,6 +609,68 @@ function ReviewQualitySection({
   );
 }
 
+function RecommendationPanel({
+  recommendation,
+  className = "",
+}: {
+  recommendation: PracticeRecommendationView | null | undefined;
+  className?: string;
+}) {
+  if (!recommendation) return null;
+
+  return (
+    <section className={`rounded-lg border border-border bg-card p-4 ${className}`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-accent">
+            Recommended path
+          </p>
+          <h3 className="mt-1 text-base font-semibold leading-snug">
+            {recommendation.nextNode.title}
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            {recommendation.nextNode.objective}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-1.5">
+          <Pill tone="success">
+            {recommendation.nextNode.masteryBandId}, {recommendation.nextNode.masteryBandLabel}
+          </Pill>
+          <Pill tone="accent">{recommendation.sourceLabel}</Pill>
+        </div>
+      </div>
+
+      <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+        <div>
+          <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Current mastery
+          </dt>
+          <dd className="mt-1">
+            {recommendation.currentMastery
+              ? `${recommendation.currentMastery.topicLabel}: ${recommendation.currentMastery.masteryPercent}% (${recommendation.currentMastery.bandLabel})`
+              : "No mastery record yet."}
+          </dd>
+        </div>
+        <div>
+          <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Next node
+          </dt>
+          <dd className="mt-1">
+            {recommendation.nextNode.curriculumNodeId} - {recommendation.nextNode.topicLabel}
+          </dd>
+        </div>
+      </dl>
+
+      {recommendation.bridgePreview && (
+        <p className="mt-3 rounded-md border border-accent/30 bg-accent/10 p-2 text-xs leading-5 text-muted-foreground">
+          Bridge preview: finish {recommendation.nextNode.title} before{" "}
+          {recommendation.bridgePreview.title}.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function ChecklistSection({
   icon,
   eyebrow,
@@ -642,22 +706,23 @@ function Practice() {
   const list = useServerFn(listPractice);
   const { track } = useTelemetry();
   const search = Route.useSearch();
-  const { data, refetch, isLoading } = useQuery({
-    queryKey: ["practice"],
-    queryFn: () => list(),
-    staleTime: 2 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
   const [busy, setBusy] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("python");
   const [step, setStep] = useState<PracticeStep>("topic");
   const [showAllOptions, setShowAllOptions] = useState(false);
   const [topicSlug, setTopicSlug] = useState<TopicSlug | null>(normalizeTopicSlug(search.topic));
+  const { data, refetch, isLoading } = useQuery({
+    queryKey: ["practice", topicSlug],
+    queryFn: () => list({ data: { topicSlug } }),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
   const problems = (data?.problems ?? []) as PracticeProblem[];
   const active = problems.find((p) => p.id === activeId) ?? null;
   const selectedTopicName = topicSlug ? topicDisplayName(topicSlug) : "Weakest Topic (auto)";
+  const recommendation = data?.recommendation ?? null;
 
   useEffect(() => {
     if (!activeId && data?.problems?.[0]) setActiveId(data.problems[0].id);
@@ -714,9 +779,11 @@ function Practice() {
           </p>
           <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Practice</h1>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
-            {topicSlug
-              ? `Current target: ${selectedTopicName}.`
-              : "Auto mode starts from your weakest open topic."}
+            {recommendation
+              ? `Next: ${recommendation.nextNode.title}, ${recommendation.nextNode.masteryBandLabel}.`
+              : topicSlug
+                ? `Current target: ${selectedTopicName}.`
+                : "Auto mode starts from your weakest open topic."}
           </p>
         </div>
         {showAllOptions && (
@@ -743,11 +810,14 @@ function Practice() {
           </p>
           <div className="rounded-md border border-accent/40 bg-accent/10 p-4 mb-4">
             <p className="text-[10px] font-mono uppercase tracking-widest text-accent">Suggested</p>
-            <p className="font-medium mt-1">Weakest topic</p>
+            <p className="font-medium mt-1">{recommendation?.nextNode.title ?? "Weakest topic"}</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Leave the picker on auto to let CodeWise choose your lowest mastery topic.
+              {recommendation
+                ? `${recommendation.nextNode.masteryBandLabel}. ${recommendation.summary}`
+                : "Leave the picker on auto to let CodeWise choose your lowest mastery topic."}
             </p>
           </div>
+          <RecommendationPanel recommendation={recommendation} className="mb-4" />
           <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
             Topic
           </label>
@@ -778,6 +848,7 @@ function Practice() {
           <p className="text-sm text-muted-foreground mb-6">
             Topic: <span className="text-foreground">{selectedTopicName}</span>
           </p>
+          <RecommendationPanel recommendation={recommendation} className="mb-4" />
           <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
             Language
           </label>
@@ -811,6 +882,7 @@ function Practice() {
           onSelect={setActiveId}
           onNewProblem={resetFlow}
           showNewProblem={!showAllOptions}
+          recommendation={recommendation}
         />
       )}
     </div>
@@ -878,6 +950,7 @@ function PracticeWorkspace({
   onSelect,
   onNewProblem,
   showNewProblem,
+  recommendation,
 }: {
   data: PracticeData | undefined;
   active: PracticeProblem | null;
@@ -886,6 +959,7 @@ function PracticeWorkspace({
   onSelect: (id: string) => void;
   onNewProblem: () => void;
   showNewProblem: boolean;
+  recommendation: PracticeRecommendationView | null | undefined;
 }) {
   return (
     <div className="space-y-4">
@@ -914,6 +988,8 @@ function PracticeWorkspace({
           No problems yet. Click "Generate a problem" to get one.
         </p>
       )}
+
+      {data && data.problems.length > 0 && <RecommendationPanel recommendation={recommendation} />}
 
       {data && data.problems.length > 0 && (
         <div className="grid lg:grid-cols-[260px_1fr] gap-4 md:gap-6 min-w-0">

@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingModal } from "@/components/onboarding-modal";
 import { ReviewQueue } from "@/components/review-queue";
 import { ArrowUpRight, Code2, ChevronDown } from "lucide-react";
+import { getMasteryBandForScore } from "@/lib/dsa-curriculum";
+import type { PracticeRecommendationView } from "@/lib/practice-recommendation-view";
 
 const KnowledgeGraph = lazy(() =>
   import("@/components/knowledge-graph").then((m) => ({ default: m.KnowledgeGraph })),
@@ -78,7 +80,12 @@ function Dashboard() {
 
       {data && (
         <div className="grid lg:grid-cols-3 gap-6">
-          <NextBestAction weakestTopic={weakestTopic} latestReview={latestReview} reviewCount={reviews.length} />
+          <NextBestAction
+            weakestTopic={weakestTopic}
+            latestReview={latestReview}
+            reviewCount={reviews.length}
+            practiceRecommendation={data.practiceRecommendation}
+          />
 
           <Stat label="Total reviews" value={reviews.length} />
           <Stat label="Topics touched" value={data.progress.length} />
@@ -105,7 +112,9 @@ function Dashboard() {
               </div>
               <span className="inline-flex items-center gap-2 text-sm text-accent">
                 {showGraph ? "Hide knowledge graph" : "Show knowledge graph"}
-                <ChevronDown className={`size-4 transition-transform ${showGraph ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`size-4 transition-transform ${showGraph ? "rotate-180" : ""}`}
+                />
               </span>
             </button>
             {showGraph && (
@@ -136,8 +145,9 @@ function Dashboard() {
                   <li key={p.topic_slug}>
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="font-medium">{p.topic?.name ?? p.topic_slug}</span>
-                      <span className="font-mono text-xs text-muted-foreground">
-                        {Math.round(p.mastery * 100)}% - {p.attempts} attempts
+                      <span className="text-right font-mono text-xs text-muted-foreground">
+                        {Math.round(p.mastery * 100)}% - {getMasteryBandForScore(p.mastery).label} -{" "}
+                        {p.attempts} attempts
                       </span>
                     </div>
                     <div className="h-2 rounded-full bg-secondary overflow-hidden">
@@ -226,16 +236,55 @@ function NextBestAction({
   weakestTopic,
   latestReview,
   reviewCount,
+  practiceRecommendation,
 }: {
-  weakestTopic: ({ topic_slug: string; mastery: number; topic?: { name: string } | null } & Record<string, any>) | null;
+  weakestTopic: { topic_slug: string; mastery: number; topic?: { name: string } | null } | null;
   latestReview: { id: string } | null;
   reviewCount: number;
+  practiceRecommendation?: PracticeRecommendationView | null;
 }) {
+  if (practiceRecommendation) {
+    const search =
+      practiceRecommendation.nextNode.topicSlug === null
+        ? {}
+        : { topic: practiceRecommendation.nextNode.topicSlug };
+    return (
+      <section className="lg:col-span-3 rounded-xl border border-accent/50 bg-accent/10 p-6 flex items-center justify-between gap-4">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">
+            Next best action
+          </p>
+          <h2 className="font-display text-3xl mt-2">
+            Practice {practiceRecommendation.nextNode.title}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            {practiceRecommendation.currentMastery
+              ? `${practiceRecommendation.currentMastery.topicLabel}: ${practiceRecommendation.currentMastery.masteryPercent}% mastery, ${practiceRecommendation.currentMastery.bandLabel}.`
+              : `Start at ${practiceRecommendation.nextNode.masteryBandLabel} on the CodeWise DSA Ladder.`}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Next node: {practiceRecommendation.nextNode.title}. Source:{" "}
+            {practiceRecommendation.sourceLabel}.
+          </p>
+        </div>
+        <Link
+          to="/practice"
+          search={search}
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition"
+        >
+          Practice now <ArrowUpRight className="size-4" />
+        </Link>
+      </section>
+    );
+  }
+
   if (reviewCount === 0) {
     return (
       <section className="lg:col-span-3 rounded-xl border border-accent/50 bg-accent/10 p-6 flex items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">Next best action</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">
+            Next best action
+          </p>
           <h2 className="font-display text-3xl mt-2">Submit your first code review</h2>
           <p className="text-sm text-muted-foreground mt-2">
             Get feedback first, then CodeWise can recommend focused practice.
@@ -256,7 +305,9 @@ function NextBestAction({
     return (
       <section className="lg:col-span-3 rounded-xl border border-accent/50 bg-accent/10 p-6 flex items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">Next best action</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">
+            Next best action
+          </p>
           <h2 className="font-display text-3xl mt-2">Practice {topicName}</h2>
           <p className="text-sm text-muted-foreground mt-2">
             This is your lowest mastery topic at {Math.round(weakestTopic.mastery * 100)}%.
@@ -298,7 +349,9 @@ function NextBestAction({
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
       <p className="font-display text-3xl mt-1">{value}</p>
     </div>
   );
