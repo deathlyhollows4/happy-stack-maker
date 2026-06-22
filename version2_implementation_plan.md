@@ -177,7 +177,7 @@ Session 6 evidence:
 1. ✅ Define a language-agnostic test case schema with input, expected output, comparator, timeout, and visibility.
 2. ✅ Add test wrapper builders for Python, JavaScript, C++, Java, and Go.
 3. ✅ Extend the existing code execution flow to run visible tests and normalize results across languages.
-4. Generate and store hidden tests too, but mark them as conservative scoring signals.
+4. ✅ Generate and store hidden tests too, but mark them as conservative scoring signals.
 5. Add timeout, compile error, runtime error, wrong answer, and unsupported signature normalization.
 6. Add fixture tests for all five languages using simple beginner functions.
 
@@ -212,6 +212,18 @@ Session 3 evidence:
 - GitNexus impact for `langExt`: HIGH risk because it feeds the shared editor across practice, review, submission detail, and share pages. The edit stayed minimal: add Go to the language union and label map while keeping the existing C++ editor extension fallback.
 - GitNexus impact for `Review`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `LANGS`: LOW risk, 0 direct callers, 0 affected processes.
 - Focused verification: `npx vitest run tests\lib\practice-test-execution.test.ts tests\lib\practice-test-wrappers.test.ts tests\lib\practice-test-harness.test.ts tests\lib\review-constants.test.ts` passed with 44 tests.
+- Build verification: `npm run build` passed with the existing large-chunk and TanStack unused-import warnings.
+
+Session 4 evidence:
+
+- Added `src/lib/practice-attempt.functions.ts` with `submitPracticeAttempt`, a server-only hidden-check submission path.
+- The submission path fetches hidden tests through `supabaseAdmin`, validates visible tests, hidden tests, and function signatures with Zod, runs visible plus hidden checks through the shared multi-language wrapper, and stores a `practice_attempts` row.
+- Hidden tests stay private: the client receives only attempt id, status, correctness score, visible counts, hidden counts, and execution status.
+- Added `src/lib/practice-attempt-scoring.ts` for conservative scoring: visible tests carry 75% weight, hidden tests carry 25% weight, and hidden passes cannot complete an attempt when visible tests fail.
+- Updated the practice submit workflow to record the attempt before the existing AI review and include hidden-test aggregate counts in telemetry.
+- GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes: `PracticeWorkspace` and `Practice`.
+- GitNexus could not resolve the new Day 3 helper symbols yet, returning `UNKNOWN` or not found for newly added/unindexed practice test execution symbols. The edit stayed scoped to the new hidden-attempt server boundary and the existing practice submit flow.
+- Focused verification: `npx vitest run tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-test-execution.test.ts tests\lib\practice-test-wrappers.test.ts` passed with 24 tests.
 - Build verification: `npm run build` passed with the existing large-chunk and TanStack unused-import warnings.
 
 ## Day 4: Practice UI Redesign

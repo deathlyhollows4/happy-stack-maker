@@ -9,7 +9,12 @@ import {
   loadEditorSettings,
   type EditorSettings,
 } from "@/components/code-workspace";
-import { generatePractice, listPractice, reviewCode } from "@/lib/codewise.functions";
+import {
+  generatePractice,
+  listPractice,
+  reviewCode,
+  submitPracticeAttempt,
+} from "@/lib/codewise.functions";
 import { Markdown } from "@/components/markdown";
 import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
@@ -78,6 +83,24 @@ interface PracticeRunOutput {
     passed: number;
     failed: number;
     status: "passed" | "failed" | "compile_error" | "runtime_error" | "no_tests";
+  };
+}
+
+interface PracticeAttemptResult {
+  ok: boolean;
+  error?: string;
+  attemptId?: string;
+  status?: "completed" | "failed";
+  correctnessScore?: number;
+  visibleSummary?: {
+    total: number;
+    passed: number;
+    failed: number;
+  };
+  hiddenSummary?: {
+    total: number;
+    passed: number;
+    failed: number;
   };
 }
 
@@ -444,6 +467,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const [fullscreen, setFullscreen] = useState(false);
 
   const runFn = useServerFn(runCode);
+  const submitAttemptFn = useServerFn(submitPracticeAttempt);
   const reviewFn = useServerFn(reviewCode);
   const { track } = useTelemetry();
 
@@ -487,8 +511,26 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   };
 
   const onSubmit = async () => {
+    if (!code.trim()) {
+      toast.error("Write some code first.");
+      return;
+    }
     setReviewing(true);
     try {
+      const attemptResponse = await submitAttemptFn({
+        data: {
+          practiceProblemId: problem.id,
+          code,
+          language: editorLang,
+          environment: getBillingEnvironment(),
+        },
+      });
+      const attempt = attemptResponse as PracticeAttemptResult;
+      if (!attempt.ok) {
+        toast.error(attempt.error);
+        return;
+      }
+
       const r = await reviewFn({
         data: { code, language: editorLang, environment: getBillingEnvironment() },
       });
@@ -500,6 +542,10 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
       track("practice_solved", {
         topic: problem.topic_slug ?? null,
         language: editorLang,
+        attemptId: attempt.attemptId ?? null,
+        correctnessScore: attempt.correctnessScore ?? null,
+        hiddenTestsPassed: attempt.hiddenSummary?.passed ?? null,
+        hiddenTestsTotal: attempt.hiddenSummary?.total ?? null,
       });
       nav({ to: "/submission/$submissionId", params: { submissionId: r.submissionId! } });
     } finally {

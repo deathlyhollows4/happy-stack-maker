@@ -6,7 +6,15 @@ export { reviewCode, getSubmission, getPublicSubmission } from "./review.functio
 
 export { generatePractice, listPractice } from "./practice.functions";
 
-export { getDashboard, getDueReviews, getEntitlements, exportUserData, getTopicBySlug } from "./dashboard.functions";
+export { submitPracticeAttempt } from "./practice-attempt.functions";
+
+export {
+  getDashboard,
+  getDueReviews,
+  getEntitlements,
+  exportUserData,
+  getTopicBySlug,
+} from "./dashboard.functions";
 
 export {
   getAdminDashboard,
