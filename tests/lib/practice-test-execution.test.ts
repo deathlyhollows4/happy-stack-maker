@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPracticeExecutionFailure,
   buildPracticeVisibleTestWrapper,
   normalizePracticeExecutionResult,
   parsePracticeTestRunOutput,
@@ -104,7 +105,7 @@ describe("normalizePracticeExecutionResult", () => {
     });
   });
 
-  it("returns a failed summary when any visible test fails", () => {
+  it("normalizes wrong answers when a test result does not match expected output", () => {
     const normalized = normalizePracticeExecutionResult({
       stdout:
         '{"codewiseTestResults":[{"id":"visible-1","name":"case","visibility":"visible","passed":false,"actual":1,"expected":2,"error":null}]}',
@@ -117,7 +118,7 @@ describe("normalizePracticeExecutionResult", () => {
       total: 1,
       passed: 0,
       failed: 1,
-      status: "failed",
+      status: "wrong_answer",
     });
   });
 
@@ -142,5 +143,52 @@ describe("normalizePracticeExecutionResult", () => {
     });
 
     expect(normalized.testSummary.status).toBe("runtime_error");
+  });
+
+  it("normalizes runtime errors captured by an individual test wrapper", () => {
+    const normalized = normalizePracticeExecutionResult({
+      stdout:
+        '{"codewiseTestResults":[{"id":"visible-1","name":"case","visibility":"visible","passed":false,"actual":null,"expected":2,"error":"ZeroDivisionError"}]}',
+      stderr: "",
+      compileStderr: "",
+      exitCode: 0,
+    });
+
+    expect(normalized.testSummary).toMatchObject({
+      total: 1,
+      passed: 0,
+      failed: 1,
+      status: "runtime_error",
+    });
+  });
+
+  it("normalizes timeout signals before generic runtime errors", () => {
+    const normalized = normalizePracticeExecutionResult({
+      stdout: "",
+      stderr: "execution timed out",
+      compileStderr: "",
+      exitCode: 1,
+      runSignal: "SIGKILL",
+    });
+
+    expect(normalized.testSummary.status).toBe("timeout");
+  });
+
+  it("builds unsupported signature summaries without runnable test results", () => {
+    const normalized = buildPracticeExecutionFailure({
+      status: "unsupported_signature",
+      total: 2,
+      error: "This function signature is not supported by the test runner yet.",
+    });
+
+    expect(normalized).toEqual({
+      testSummary: {
+        total: 2,
+        passed: 0,
+        failed: 2,
+        status: "unsupported_signature",
+      },
+      error: "This function signature is not supported by the test runner yet.",
+    });
   });
 });

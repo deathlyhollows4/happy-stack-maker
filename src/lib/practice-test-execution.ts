@@ -46,8 +46,11 @@ export const PracticeTestRunPayloadSchema = z
 export const PracticeExecutionStatusSchema = z.enum([
   "passed",
   "failed",
+  "wrong_answer",
   "compile_error",
   "runtime_error",
+  "timeout",
+  "unsupported_signature",
   "no_tests",
 ]);
 
@@ -72,11 +75,13 @@ export interface NormalizePracticeExecutionInput {
   stderr: string;
   compileStderr: string;
   exitCode: number;
+  runSignal?: string | null;
 }
 
 export interface NormalizedPracticeExecution {
   testResults?: PracticeTestRunResult[];
   testSummary: PracticeExecutionSummary;
+  error?: string;
 }
 
 function normalizeResult(result: PracticeTestRunResult): PracticeTestRunResult {
@@ -98,6 +103,44 @@ function parseJsonPayload(candidate: string): PracticeTestRunResult[] | null {
   } catch {
     return null;
   }
+}
+
+function hasTimeoutEvidence(input: NormalizePracticeExecutionInput): boolean {
+  const joined = [input.stderr, input.compileStderr, input.runSignal ?? ""].join("\n");
+  return /\b(timed?\s*out|timeout|time limit|sigkill|sigterm)\b/i.test(joined);
+}
+
+function getResultStatus(input: {
+  failed: number;
+  exitCode: number;
+  stderr: string;
+  testResults: PracticeTestRunResult[];
+}): PracticeExecutionStatus {
+  if (input.failed === 0 && input.exitCode === 0) return "passed";
+  if (input.testResults.some((result) => typeof result.error === "string" && result.error.trim())) {
+    return "runtime_error";
+  }
+  if (input.exitCode !== 0 || input.stderr.trim()) return "runtime_error";
+  return "wrong_answer";
+}
+
+export function buildPracticeExecutionFailure(input: {
+  status: Exclude<PracticeExecutionStatus, "passed" | "wrong_answer">;
+  total?: number;
+  error?: string;
+}): NormalizedPracticeExecution {
+  const total = Math.max(input.total ?? 0, 0);
+  const execution: NormalizedPracticeExecution = {
+    testSummary: {
+      total,
+      passed: 0,
+      failed: total,
+      status: input.status,
+    },
+  };
+
+  if (input.error) execution.error = input.error;
+  return execution;
 }
 
 export function buildPracticeVisibleTestWrapper(
@@ -154,20 +197,27 @@ export function normalizePracticeExecutionResult(
         total: testResults.length,
         passed,
         failed,
-        status: failed === 0 && input.exitCode === 0 ? "passed" : "failed",
+        status: hasTimeoutEvidence(input)
+          ? "timeout"
+          : getResultStatus({
+              failed,
+              exitCode: input.exitCode,
+              stderr: input.stderr,
+              testResults,
+            }),
       },
     };
   }
 
   const hasCompileError = input.compileStderr.trim().length > 0;
   const hasRuntimeError = input.exitCode !== 0 || input.stderr.trim().length > 0;
+  const status = hasTimeoutEvidence(input)
+    ? "timeout"
+    : hasCompileError
+      ? "compile_error"
+      : hasRuntimeError
+        ? "runtime_error"
+        : "no_tests";
 
-  return {
-    testSummary: {
-      total: 0,
-      passed: 0,
-      failed: 0,
-      status: hasCompileError ? "compile_error" : hasRuntimeError ? "runtime_error" : "no_tests",
-    },
-  };
+  return buildPracticeExecutionFailure({ status });
 }

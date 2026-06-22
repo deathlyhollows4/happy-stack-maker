@@ -178,7 +178,7 @@ Session 6 evidence:
 2. ✅ Add test wrapper builders for Python, JavaScript, C++, Java, and Go.
 3. ✅ Extend the existing code execution flow to run visible tests and normalize results across languages.
 4. ✅ Generate and store hidden tests too, but mark them as conservative scoring signals.
-5. Add timeout, compile error, runtime error, wrong answer, and unsupported signature normalization.
+5. ✅ Add timeout, compile error, runtime error, wrong answer, and unsupported signature normalization.
 6. Add fixture tests for all five languages using simple beginner functions.
 
 Session 1 evidence:
@@ -225,6 +225,20 @@ Session 4 evidence:
 - GitNexus could not resolve the new Day 3 helper symbols yet, returning `UNKNOWN` or not found for newly added/unindexed practice test execution symbols. The edit stayed scoped to the new hidden-attempt server boundary and the existing practice submit flow.
 - Focused verification: `npx vitest run tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-test-execution.test.ts tests\lib\practice-test-wrappers.test.ts` passed with 24 tests.
 - Build verification: `npm run build` passed with the existing large-chunk and TanStack unused-import warnings.
+
+Session 5 evidence:
+
+- Expanded normalized practice execution statuses to distinguish passed, wrong answer, compile error, runtime error, timeout, unsupported signature, and no-tests outcomes.
+- Added timeout detection from execution stderr, compile stderr, and Piston run signals so time-limit failures do not collapse into generic runtime errors.
+- Classified failed wrapper payloads with thrown per-test errors as runtime errors, and failed comparisons without runtime errors as wrong answers.
+- Added `buildPracticeExecutionFailure` for non-runnable harness failures, including unsupported signature cases.
+- Updated visible test runs and hidden-attempt submissions to return normalized unsupported-signature summaries instead of throwing or storing vague failures.
+- Updated the practice UI status label union to show the precise visible-test execution category.
+- GitNexus impact for `runCode`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `buildPracticeTestWrapper`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes: `PracticeWorkspace` and `Practice`.
+- GitNexus could not resolve newer Day 3 symbols `normalizePracticeExecutionResult`, `executePracticeTests`, or `PracticeExecutionStatusSchema`, returning `UNKNOWN` or not found.
+- Focused verification: `npx vitest run tests\lib\practice-test-execution.test.ts tests\lib\practice-test-wrappers.test.ts tests\lib\practice-attempt-scoring.test.ts` passed with 27 tests.
 
 ## Day 4: Practice UI Redesign
 

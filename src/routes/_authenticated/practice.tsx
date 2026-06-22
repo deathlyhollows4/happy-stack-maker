@@ -73,6 +73,16 @@ interface PracticeTestRunResultView {
   error?: string | null;
 }
 
+type PracticeExecutionStatusView =
+  | "passed"
+  | "failed"
+  | "wrong_answer"
+  | "compile_error"
+  | "runtime_error"
+  | "timeout"
+  | "unsupported_signature"
+  | "no_tests";
+
 interface PracticeRunOutput {
   stdout: string;
   stderr: string;
@@ -82,7 +92,7 @@ interface PracticeRunOutput {
     total: number;
     passed: number;
     failed: number;
-    status: "passed" | "failed" | "compile_error" | "runtime_error" | "no_tests";
+    status: PracticeExecutionStatusView;
   };
 }
 
@@ -143,6 +153,26 @@ function formatTestValue(value: unknown) {
     return JSON.stringify(value);
   } catch {
     return String(value);
+  }
+}
+
+function formatExecutionStatus(status: PracticeExecutionStatusView) {
+  switch (status) {
+    case "passed":
+      return "Passed";
+    case "wrong_answer":
+    case "failed":
+      return "Wrong answer";
+    case "compile_error":
+      return "Compile error";
+    case "runtime_error":
+      return "Runtime error";
+    case "timeout":
+      return "Time limit exceeded";
+    case "unsupported_signature":
+      return "Unsupported signature";
+    case "no_tests":
+      return "No tests";
   }
 }
 
@@ -652,7 +682,8 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
                     output.testSummary.status === "passed" ? "text-success" : "text-destructive"
                   }`}
                 >
-                  {output.testSummary.passed}/{output.testSummary.total} passed
+                  {formatExecutionStatus(output.testSummary.status)} | {output.testSummary.passed}/
+                  {output.testSummary.total} passed
                 </span>
               </div>
               {output.testResults && output.testResults.length > 0 && (

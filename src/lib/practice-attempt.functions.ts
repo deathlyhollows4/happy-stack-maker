@@ -9,9 +9,12 @@ import {
   buildConservativePracticeAttemptScore,
   summarizePracticeTestResults,
 } from "@/lib/practice-attempt-scoring";
-import { normalizePracticeExecutionResult } from "@/lib/practice-test-execution";
+import {
+  buildPracticeExecutionFailure,
+  normalizePracticeExecutionResult,
+} from "@/lib/practice-test-execution";
 import { normalizePracticeProblemTestCases } from "@/lib/practice-test-harness";
-import { buildPracticeTestWrapper } from "@/lib/practice-test-wrappers";
+import { buildPracticeTestWrapper, type PracticeTestWrapper } from "@/lib/practice-test-wrappers";
 import {
   PracticeProblemFunctionSignatureSchema,
   PracticeProblemLanguageSchema,
@@ -66,12 +69,25 @@ async function executePracticeTests(input: {
   tests: PracticeProblemTestCase[];
 }) {
   const runtime = PISTON[input.language];
-  const wrapper = buildPracticeTestWrapper({
-    language: input.language,
-    functionName: input.functionName,
-    userCode: input.code,
-    testCases: normalizePracticeProblemTestCases(input.tests),
-  });
+  let wrapper: PracticeTestWrapper;
+  try {
+    wrapper = buildPracticeTestWrapper({
+      language: input.language,
+      functionName: input.functionName,
+      userCode: input.code,
+      testCases: normalizePracticeProblemTestCases(input.tests),
+    });
+  } catch (e) {
+    console.error("submitPracticeAttempt test wrapper failed:", e);
+    return {
+      ok: true as const,
+      execution: buildPracticeExecutionFailure({
+        status: "unsupported_signature",
+        total: input.tests.length,
+        error: "This function signature is not supported by the test runner yet.",
+      }),
+    };
+  }
 
   const res = await fetch("https://emkc.org/api/v2/piston/execute", {
     method: "POST",
@@ -102,6 +118,7 @@ async function executePracticeTests(input: {
       stdout: (json?.run?.stdout ?? "") as string,
       stderr: (json?.run?.stderr ?? "") as string,
       exitCode: (json?.run?.code ?? 0) as number,
+      runSignal: (json?.run?.signal ?? null) as string | null,
       compileStderr: (json?.compile?.stderr ?? "") as string,
     }),
   };

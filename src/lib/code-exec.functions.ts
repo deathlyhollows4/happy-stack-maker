@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getUserPlan, consumeQuota, getPlanQuotas, dayKey } from "@/lib/entitlements.server";
 import type { PaymentsEnv } from "@/lib/payments.server";
 import {
+  buildPracticeExecutionFailure,
   buildPracticeVisibleTestWrapper,
   normalizePracticeExecutionResult,
   PracticeVisibleTestRunInputSchema,
@@ -73,9 +74,18 @@ export const runCode = createServerFn({ method: "POST" })
         };
       } catch (e: any) {
         console.error("runCode visible test wrapper failed:", e);
+        const error = "This function signature is not supported by the test runner yet.";
         return {
-          ok: false as const,
-          error: "Could not prepare visible tests for this problem.",
+          ok: true as const,
+          stdout: "",
+          stderr: error,
+          exitCode: 1,
+          compileStderr: "",
+          ...buildPracticeExecutionFailure({
+            status: "unsupported_signature",
+            total: data.testRun.visibleTests.length,
+            error,
+          }),
         };
       }
     }
@@ -107,6 +117,7 @@ export const runCode = createServerFn({ method: "POST" })
       const stdout = (json?.run?.stdout ?? "") as string;
       const stderr = (json?.run?.stderr ?? "") as string;
       const exitCode = (json?.run?.code ?? 0) as number;
+      const runSignal = (json?.run?.signal ?? null) as string | null;
       const compileStderr = (json?.compile?.stderr ?? "") as string;
       const normalizedTestRun = data.testRun
         ? normalizePracticeExecutionResult({
@@ -114,6 +125,7 @@ export const runCode = createServerFn({ method: "POST" })
             stderr,
             exitCode,
             compileStderr,
+            runSignal,
           })
         : {};
 
