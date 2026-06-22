@@ -15,14 +15,33 @@ import {
   type PracticeProblemTestCase,
 } from "@/lib/practice-problem-contract";
 import { getMasteryBandById } from "@/lib/dsa-curriculum";
+import { normalizeTopicSlug, topicDisplayName, type TopicSlug } from "@/lib/topics";
 
 const textArraySchema = z.array(z.string().trim().min(1).max(300));
 const visibleTestArraySchema = z.array(
   PracticeProblemTestCaseSchema.extend({ visibility: z.literal("visible") }),
 );
+const planningContextSchema = z.object({
+  source: z.enum(["manual-topic", "due-review", "weakest-topic", "beginner-start"]),
+  requestedTopicSlug: z.string().nullable(),
+  selectedTopicSlug: z.string().nullable(),
+  selectedCurriculumNodeId: z.string().trim().min(1),
+  selectedCurriculumNodeTitle: z.string().trim().min(1),
+  selectedMasteryBand: PracticeProblemMasteryBandSchema,
+  bridgePreview: z
+    .object({
+      targetTopicSlug: z.string().nullable(),
+      targetCurriculumNodeId: z.string().trim().min(1),
+      targetCurriculumNodeTitle: z.string().trim().min(1),
+      targetMasteryBand: PracticeProblemMasteryBandSchema,
+    })
+    .nullable(),
+});
 
 export interface PracticeProblemViewInput {
   prompt?: string | null;
+  topic_slug?: string | null;
+  planning_context?: unknown;
   contract_version?: string | null;
   curriculum_node_id?: string | null;
   mastery_band?: string | null;
@@ -40,6 +59,15 @@ export interface PracticeProblemViewInput {
   generation_status?: string | null;
 }
 
+export interface PracticeBridgePreview {
+  currentNodeId: string;
+  currentNodeTitle: string;
+  targetTopicSlug: TopicSlug;
+  targetTopicLabel: string;
+  targetNodeId: string;
+  targetNodeTitle: string;
+}
+
 export interface PracticeProblemView {
   isStructured: boolean;
   promptFallback: string;
@@ -51,6 +79,7 @@ export interface PracticeProblemView {
   statement: string | null;
   topicTags: PracticeProblemTag[];
   prerequisiteTags: PracticeProblemTag[];
+  bridgePreview: PracticeBridgePreview | null;
   examples: PracticeProblemExample[];
   constraints: string[];
   functionSignature: PracticeProblemFunctionSignature | null;
@@ -86,6 +115,31 @@ function parseMasteryBand(input: string | null | undefined): PracticeProblemMast
   return result.success ? result.data : null;
 }
 
+function buildBridgePreview(input: PracticeProblemViewInput, currentNodeId: string | null) {
+  const planningContext = planningContextSchema.safeParse(input.planning_context);
+  if (!planningContext.success) return null;
+  if (planningContext.data.source !== "manual-topic") return null;
+  if (!planningContext.data.bridgePreview || !currentNodeId) return null;
+  if (planningContext.data.selectedCurriculumNodeId !== currentNodeId) return null;
+
+  const targetTopicSlug = normalizeTopicSlug(
+    planningContext.data.bridgePreview.targetTopicSlug ?? planningContext.data.requestedTopicSlug,
+  );
+  if (!targetTopicSlug) return null;
+
+  const bridgePreview = planningContext.data.bridgePreview;
+  if (bridgePreview.targetCurriculumNodeId === currentNodeId) return null;
+
+  return {
+    currentNodeId,
+    currentNodeTitle: planningContext.data.selectedCurriculumNodeTitle,
+    targetTopicSlug,
+    targetTopicLabel: topicDisplayName(targetTopicSlug),
+    targetNodeId: bridgePreview.targetCurriculumNodeId,
+    targetNodeTitle: bridgePreview.targetCurriculumNodeTitle,
+  };
+}
+
 export function buildPracticeProblemView(input: PracticeProblemViewInput): PracticeProblemView {
   const masteryBand = parseMasteryBand(input.mastery_band);
   const functionSignature = PracticeProblemFunctionSignatureSchema.safeParse(
@@ -94,6 +148,7 @@ export function buildPracticeProblemView(input: PracticeProblemViewInput): Pract
   const statement = parseText(input.statement);
   const objective = parseText(input.objective);
   const contractVersion = parseText(input.contract_version);
+  const curriculumNodeId = parseText(input.curriculum_node_id);
   const generationStatus = parseText(input.generation_status);
   const topicTags = parseArray(z.array(PracticeProblemTagSchema), input.topic_tags);
   const prerequisiteTags = parseArray(z.array(PracticeProblemTagSchema), input.prerequisite_tags);
@@ -113,13 +168,14 @@ export function buildPracticeProblemView(input: PracticeProblemViewInput): Pract
       Boolean(statement || objective || examples.length || visibleTests.length),
     promptFallback: input.prompt ?? "",
     contractVersion,
-    curriculumNodeId: parseText(input.curriculum_node_id),
+    curriculumNodeId,
     masteryBand,
     masteryBandLabel: masteryBand ? getMasteryBandById(masteryBand).label : null,
     objective,
     statement,
     topicTags,
     prerequisiteTags,
+    bridgePreview: buildBridgePreview(input, curriculumNodeId),
     examples,
     constraints,
     functionSignature: functionSignature.success ? functionSignature.data : null,

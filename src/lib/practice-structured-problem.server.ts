@@ -128,6 +128,7 @@ export function buildStructuredPracticeProblemInsert(input: {
     prompt: formatStructuredPracticePrompt(problem),
     starter_code: getStructuredStarterCode(problem, input.language),
     language: input.language,
+    planning_context: generationPlan.problemInsertPlan.planning_context as Json,
     statement: problem.statement,
     topic_tags: problem.topicTags as Json,
     prerequisite_tags: problem.prerequisiteTags as Json,

@@ -142,6 +142,11 @@ describe("structured practice problem generation helpers", () => {
     expect(insert.contract_version).toBe(PRACTICE_PROBLEM_CONTRACT_VERSION);
     expect(insert.starter_code).toContain("export function sumTwo");
     expect(insert.visible_tests).toEqual(validProblem().visibleTests);
+    expect(insert.planning_context).toMatchObject({
+      source: "beginner-start",
+      selectedCurriculumNodeId: "foundation-io",
+      bridgePreview: null,
+    });
   });
 
   it("selects starter code for the requested language", () => {

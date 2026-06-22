@@ -1,6 +1,7 @@
 import {
   mapProgressRowsForPracticePlanner,
   planPracticeSession,
+  type PracticePlannerSource,
   type PracticePlannerProgressRow,
   type PracticePlannerRequest,
   type PracticePlannerResult,
@@ -21,6 +22,24 @@ export interface PracticeProblemInsertPlan {
   curriculum_node_id: string;
   mastery_band: string;
   objective: string;
+  planning_context: PracticePlanningContext;
+}
+
+export interface PracticePlanningBridgePreview {
+  targetTopicSlug: TopicSlug | null;
+  targetCurriculumNodeId: string;
+  targetCurriculumNodeTitle: string;
+  targetMasteryBand: string;
+}
+
+export interface PracticePlanningContext {
+  source: PracticePlannerSource;
+  requestedTopicSlug: TopicSlug | null;
+  selectedTopicSlug: TopicSlug | null;
+  selectedCurriculumNodeId: string;
+  selectedCurriculumNodeTitle: string;
+  selectedMasteryBand: string;
+  bridgePreview: PracticePlanningBridgePreview | null;
 }
 
 export interface PracticeGenerationPlan {
@@ -56,6 +75,28 @@ export function buildPracticeGenerationPlan(
       curriculum_node_id: practicePlan.node.id,
       mastery_band: practicePlan.masteryBand.id,
       objective: practicePlan.node.objective,
+      planning_context: buildPracticePlanningContext(practicePlan),
     },
+  };
+}
+
+function buildPracticePlanningContext(
+  practicePlan: PracticePlannerResult,
+): PracticePlanningContext {
+  return {
+    source: practicePlan.source,
+    requestedTopicSlug: practicePlan.requestedTopicSlug,
+    selectedTopicSlug: practicePlan.topicSlug,
+    selectedCurriculumNodeId: practicePlan.node.id,
+    selectedCurriculumNodeTitle: practicePlan.node.title,
+    selectedMasteryBand: practicePlan.masteryBand.id,
+    bridgePreview: practicePlan.preview
+      ? {
+          targetTopicSlug: practicePlan.preview.topicSlug,
+          targetCurriculumNodeId: practicePlan.preview.node.id,
+          targetCurriculumNodeTitle: practicePlan.preview.node.title,
+          targetMasteryBand: practicePlan.preview.masteryBand.id,
+        }
+      : null,
   };
 }

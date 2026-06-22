@@ -146,6 +146,7 @@ export type Database = {
           language: string;
           mastery_band: string | null;
           objective: string | null;
+          planning_context: Json;
           prompt: string;
           prerequisite_tags: Json;
           starter_code: string | null;
@@ -171,6 +172,7 @@ export type Database = {
           language?: string;
           mastery_band?: string | null;
           objective?: string | null;
+          planning_context?: Json;
           prompt: string;
           prerequisite_tags?: Json;
           starter_code?: string | null;
@@ -196,6 +198,7 @@ export type Database = {
           language?: string;
           mastery_band?: string | null;
           objective?: string | null;
+          planning_context?: Json;
           prompt?: string;
           prerequisite_tags?: Json;
           starter_code?: string | null;

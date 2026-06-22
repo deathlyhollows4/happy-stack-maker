@@ -256,7 +256,7 @@ Session 6 evidence:
 2. ✅ Render structured problem fields instead of one markdown prompt.
 3. ✅ Add visible test runner UI with per-test pass/fail output.
 4. ✅ Add hint ladder UI that records hint usage events.
-5. Add bridge/preview messaging for manual topics above the learner's mastery.
+5. ✅ Add bridge/preview messaging for manual topics above the learner's mastery.
 6. Browser-check mobile and desktop layouts for text overflow, editor usability, and problem navigation.
 
 Session 1 evidence:
@@ -321,6 +321,35 @@ Session 4 evidence:
 - Scoped lint verification: `npx eslint src\lib\practice-event-model.ts src\lib\practice-event.functions.ts tests\lib\practice-event-model.test.ts src\routes\_authenticated\practice.tsx` passed.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes with `--scope staged` reported CRITICAL risk across 5 files and 20 indexed symbols, affecting 16 existing practice execution flows. The affected scope is expected because hint event recording and hint-count submission live inside the authenticated practice workspace.
+
+Session 5 evidence:
+
+- Added `supabase/migrations/20260622170000_add_practice_planning_context.sql` to persist `practice_problems.planning_context` as a JSONB object.
+- Updated `src/lib/practice-generation-plan.server.ts` so each generated problem stores planner source, requested topic, selected curriculum node, selected mastery band, and bridge preview target.
+- Updated `src/lib/practice-structured-problem.server.ts` and `src/integrations/supabase/types.ts` so structured practice inserts include `planning_context`.
+- Updated `src/lib/practice-problem-view.ts` so bridge preview rendering only appears for persisted `manual-topic` planner context with a bridge preview target.
+- Updated `src/routes/_authenticated/practice.tsx` with a compact Bridge preview callout and bridge pill in the problem brief.
+- Added focused tests in `tests/lib/practice-generation-plan.test.ts`, `tests/lib/practice-structured-problem.test.ts`, and `tests/lib/practice-problem-view.test.ts` for planner metadata persistence, insert payloads, manual bridge preview rendering, and non-manual no-bridge behavior.
+- Updated `tests/lib/practice-event-model.test.ts` for the expanded practice problem view type.
+- Supabase changelog, API exposure docs, and RLS docs were checked. The Supabase CLI was not installed locally, so the migration file was created manually and has not been applied.
+- GitNexus impact for `buildPracticeProblemView`: HIGH risk, 2 direct callers, 3 affected processes: `PracticeWorkspace`, `ProblemWorkspace`, and `Practice`.
+- GitNexus impact for `ProblemBrief`: HIGH risk, 1 direct caller, 3 affected processes: `ProblemWorkspace`, `PracticeWorkspace`, and `Practice`.
+- GitNexus impact for `ProblemWorkspace`, `PracticeWorkspace`, `Practice`, `buildStructuredPracticeProblemInsert`, `buildPracticeGenerationPlan`, and `planPracticeSession` returned LOW risk.
+- Focused verification: `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-problem-view.test.ts tests\lib\practice-event-model.test.ts` passed with 21 tests.
+- Related verification: `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-problem-view.test.ts tests\lib\practice-run-output-view.test.ts tests\lib\practice-event-model.test.ts tests\lib\practice-test-execution.test.ts tests\lib\practice-test-harness.test.ts` passed with 43 tests.
+- Scoped lint verification: `npx eslint src\lib\practice-generation-plan.server.ts src\lib\practice-structured-problem.server.ts src\lib\practice-problem-view.ts src\routes\_authenticated\practice.tsx src\integrations\supabase\types.ts tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-problem-view.test.ts tests\lib\practice-event-model.test.ts` passed.
+
+Session 6 partial evidence:
+
+- Started the local app at `http://127.0.0.1:5177` with `npm run dev -- --host 127.0.0.1 --port 5177`; the root route returned HTTP 200.
+- Browser-checked `/practice` unauthenticated at 1440x900 and 390x844. It correctly redirected to `/login`, and both viewports reported no horizontal overflow.
+- Browser-checked the authenticated practice shell with a local fake Supabase session at 1440x900 and 390x844. The topic step rendered with no horizontal overflow in both viewports.
+- Browser-checked the mobile authenticated shell menu at 390x844. Dashboard, Review Code, Practice, Settings, Billing, and Sign out navigation rendered with no horizontal overflow.
+- Screenshot evidence was saved under `test-results/day4-session6-practice-*.png` for the redirect, fake-auth shell, and mobile menu passes.
+- Full authenticated problem workspace editor usability and problem navigation still need a real Supabase session. A simple `_serverFn` JSON mock does not satisfy TanStack Start server-function middleware, so Session 6 remains uncompleted.
+- Full verification: `npm test` passed with 176 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported HIGH risk across 16 files and 34 symbols, affecting 11 execution flows. The affected scope is expected because planner metadata, structured inserts, the practice view model, and the practice route all feed generated practice problem flows.
 
 ## Day 5: Mastery Analytics
 

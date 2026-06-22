@@ -18,6 +18,7 @@ const practiceView: PracticeProblemView = {
   statement: "Given a list of integers, return how many values are greater than zero.",
   topicTags: [{ slug: "loops", label: "Loops" }],
   prerequisiteTags: [{ slug: "functions", label: "Functions" }],
+  bridgePreview: null,
   examples: [],
   constraints: [],
   functionSignature: null,

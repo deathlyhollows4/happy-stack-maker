@@ -103,6 +103,71 @@ describe("practice problem view", () => {
     expect(view.hintLadder.map((hint) => hint.order)).toEqual([1, 2]);
   });
 
+  it("derives bridge preview data when a saved target topic is ahead of the current node", () => {
+    const view = buildPracticeProblemView({
+      ...structuredProblemRow(),
+      topic_slug: "two-pointers",
+      curriculum_node_id: "foundation-io",
+      planning_context: {
+        source: "manual-topic",
+        requestedTopicSlug: "two-pointers",
+        selectedTopicSlug: null,
+        selectedCurriculumNodeId: "foundation-io",
+        selectedCurriculumNodeTitle: "Input, Output, And Values",
+        selectedMasteryBand: "0-20",
+        bridgePreview: {
+          targetTopicSlug: "two-pointers",
+          targetCurriculumNodeId: "two-pointers-basics",
+          targetCurriculumNodeTitle: "Two Pointers",
+          targetMasteryBand: "21-40",
+        },
+      },
+    });
+
+    expect(view.bridgePreview).toEqual({
+      currentNodeId: "foundation-io",
+      currentNodeTitle: "Input, Output, And Values",
+      targetTopicSlug: "two-pointers",
+      targetTopicLabel: "Two Pointers",
+      targetNodeId: "two-pointers-basics",
+      targetNodeTitle: "Two Pointers",
+    });
+  });
+
+  it("does not show bridge preview data without manual planner context", () => {
+    const view = buildPracticeProblemView({
+      ...structuredProblemRow(),
+      topic_slug: "two-pointers",
+      curriculum_node_id: "foundation-io",
+    });
+
+    expect(view.bridgePreview).toBeNull();
+  });
+
+  it("does not show bridge preview data for non-manual planner sources", () => {
+    const view = buildPracticeProblemView({
+      ...structuredProblemRow(),
+      topic_slug: "two-pointers",
+      curriculum_node_id: "foundation-io",
+      planning_context: {
+        source: "weakest-topic",
+        requestedTopicSlug: "two-pointers",
+        selectedTopicSlug: null,
+        selectedCurriculumNodeId: "foundation-io",
+        selectedCurriculumNodeTitle: "Input, Output, And Values",
+        selectedMasteryBand: "0-20",
+        bridgePreview: {
+          targetTopicSlug: "two-pointers",
+          targetCurriculumNodeId: "two-pointers-basics",
+          targetCurriculumNodeTitle: "Two Pointers",
+          targetMasteryBand: "21-40",
+        },
+      },
+    });
+
+    expect(view.bridgePreview).toBeNull();
+  });
+
   it("returns the active language signature when available", () => {
     const view = buildPracticeProblemView(structuredProblemRow());
 

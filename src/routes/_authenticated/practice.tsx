@@ -88,6 +88,7 @@ interface PracticeProblem {
   starter_code: string | null;
   language: string | null;
   topic_slug: string | null;
+  planning_context?: unknown;
   contract_version?: string | null;
   curriculum_node_id?: string | null;
   mastery_band?: string | null;
@@ -196,6 +197,47 @@ function TagList({ tags }: { tags: PracticeProblemView["topicTags"] }) {
   );
 }
 
+function BridgePreviewCallout({ view }: { view: PracticeProblemView }) {
+  if (!view.bridgePreview) return null;
+
+  return (
+    <div className="mb-4 rounded-md border border-accent/40 bg-accent/10 p-3">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-accent/30 bg-background/60 text-accent">
+          <RouteIcon className="size-3.5" />
+        </span>
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-accent">
+            Bridge preview
+          </p>
+          <h4 className="mt-1 text-sm font-semibold leading-snug">
+            Bridge before {view.bridgePreview.targetTopicLabel}
+          </h4>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            CodeWise selected {view.bridgePreview.currentNodeTitle} before{" "}
+            {view.bridgePreview.targetNodeTitle}. Finish this prerequisite step first, then continue
+            toward {view.bridgePreview.targetTopicLabel}.
+          </p>
+        </div>
+      </div>
+      <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+        <div className="min-w-0">
+          <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Current step
+          </dt>
+          <dd className="mt-1 truncate font-medium">{view.bridgePreview.currentNodeTitle}</dd>
+        </div>
+        <div className="min-w-0">
+          <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Target preview
+          </dt>
+          <dd className="mt-1 truncate font-medium">{view.bridgePreview.targetNodeTitle}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
 function WorkflowStrip({ view }: { view: PracticeProblemView }) {
   const steps = [
     {
@@ -247,6 +289,7 @@ function ProblemBrief({ problem, view }: { problem: PracticeProblem; view: Pract
 
       <div className="mb-4 flex flex-wrap gap-1.5">
         {view.curriculumNodeId && <Pill tone="accent">{view.curriculumNodeId}</Pill>}
+        {view.bridgePreview && <Pill tone="accent">Bridge</Pill>}
         {view.masteryBand && (
           <Pill tone="success">
             {view.masteryBand}
@@ -256,6 +299,8 @@ function ProblemBrief({ problem, view }: { problem: PracticeProblem; view: Pract
         {displayTopic && <Pill>{displayTopic}</Pill>}
         {view.generationStatus && <Pill>{view.generationStatus}</Pill>}
       </div>
+
+      <BridgePreviewCallout view={view} />
 
       {view.objective && (
         <div className="mb-4 rounded-md border border-border bg-background/60 p-3">

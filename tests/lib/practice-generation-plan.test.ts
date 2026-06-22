@@ -13,11 +13,25 @@ describe("practice generation plan", () => {
     expect(generationPlan.practicePlan.node.id).toBe("foundation-io");
     expect(generationPlan.practicePlan.preview?.node.id).toBe("two-pointers-basics");
     expect(generationPlan.aiPromptTopicSlug).toBe("two-pointers");
-    expect(generationPlan.problemInsertPlan).toEqual({
+    expect(generationPlan.problemInsertPlan).toMatchObject({
       topic_slug: "two-pointers",
       curriculum_node_id: "foundation-io",
       mastery_band: "0-20",
       objective: "Read small values, store them in variables, and return or print a direct result.",
+      planning_context: {
+        source: "manual-topic",
+        requestedTopicSlug: "two-pointers",
+        selectedTopicSlug: null,
+        selectedCurriculumNodeId: "foundation-io",
+        selectedCurriculumNodeTitle: "Input, Output, And Values",
+        selectedMasteryBand: "0-20",
+        bridgePreview: {
+          targetTopicSlug: "two-pointers",
+          targetCurriculumNodeId: "two-pointers-basics",
+          targetCurriculumNodeTitle: "Two Pointers",
+          targetMasteryBand: "21-40",
+        },
+      },
     });
   });
 
@@ -38,6 +52,11 @@ describe("practice generation plan", () => {
       topic_slug: "arrays",
       curriculum_node_id: "arrays-basics",
       mastery_band: "21-40",
+      planning_context: {
+        source: "weakest-topic",
+        selectedCurriculumNodeId: "arrays-basics",
+        bridgePreview: null,
+      },
     });
   });
 });
