@@ -257,7 +257,7 @@ Session 6 evidence:
 3. ✅ Add visible test runner UI with per-test pass/fail output.
 4. ✅ Add hint ladder UI that records hint usage events.
 5. ✅ Add bridge/preview messaging for manual topics above the learner's mastery.
-6. Browser-check mobile and desktop layouts for text overflow, editor usability, and problem navigation.
+6. ✅ Browser-check mobile and desktop layouts for text overflow, editor usability, and problem navigation.
 
 Session 1 evidence:
 
@@ -339,16 +339,21 @@ Session 5 evidence:
 - Related verification: `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-problem-view.test.ts tests\lib\practice-run-output-view.test.ts tests\lib\practice-event-model.test.ts tests\lib\practice-test-execution.test.ts tests\lib\practice-test-harness.test.ts` passed with 43 tests.
 - Scoped lint verification: `npx eslint src\lib\practice-generation-plan.server.ts src\lib\practice-structured-problem.server.ts src\lib\practice-problem-view.ts src\routes\_authenticated\practice.tsx src\integrations\supabase\types.ts tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-problem-view.test.ts tests\lib\practice-event-model.test.ts` passed.
 
-Session 6 partial evidence:
+Session 6 evidence:
 
 - Started the local app at `http://127.0.0.1:5177` with `npm run dev -- --host 127.0.0.1 --port 5177`; the root route returned HTTP 200.
 - Browser-checked `/practice` unauthenticated at 1440x900 and 390x844. It correctly redirected to `/login`, and both viewports reported no horizontal overflow.
 - Browser-checked the authenticated practice shell with a local fake Supabase session at 1440x900 and 390x844. The topic step rendered with no horizontal overflow in both viewports.
 - Browser-checked the mobile authenticated shell menu at 390x844. Dashboard, Review Code, Practice, Settings, Billing, and Sign out navigation rendered with no horizontal overflow.
 - Screenshot evidence was saved under `test-results/day4-session6-practice-*.png` for the redirect, fake-auth shell, and mobile menu passes.
-- Full authenticated problem workspace editor usability and problem navigation still need a real Supabase session. A simple `_serverFn` JSON mock does not satisfy TanStack Start server-function middleware, so Session 6 remains uncompleted.
+- Added `tests/e2e/practice-workspace.spec.ts` to browser-check the real authenticated `/practice` route with a route-compatible fake Supabase session, Supabase REST stubs, and TanStack server-function mocks that return the required `{ result, context }` middleware envelope.
+- Browser-checked the full practice problem workspace at 1440x900: structured problem brief, visible-test count, editor typing, reset behavior, mocked visible-test run output, and problem-list navigation.
+- Browser-checked the full practice problem workspace at 390x844: problem-list navigation, editor visibility, run-test control visibility, and horizontal overflow metrics.
+- Focused e2e verification: `$env:CODEWISE_URL='http://127.0.0.1:5177'; npx playwright test tests/e2e/practice-workspace.spec.ts --project=chromium --workers=1` passed with 2 tests.
+- Scoped lint verification: `npx eslint tests\e2e\practice-workspace.spec.ts` passed.
 - Full verification: `npm test` passed with 176 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported LOW risk across 5 indexed files and 7 markdown symbols, with 0 affected processes.
 - GitNexus detect-changes with `--scope staged` reported HIGH risk across 16 files and 34 symbols, affecting 11 execution flows. The affected scope is expected because planner metadata, structured inserts, the practice view model, and the practice route all feed generated practice problem flows.
 
 ## Day 5: Mastery Analytics

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue after Day 4 Sessions 5 and 6 implementation.
+Continue with Day 5 Session 1 after Day 4 completion.
 
 ## Current Status
 
@@ -13,10 +13,10 @@ Continue after Day 4 Sessions 5 and 6 implementation.
   - @Canvas/@Sentinel: Day 4 Session 6 browser verification plan.
 - @Prime created routed lane files for Session 5 implementation, Session 6 browser checks, and combined verification.
 - Day 4 Session 5 is implemented: practice rows persist planner metadata in `planning_context`, and the practice problem brief renders a Bridge preview callout only for manual-topic bridge context.
-- Day 4 Session 6 partial browser checks ran against the local app at `http://127.0.0.1:5177`.
-- Desktop and mobile route checks, fake-auth topic shell checks, and mobile menu checks showed no horizontal overflow.
-- Full authenticated problem workspace editor and problem-navigation checks still need a real Supabase session.
-- Focused tests, related tests, scoped lint, full tests, and build passed after the planner metadata fix.
+- Day 4 Session 6 is implemented and marked complete.
+- Desktop and mobile route checks, fake-auth topic shell checks, mobile menu checks, and full practice problem workspace checks showed no horizontal overflow.
+- `tests/e2e/practice-workspace.spec.ts` verifies the authenticated `/practice` problem workspace through a route-compatible fake Supabase session and TanStack server-function mocks.
+- Focused tests, related tests, scoped lint, full tests, build, and the Day 4 Session 6 Playwright checks passed.
 - Branch `main` is ahead of `origin/main`; do not push without explicit user approval.
 
 ## Commands Run
@@ -74,13 +74,12 @@ Continue after Day 4 Sessions 5 and 6 implementation.
 
 ## Open Risks
 
-- Full authenticated problem workspace editor usability and problem navigation could not be live-tested without a real Supabase session.
+- Full authenticated problem workspace editor usability and problem navigation are covered by the route-compatible Playwright pass.
 - `supabase/migrations/20260622170000_add_practice_planning_context.sql` has not been applied.
 - Existing untracked workspace artifacts remain unrelated and should not be mixed into commits.
 
 ## Resume Steps
 
-1. Commit the scoped Day 4 Session 5 and partial Session 6 changes without pushing.
-2. Apply `supabase/migrations/20260622170000_add_practice_planning_context.sql` before relying on manual bridge preview in deployed generation.
-3. Re-run a full authenticated problem workspace browser pass later when a real Supabase session is available.
-4. Complete Day 4 Session 6, then continue with Day 5 Session 1.
+1. Apply `supabase/migrations/20260622170000_add_practice_planning_context.sql` before relying on manual bridge preview in deployed generation.
+2. Start Day 5 Session 1: generation, visible run, hidden check, hint, submission, completion, and review-quality event logging.
+3. Keep final verification scoped to the current session before committing.

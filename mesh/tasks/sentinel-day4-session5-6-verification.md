@@ -32,8 +32,8 @@ Next:
 
 ## Worker summary
 
-Result: Day 4 Session 5 is verified after the manual planner metadata fix; Day 4 Session 6 remains partial because the editor and problem-navigation browser pass needs a real Supabase session.
-Evidence: Focused planner, structured insert, view-model, and event tests passed; related practice test group and scoped ESLint passed; Playwright route and mobile shell checks passed for available local states.
-Changed files: `src/lib/practice-problem-view.ts`, `src/routes/_authenticated/practice.tsx`, `tests/lib/practice-problem-view.test.ts`, `tests/lib/practice-event-model.test.ts`, `version2_implementation_plan.md`, mesh task files.
-Risks: Authenticated problem workspace editor usability remains a live-session follow-up, and the new planning-context migration is not applied.
-Next: Run full tests, build, and GitNexus detect changes before commit.
+Result: Day 4 Sessions 5 and 6 are verified.
+Evidence: Focused planner, structured insert, view-model, and event tests passed; related practice test group and scoped ESLint passed; full tests and build passed in the prior Session 5 commit; the new `tests/e2e/practice-workspace.spec.ts` browser-checks the authenticated practice problem workspace at desktop and mobile sizes with editor typing, reset behavior, visible-test output, problem navigation, and horizontal overflow metrics.
+Changed files: `tests/e2e/practice-workspace.spec.ts`, `version2_implementation_plan.md`, mesh task files.
+Risks: The planning-context migration still needs to be applied before deployed generation relies on `planning_context`.
+Next: Run final scoped verification, GitNexus detect changes, then commit Day 4 Session 6.

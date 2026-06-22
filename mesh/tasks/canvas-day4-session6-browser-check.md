@@ -33,8 +33,8 @@ Next:
 
 ## Worker summary
 
-Result: Desktop and mobile browser checks covered the practice route gate, authenticated shell, and mobile navigation with no horizontal overflow in the verified viewports, but Session 6 remains partial.
-Evidence: Ran local app on `http://127.0.0.1:5177`; Playwright screenshots saved under `test-results/day4-session6-practice-*.png`; checked 1440x900 and 390x844 metrics.
-Changed files: none by this worker.
-Risks: Full problem workspace and editor controls could not be live-tested without a real Supabase session; simple `_serverFn` JSON mocking did not satisfy TanStack Start middleware.
-Next: Re-run an authenticated browser pass after a real session is available.
+Result: Day 4 Session 6 is complete.
+Evidence: Ran the local app on `http://127.0.0.1:5177`; earlier redirect, authenticated shell, and mobile menu checks passed with no horizontal overflow; added and ran `tests/e2e/practice-workspace.spec.ts` against the real authenticated `/practice` route with a fake Supabase session and route-compatible TanStack server-function mocks; desktop and mobile workspace checks passed.
+Changed files: `tests/e2e/practice-workspace.spec.ts`, `version2_implementation_plan.md`, mesh task files.
+Risks: The browser pass uses local route mocks instead of writing disposable rows to live Supabase.
+Next: Continue with Day 5 Session 1 after final verification and commit.
