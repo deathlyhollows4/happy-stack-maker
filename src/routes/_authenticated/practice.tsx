@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
@@ -20,7 +20,22 @@ import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
 import { getBillingEnvironment } from "@/lib/payments";
 import { toast } from "sonner";
-import { Sparkles, ArrowLeft, Play, Send, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Sparkles,
+  ArrowLeft,
+  Play,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Target,
+  ListChecks,
+  FlaskConical,
+  Lightbulb,
+  BadgeCheck,
+  BookOpen,
+  Route as RouteIcon,
+  Code2,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   normalizeTopicSlug,
@@ -29,6 +44,11 @@ import {
   topicDisplayName,
   type TopicSlug,
 } from "@/lib/topics";
+import {
+  buildPracticeProblemView,
+  getPracticeLanguageSignature,
+  type PracticeProblemView,
+} from "@/lib/practice-problem-view";
 
 const practiceSearchSchema = z.object({
   topic: z.string().optional(),
@@ -49,8 +69,21 @@ interface PracticeProblem {
   starter_code: string | null;
   language: string | null;
   topic_slug: string | null;
+  contract_version?: string | null;
+  curriculum_node_id?: string | null;
+  mastery_band?: string | null;
+  objective?: string | null;
+  statement?: string | null;
+  topic_tags?: unknown;
+  prerequisite_tags?: unknown;
+  examples?: unknown;
+  constraints?: unknown;
   function_signature?: unknown;
   visible_tests?: unknown;
+  hidden_test_themes?: unknown;
+  hint_ladder?: unknown;
+  success_criteria?: unknown;
+  generation_status?: string | null;
 }
 
 interface PracticeData {
@@ -176,6 +209,370 @@ function formatExecutionStatus(status: PracticeExecutionStatusView) {
   }
 }
 
+function getDisplayTopic(problem: PracticeProblem) {
+  return problem.topic_slug ? topicDisplayName(normalizeTopicSlug(problem.topic_slug)) : null;
+}
+
+function Pill({
+  children,
+  tone = "default",
+}: {
+  children: ReactNode;
+  tone?: "default" | "accent" | "success";
+}) {
+  const toneClass =
+    tone === "accent"
+      ? "border-accent/30 bg-accent/10 text-accent"
+      : tone === "success"
+        ? "border-success/30 bg-success/10 text-success"
+        : "border-border bg-background text-muted-foreground";
+
+  return (
+    <span
+      className={`inline-flex max-w-full items-center rounded-sm border px-2 py-0.5 text-[11px] font-medium ${toneClass}`}
+    >
+      <span className="truncate">{children}</span>
+    </span>
+  );
+}
+
+function SectionHeader({
+  icon: Icon,
+  eyebrow,
+  title,
+}: {
+  icon: typeof Target;
+  eyebrow: string;
+  title: string;
+}) {
+  return (
+    <div className="mb-3 flex items-start gap-2">
+      <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground">
+        <Icon className="size-3.5" />
+      </span>
+      <div className="min-w-0">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          {eyebrow}
+        </p>
+        <h3 className="text-base font-semibold leading-snug">{title}</h3>
+      </div>
+    </div>
+  );
+}
+
+function TagList({ tags }: { tags: PracticeProblemView["topicTags"] }) {
+  if (!tags.length) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {tags.map((tag) => (
+        <Pill key={`${tag.slug}-${tag.label}`}>{tag.label}</Pill>
+      ))}
+    </div>
+  );
+}
+
+function WorkflowStrip({ view }: { view: PracticeProblemView }) {
+  const steps = [
+    {
+      label: "Learn",
+      value: view.masteryBandLabel ?? "Problem brief",
+    },
+    {
+      label: "Solve",
+      value: `${view.visibleTests.length} visible ${view.visibleTests.length === 1 ? "test" : "tests"}`,
+    },
+    {
+      label: "Review",
+      value: view.hiddenTestThemes.length
+        ? `${view.hiddenTestThemes.length} hidden themes`
+        : "Submit review",
+    },
+    {
+      label: "Adapt",
+      value: view.successCriteria.length
+        ? `${view.successCriteria.length} criteria`
+        : "Next recommendation",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      {steps.map((step, index) => (
+        <div key={step.label} className="rounded-md border border-border bg-card p-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-sm bg-primary text-[10px] font-semibold text-primary-foreground">
+              {index + 1}
+            </span>
+            <span className="text-sm font-medium">{step.label}</span>
+          </div>
+          <p className="mt-2 truncate text-xs text-muted-foreground">{step.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProblemBrief({ problem, view }: { problem: PracticeProblem; view: PracticeProblemView }) {
+  const displayTopic = getDisplayTopic(problem);
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
+      <SectionHeader icon={Target} eyebrow="Learn" title={problem.title} />
+
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        {view.curriculumNodeId && <Pill tone="accent">{view.curriculumNodeId}</Pill>}
+        {view.masteryBand && (
+          <Pill tone="success">
+            {view.masteryBand}
+            {view.masteryBandLabel ? `, ${view.masteryBandLabel}` : ""}
+          </Pill>
+        )}
+        {displayTopic && <Pill>{displayTopic}</Pill>}
+        {view.generationStatus && <Pill>{view.generationStatus}</Pill>}
+      </div>
+
+      {view.objective && (
+        <div className="mb-4 rounded-md border border-border bg-background/60 p-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Objective
+          </p>
+          <p className="mt-1 text-sm leading-6">{view.objective}</p>
+        </div>
+      )}
+
+      {view.statement ? (
+        <p className="text-sm leading-6 text-foreground">{view.statement}</p>
+      ) : (
+        <Markdown className="text-muted-foreground">{view.promptFallback}</Markdown>
+      )}
+
+      {(view.topicTags.length > 0 || view.prerequisiteTags.length > 0) && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {view.topicTags.length > 0 && (
+            <div>
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Topic tags
+              </p>
+              <TagList tags={view.topicTags} />
+            </div>
+          )}
+          {view.prerequisiteTags.length > 0 && (
+            <div>
+              <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                Prerequisites
+              </p>
+              <TagList tags={view.prerequisiteTags} />
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ExamplesSection({ view }: { view: PracticeProblemView }) {
+  if (!view.examples.length) return null;
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
+      <SectionHeader icon={BookOpen} eyebrow="Read" title="Examples" />
+      <div className="space-y-3">
+        {view.examples.map((example, index) => (
+          <div key={`${example.input}-${index}`} className="rounded-md border border-border p-3">
+            <p className="text-xs font-medium">Example {index + 1}</p>
+            <dl className="mt-2 space-y-2 text-sm">
+              <div>
+                <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Input
+                </dt>
+                <dd className="mt-1 whitespace-pre-wrap break-words font-mono text-xs">
+                  {example.input}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Output
+                </dt>
+                <dd className="mt-1 whitespace-pre-wrap break-words font-mono text-xs">
+                  {example.output}
+                </dd>
+              </div>
+              {example.explanation && (
+                <div>
+                  <dt className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Why
+                  </dt>
+                  <dd className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {example.explanation}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FunctionSignatureSection({
+  view,
+  language,
+}: {
+  view: PracticeProblemView;
+  language: Lang;
+}) {
+  const languageSignature = getPracticeLanguageSignature(view, language);
+
+  if (!view.functionSignature) return null;
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
+      <SectionHeader icon={Code2} eyebrow="Contract" title="Expected function" />
+      {languageSignature ? (
+        <pre className="overflow-x-auto rounded-md border border-border bg-background p-3 text-xs">
+          <code>{languageSignature.signature}</code>
+        </pre>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          No stored signature for {LANG_LABELS[language]}.
+        </p>
+      )}
+      <dl className="mt-3 grid gap-2 text-xs">
+        <div className="flex flex-wrap gap-2">
+          <dt className="font-mono uppercase tracking-widest text-muted-foreground">Returns</dt>
+          <dd className="font-mono">{view.functionSignature.returnType}</dd>
+        </div>
+        {view.functionSignature.parameters.length > 0 && (
+          <div>
+            <dt className="font-mono uppercase tracking-widest text-muted-foreground">
+              Parameters
+            </dt>
+            <dd className="mt-1 flex flex-wrap gap-1.5">
+              {view.functionSignature.parameters.map((parameter) => (
+                <Pill key={`${parameter.name}-${parameter.type}`}>
+                  {parameter.name}: {parameter.type}
+                </Pill>
+              ))}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </section>
+  );
+}
+
+function VisibleTestsSection({ view }: { view: PracticeProblemView }) {
+  if (!view.visibleTests.length) return null;
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
+      <SectionHeader icon={FlaskConical} eyebrow="Solve" title="Visible tests" />
+      <ul className="space-y-2">
+        {view.visibleTests.map((test, index) => (
+          <li key={`${test.name}-${index}`} className="rounded-md border border-border p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-medium">{test.name}</p>
+              <Pill>{test.theme}</Pill>
+            </div>
+            <dl className="mt-2 grid gap-2 text-xs">
+              <div>
+                <dt className="font-mono uppercase tracking-widest text-muted-foreground">
+                  Arguments
+                </dt>
+                <dd className="mt-1 break-words font-mono">{formatTestValue(test.arguments)}</dd>
+              </div>
+              <div>
+                <dt className="font-mono uppercase tracking-widest text-muted-foreground">
+                  Expected
+                </dt>
+                <dd className="mt-1 break-words font-mono">{formatTestValue(test.expected)}</dd>
+              </div>
+            </dl>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function HintsSection({ view }: { view: PracticeProblemView }) {
+  const [openHints, setOpenHints] = useState<number[]>([]);
+
+  if (!view.hintLadder.length) return null;
+
+  const toggleHint = (order: number) => {
+    setOpenHints((current) =>
+      current.includes(order) ? current.filter((item) => item !== order) : [...current, order],
+    );
+  };
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
+      <SectionHeader icon={Lightbulb} eyebrow="Support" title="Hint ladder" />
+      <div className="space-y-2">
+        {view.hintLadder.map((hint) => {
+          const isOpen = openHints.includes(hint.order);
+          return (
+            <div key={hint.order} className="rounded-md border border-border">
+              <button
+                type="button"
+                onClick={() => toggleHint(hint.order)}
+                className="flex w-full items-center justify-between gap-3 p-3 text-left"
+              >
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium">
+                    Hint {hint.order}: {hint.title}
+                  </span>
+                </span>
+                <span className="shrink-0 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                  {isOpen ? "Hide" : "Show"}
+                </span>
+              </button>
+              {isOpen && (
+                <p className="border-t border-border px-3 py-3 text-xs leading-5 text-muted-foreground">
+                  {hint.body}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ChecklistSection({
+  icon,
+  eyebrow,
+  title,
+  items,
+}: {
+  icon: typeof Target;
+  eyebrow: string;
+  title: string;
+  items: string[];
+}) {
+  if (!items.length) return null;
+
+  const Icon = icon;
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
+      <SectionHeader icon={Icon} eyebrow={eyebrow} title={title} />
+      <ul className="space-y-2">
+        {items.map((item) => (
+          <li key={item} className="flex gap-2 text-sm leading-5">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function Practice() {
   const gen = useServerFn(generatePractice);
   const list = useServerFn(listPractice);
@@ -249,13 +646,13 @@ function Practice() {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-6 md:mb-8 gap-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Targeted reps
+            CodeWise DSA Ladder
           </p>
           <h1 className="mt-2 font-display text-3xl md:text-5xl tracking-tight">Practice</h1>
           <p className="text-sm md:text-base text-muted-foreground mt-2">
             {topicSlug
-              ? `Generating problems for ${selectedTopicName}.`
-              : "Auto-generated problems targeting your weakest topic."}
+              ? `Current target: ${selectedTopicName}.`
+              : "Auto mode starts from your weakest open topic."}
           </p>
         </div>
         {showAllOptions && (
@@ -457,24 +854,27 @@ function PracticeWorkspace({
       {data && data.problems.length > 0 && (
         <div className="grid lg:grid-cols-[260px_1fr] gap-4 md:gap-6 min-w-0">
           <aside className="space-y-2 w-full overflow-hidden min-w-0">
-            {data.problems.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => onSelect(p.id)}
-                className={`w-full min-w-0 text-left rounded-md border p-3 transition ${
-                  activeId === p.id
-                    ? "border-accent bg-accent/10"
-                    : "border-border bg-card hover:border-accent/40"
-                }`}
-              >
-                <div className="text-sm font-medium truncate min-w-0 max-w-full">{p.title}</div>
-                {p.topic_slug && (
-                  <div className="mt-1 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                    {p.topic_slug}
+            {data.problems.map((p) => {
+              const view = buildPracticeProblemView(p);
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => onSelect(p.id)}
+                  className={`w-full min-w-0 text-left rounded-md border p-3 transition ${
+                    activeId === p.id
+                      ? "border-accent bg-accent/10"
+                      : "border-border bg-card hover:border-accent/40"
+                  }`}
+                >
+                  <div className="text-sm font-medium truncate min-w-0 max-w-full">{p.title}</div>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {view.masteryBand && <Pill tone="success">{view.masteryBand}</Pill>}
+                    {view.curriculumNodeId && <Pill tone="accent">{view.curriculumNodeId}</Pill>}
+                    {!view.masteryBand && p.topic_slug && <Pill>{p.topic_slug}</Pill>}
                   </div>
-                )}
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </aside>
 
           {active ? <ProblemWorkspace problem={active} /> : null}
@@ -500,6 +900,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const submitAttemptFn = useServerFn(submitPracticeAttempt);
   const reviewFn = useServerFn(reviewCode);
   const { track } = useTelemetry();
+  const view = buildPracticeProblemView(problem);
 
   useEffect(() => {
     setCode(problem.starter_code || "");
@@ -584,146 +985,171 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   };
 
   return (
-    <article className="space-y-4 min-w-0">
-      <div className="rounded-lg border border-border bg-card p-4 md:p-6">
-        <h2 className="font-display text-2xl mb-1">{problem.title}</h2>
-        {problem.topic_slug && (
-          <span className="text-[11px] font-mono px-2 py-0.5 rounded-sm bg-accent/15 text-accent">
-            {problem.topic_slug}
-          </span>
-        )}
-        <Markdown className="text-muted-foreground mt-4">{problem.prompt}</Markdown>
+    <article className="grid min-w-0 items-start gap-4 md:gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)]">
+      <div className="min-w-0 space-y-4">
+        <WorkflowStrip view={view} />
+        <ProblemBrief problem={problem} view={view} />
+        <ExamplesSection view={view} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <FunctionSignatureSection view={view} language={editorLang} />
+          <VisibleTestsSection view={view} />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <ChecklistSection
+            icon={ListChecks}
+            eyebrow="Limits"
+            title="Constraints"
+            items={view.constraints}
+          />
+          <ChecklistSection
+            icon={BadgeCheck}
+            eyebrow="Adapt"
+            title="Success criteria"
+            items={view.successCriteria}
+          />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <HintsSection key={problem.id} view={view} />
+          <ChecklistSection
+            icon={RouteIcon}
+            eyebrow="Review"
+            title="Hidden-test themes"
+            items={view.hiddenTestThemes}
+          />
+        </div>
       </div>
 
-      <CodeWorkspace
-        value={code}
-        language={editorLang}
-        onChange={setCode}
-        settings={editorSettings}
-        onSettingsChange={setEditorSettings}
-        fullscreen={fullscreen}
-        onFullscreenChange={setFullscreen}
-        resetLabel="Reset to starter code"
-        onReset={() => setCode(problem.starter_code || "")}
-        height="42vh"
-        label="Editor"
-        showLanguageLabel={false}
-        rightControls={
-          <>
-            <select
-              value={editorLang}
-              onChange={(e) => setEditorLang(e.target.value as Lang)}
-              className="rounded-md border border-border bg-input px-2 py-1 text-xs font-mono"
-            >
-              {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
-                <option key={l} value={l}>
-                  {LANG_LABELS[l]}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-1 ml-1 pl-1 border-l border-border">
-              <button
-                onClick={onRun}
-                disabled={running || reviewing}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10 disabled:opacity-50"
+      <div className="min-w-0 space-y-4 xl:sticky xl:top-4">
+        <CodeWorkspace
+          value={code}
+          language={editorLang}
+          onChange={setCode}
+          settings={editorSettings}
+          onSettingsChange={setEditorSettings}
+          fullscreen={fullscreen}
+          onFullscreenChange={setFullscreen}
+          resetLabel="Reset to starter code"
+          onReset={() => setCode(problem.starter_code || "")}
+          height="42vh"
+          label="Editor"
+          showLanguageLabel={false}
+          rightControls={
+            <>
+              <select
+                value={editorLang}
+                onChange={(e) => setEditorLang(e.target.value as Lang)}
+                className="rounded-md border border-border bg-input px-2 py-1 text-xs font-mono"
               >
-                <Play className="size-3" /> {running ? "Running..." : "Run"}
-              </button>
-              <button
-                onClick={onSubmit}
-                disabled={running || reviewing}
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                <Send className="size-3" /> {reviewing ? "Reviewing..." : "Submit"}
-              </button>
-            </div>
-          </>
-        }
-      />
+                {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
+                  <option key={l} value={l}>
+                    {LANG_LABELS[l]}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-1 ml-1 pl-1 border-l border-border">
+                <button
+                  onClick={onRun}
+                  disabled={running || reviewing}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10 disabled:opacity-50"
+                >
+                  <Play className="size-3" /> {running ? "Running..." : "Run"}
+                </button>
+                <button
+                  onClick={onSubmit}
+                  disabled={running || reviewing}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  <Send className="size-3" /> {reviewing ? "Reviewing..." : "Submit"}
+                </button>
+              </div>
+            </>
+          }
+        />
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-            Stdin (optional)
-          </label>
-          <textarea
-            value={stdin}
-            onChange={(e) => setStdin(e.target.value)}
-            rows={4}
-            className="mt-2 w-full rounded-md border border-border bg-input p-2 text-xs font-mono"
-            placeholder="Lines passed to your program's standard input"
-          />
-          {hasVisibleTests(problem) && (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Visible tests run through the function signature. Stdin is used only when a problem
-              has no visible test data.
-            </p>
-          )}
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-              Output
-            </span>
-            {output && (
-              <span
-                className={`text-[10px] font-mono ${output.exit === 0 ? "text-success" : "text-destructive"}`}
-              >
-                exit {output.exit}
-              </span>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+          <div className="rounded-lg border border-border bg-card p-4">
+            <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+              Stdin (optional)
+            </label>
+            <textarea
+              value={stdin}
+              onChange={(e) => setStdin(e.target.value)}
+              rows={4}
+              className="mt-2 w-full rounded-md border border-border bg-input p-2 text-xs font-mono"
+              placeholder="Lines passed to your program's standard input"
+            />
+            {hasVisibleTests(problem) && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Visible tests use the function signature. Stdin is used when no visible test data is
+                stored.
+              </p>
             )}
           </div>
-          {output?.testSummary && (
-            <div className="mb-3 rounded-md border border-border bg-background/60 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-medium">Visible tests</span>
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+                Output
+              </span>
+              {output && (
                 <span
-                  className={`text-[10px] font-mono ${
-                    output.testSummary.status === "passed" ? "text-success" : "text-destructive"
-                  }`}
+                  className={`text-[10px] font-mono ${output.exit === 0 ? "text-success" : "text-destructive"}`}
                 >
-                  {formatExecutionStatus(output.testSummary.status)} | {output.testSummary.passed}/
-                  {output.testSummary.total} passed
+                  exit {output.exit}
                 </span>
-              </div>
-              {output.testResults && output.testResults.length > 0 && (
-                <ul className="mt-2 space-y-2">
-                  {output.testResults.map((result) => (
-                    <li
-                      key={result.id}
-                      className="flex items-start gap-2 rounded-sm border border-border/70 p-2"
-                    >
-                      {result.passed ? (
-                        <CheckCircle2 className="mt-0.5 size-3.5 text-success" />
-                      ) : (
-                        <XCircle className="mt-0.5 size-3.5 text-destructive" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium">{result.name}</p>
-                        {!result.passed && (
-                          <p className="mt-1 text-[11px] text-muted-foreground">
-                            Expected {formatTestValue(result.expected)}, got{" "}
-                            {formatTestValue(result.actual)}
-                          </p>
-                        )}
-                        {result.error && (
-                          <p className="mt-1 text-[11px] text-destructive">{result.error}</p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
               )}
             </div>
-          )}
-          <pre className="text-xs font-mono whitespace-pre-wrap min-h-[80px]">
-            {!output && !running && (
-              <span className="text-muted-foreground">Run your code to see output.</span>
+            {output?.testSummary && (
+              <div className="mb-3 rounded-md border border-border bg-background/60 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-medium">Visible tests</span>
+                  <span
+                    className={`text-[10px] font-mono ${
+                      output.testSummary.status === "passed" ? "text-success" : "text-destructive"
+                    }`}
+                  >
+                    {formatExecutionStatus(output.testSummary.status)} | {output.testSummary.passed}
+                    /{output.testSummary.total} passed
+                  </span>
+                </div>
+                {output.testResults && output.testResults.length > 0 && (
+                  <ul className="mt-2 space-y-2">
+                    {output.testResults.map((result) => (
+                      <li
+                        key={result.id}
+                        className="flex items-start gap-2 rounded-sm border border-border/70 p-2"
+                      >
+                        {result.passed ? (
+                          <CheckCircle2 className="mt-0.5 size-3.5 text-success" />
+                        ) : (
+                          <XCircle className="mt-0.5 size-3.5 text-destructive" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium">{result.name}</p>
+                          {!result.passed && (
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              Expected {formatTestValue(result.expected)}, got{" "}
+                              {formatTestValue(result.actual)}
+                            </p>
+                          )}
+                          {result.error && (
+                            <p className="mt-1 text-[11px] text-destructive">{result.error}</p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
-            {running && <span className="text-muted-foreground animate-pulse">Executing...</span>}
-            {output?.stdout && <span>{output.stdout}</span>}
-            {output?.stderr && <span className="text-destructive">{output.stderr}</span>}
-          </pre>
+            <pre className="text-xs font-mono whitespace-pre-wrap min-h-[80px]">
+              {!output && !running && (
+                <span className="text-muted-foreground">Run your code to see output.</span>
+              )}
+              {running && <span className="text-muted-foreground animate-pulse">Executing...</span>}
+              {output?.stdout && <span>{output.stdout}</span>}
+              {output?.stderr && <span className="text-destructive">{output.stderr}</span>}
+            </pre>
+          </div>
         </div>
       </div>
     </article>

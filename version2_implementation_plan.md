@@ -252,12 +252,26 @@ Session 6 evidence:
 
 ## Day 4: Practice UI Redesign
 
-1. Redesign `src/routes/_authenticated/practice.tsx` around learner workflow clarity: curriculum node, mastery band, prerequisite status, objective, examples, tests, hints, editor, and results.
+1. ✅ Redesign `src/routes/_authenticated/practice.tsx` around learner workflow clarity: curriculum node, mastery band, prerequisite status, objective, examples, tests, hints, editor, and results.
 2. Render structured problem fields instead of one markdown prompt.
 3. Add visible test runner UI with per-test pass/fail output.
 4. Add hint ladder UI that records hint usage events.
 5. Add bridge/preview messaging for manual topics above the learner's mastery.
 6. Browser-check mobile and desktop layouts for text overflow, editor usability, and problem navigation.
+
+Session 1 evidence:
+
+- Added `src/lib/practice-problem-view.ts` as a safe view-model layer for structured `practice_problems` rows, with legacy markdown fallback for older rows.
+- Updated `src/routes/_authenticated/practice.tsx` to show the CodeWise DSA Ladder workflow, curriculum node, mastery band, topic and prerequisite tags, objective, story-free statement, examples, constraints, expected function signature, visible tests, hidden-test themes, hint ladder, success criteria, editor, stdin, and run output.
+- Updated the practice problem list so learners can scan mastery band and curriculum node before opening a problem.
+- Kept the existing run, visible-test execution, hidden-test submission, AI review, telemetry, and navigation flows unchanged.
+- GitNexus impact for `Practice`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `PracticeWorkspace`: LOW risk, 1 direct caller, 1 affected process.
+- GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes.
+- GitNexus impact for `hasVisibleTests`: HIGH risk, 2 direct callers, 3 affected processes. The helper behavior was intentionally left unchanged.
+- GitNexus detect-changes reported CRITICAL risk because the authenticated practice route participates in `Practice`, `PracticeWorkspace`, `onRun`, `onGen`, and `onSubmit` flows. The edit is expected for this session and keeps run, submit, review, and telemetry behavior unchanged.
+- Focused verification: `npx vitest run tests\lib\practice-problem-view.test.ts` passed with 4 tests.
+- Build verification: `npm run build` passed with the existing large-chunk and TanStack unused-import warnings.
 
 ## Day 5: Mastery Analytics
 
