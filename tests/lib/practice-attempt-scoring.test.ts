@@ -59,7 +59,23 @@ describe("summarizePracticeTestResults", () => {
 });
 
 describe("buildConservativePracticeAttemptScore", () => {
-  it("marks visible-pass attempts complete even when hidden checks reduce the score", () => {
+  it("completes visible-only pass attempts without hidden-test penalty", () => {
+    const score = buildConservativePracticeAttemptScore({
+      visible: { total: 2, passed: 2, failed: 0 },
+      hidden: { total: 0, passed: 0, failed: 0 },
+      hasRunnableResults: true,
+    });
+
+    expect(score).toEqual({
+      status: "completed",
+      correctnessScore: 1,
+      visibleScore: 1,
+      hiddenScore: 0,
+      hiddenContribution: 0,
+    });
+  });
+
+  it("lets partial hidden failures reduce mastery without blocking a near-complete pass", () => {
     const score = buildConservativePracticeAttemptScore({
       visible: { total: 2, passed: 2, failed: 0 },
       hidden: { total: 2, passed: 1, failed: 1 },
@@ -75,6 +91,38 @@ describe("buildConservativePracticeAttemptScore", () => {
     });
   });
 
+  it("keeps severe hidden failures below the completion threshold", () => {
+    const score = buildConservativePracticeAttemptScore({
+      visible: { total: 2, passed: 2, failed: 0 },
+      hidden: { total: 2, passed: 0, failed: 2 },
+      hasRunnableResults: true,
+    });
+
+    expect(score).toEqual({
+      status: "failed",
+      correctnessScore: 0.75,
+      visibleScore: 1,
+      hiddenScore: 0,
+      hiddenContribution: 0,
+    });
+  });
+
+  it("keeps hidden passes as a conservative contribution when visible tests pass", () => {
+    const score = buildConservativePracticeAttemptScore({
+      visible: { total: 2, passed: 2, failed: 0 },
+      hidden: { total: 2, passed: 2, failed: 0 },
+      hasRunnableResults: true,
+    });
+
+    expect(score).toEqual({
+      status: "completed",
+      correctnessScore: 1,
+      visibleScore: 1,
+      hiddenScore: 1,
+      hiddenContribution: 0.25,
+    });
+  });
+
   it("does not let hidden passes complete a failed visible attempt", () => {
     const score = buildConservativePracticeAttemptScore({
       visible: { total: 2, passed: 1, failed: 1 },
@@ -84,6 +132,22 @@ describe("buildConservativePracticeAttemptScore", () => {
 
     expect(score.status).toBe("failed");
     expect(score.correctnessScore).toBe(0.625);
+  });
+
+  it("falls back to visible scoring when no hidden tests are stored", () => {
+    const score = buildConservativePracticeAttemptScore({
+      visible: { total: 3, passed: 2, failed: 1 },
+      hidden: { total: 0, passed: 0, failed: 0 },
+      hasRunnableResults: true,
+    });
+
+    expect(score).toEqual({
+      status: "failed",
+      correctnessScore: 0.6667,
+      visibleScore: 0.6667,
+      hiddenScore: 0,
+      hiddenContribution: 0,
+    });
   });
 
   it("returns zero for compile or runtime failures without test payloads", () => {

@@ -361,7 +361,7 @@ Session 6 evidence:
 1. ✅ Add event logging for generation, visible test runs, hidden test checks, hint usage, submissions, completion, and review quality.
 2. ✅ Build derived mastery scoring from correctness, attempts, hint usage, review quality, speed as secondary, and repeat performance.
 3. ✅ Update mastery across the primary topic plus prerequisite topics.
-4. Add conservative hidden-test contribution so hidden tests do not become the sole pass/fail gate.
+4. ✅ Add conservative hidden-test contribution so hidden tests do not become the sole pass/fail gate.
 5. Update dashboard and practice surfaces to show mastery band and next recommended curriculum node.
 6. Add tests for mastery deltas, prerequisite updates, repeated attempts, and spaced review confirmation.
 
@@ -409,6 +409,23 @@ Session 3 evidence:
 - Related analytics verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts` passed with 24 tests.
 - Full verification: `npm test` passed with 192 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+
+Session 4 evidence:
+
+- Updated `src/lib/practice-attempt-scoring.ts` so hidden tests use the existing conservative correctness score to influence both completion and mastery.
+- Visible tests remain the main completion gate: hidden passes cannot complete a failed visible attempt, and hidden failures only matter after visible tests pass.
+- Added a completion threshold of `0.875`, so severe hidden failures keep an attempt failed while partial hidden failures still reduce the mastery signal without becoming a strict all-or-nothing gate.
+- No-hidden-test rows now fall back to visible-only scoring, so beginner problems without hidden coverage can still receive full correctness when all visible tests pass.
+- Added focused tests for visible-only pass attempts, partial hidden failures, severe hidden failures, hidden passes, visible-fail hidden-pass attempts, no-hidden-test fallback, and compile or runtime failures without runnable test payloads.
+- GitNexus impact for `buildConservativePracticeAttemptScore`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `submitPracticeAttempt`: LOW risk, 0 direct callers, 0 affected processes. This session inspected `submitPracticeAttempt` but kept the code change in the scoring module because the submission path already forwards `correctnessScore` and `status` into attempt storage, events, and mastery updates.
+- Focused verification: `npx vitest run tests\lib\practice-attempt-scoring.test.ts` passed with 9 tests.
+- Related mastery verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts` passed with 11 tests.
+- Related analytics verification: `npx vitest run tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts tests\lib\practice-event-model.test.ts` passed with 28 tests.
+- Scoped lint verification: `npx eslint src\lib\practice-attempt-scoring.ts tests\lib\practice-attempt-scoring.test.ts` passed.
+- Full verification: `npm test` passed with 196 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported LOW risk across 4 files and 9 symbols, with 0 affected processes.
 
 ## Day 6: Integration And Reliability
 
