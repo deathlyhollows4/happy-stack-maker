@@ -56,6 +56,17 @@ describe("buildPracticeTestWrapper", () => {
     expect(wrapper.code).not.toContain("export function");
   });
 
+  it("builds a JavaScript wrapper from export default starter code", () => {
+    const wrapper = wrapperFor(
+      "javascript",
+      "export default function countPositive(nums) {\n  return nums.filter((value) => value > 0).length;\n}",
+    );
+
+    expect(wrapper.code).toContain("function countPositive(nums)");
+    expect(wrapper.code).not.toContain("export default");
+    expect(wrapper.code).not.toContain("default function");
+  });
+
   it("builds a Java wrapper with a Main class and typed array test inputs", () => {
     const wrapper = wrapperFor(
       "java",
@@ -66,6 +77,31 @@ describe("buildPracticeTestWrapper", () => {
     expect(wrapper.code).toContain("public class Main");
     expect(wrapper.code).toContain("countPositive(new int[]{-1, 2, 0, 4})");
     expect(wrapper.code).toContain('\\"codewiseTestResults\\"');
+  });
+
+  it("builds a Java wrapper that serializes string arrays as JSON arrays", () => {
+    const wrapper = buildPracticeTestWrapper({
+      language: "java",
+      functionName: "tags",
+      userCode:
+        'public static String[] tags(String value) {\n    return new String[]{value, "ok"};\n  }',
+      testCases: [
+        {
+          id: "visible-1-string-array",
+          name: "string array",
+          input: {
+            arguments: ["go"],
+          },
+          expectedOutput: ["go", "ok"],
+          comparator: "deepEqual",
+          timeoutMs: 3_000,
+          visibility: "visible",
+        },
+      ],
+    });
+
+    expect(wrapper.code).toContain("static String __json(String[] values)");
+    expect(wrapper.code).toContain("items.add(__json(value))");
   });
 
   it("builds a C++ wrapper with vector test inputs", () => {
@@ -90,6 +126,53 @@ describe("buildPracticeTestWrapper", () => {
     expect(wrapper.code).toContain("package main");
     expect(wrapper.code).toContain("countPositive([]int{-1, 2, 0, 4})");
     expect(wrapper.code).toContain('"codewiseTestResults"');
+  });
+
+  it("builds a Go wrapper that can represent a null expected value", () => {
+    const wrapper = buildPracticeTestWrapper({
+      language: "go",
+      functionName: "firstOrNil",
+      userCode: "func firstOrNil(nums []int) any {\n  return nil\n}",
+      testCases: [
+        {
+          id: "visible-1-empty",
+          name: "empty",
+          input: {
+            arguments: [[]],
+          },
+          expectedOutput: null,
+          comparator: "deepEqual",
+          timeoutMs: 3_000,
+          visibility: "visible",
+        },
+      ],
+    });
+
+    expect(wrapper.code).toContain("var expected any = nil");
+  });
+
+  it("rejects stdin-only cases because function wrappers do not consume stdin", () => {
+    expect(() =>
+      buildPracticeTestWrapper({
+        language: "python",
+        functionName: "countPositive",
+        userCode: "def countPositive():\n    return 0",
+        testCases: [
+          {
+            id: "visible-1-stdin",
+            name: "stdin",
+            input: {
+              arguments: [],
+              stdin: "1 2 3",
+            },
+            expectedOutput: 3,
+            comparator: "deepEqual",
+            timeoutMs: 3_000,
+            visibility: "visible",
+          },
+        ],
+      }),
+    ).toThrow("Practice test wrappers require function arguments.");
   });
 
   it("rejects invalid function names before building a wrapper", () => {

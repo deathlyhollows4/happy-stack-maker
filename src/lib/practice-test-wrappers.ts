@@ -45,7 +45,9 @@ function encodeJson(value: unknown): string {
 }
 
 function sanitizeJavaScriptUserCode(userCode: string): string {
-  return userCode.replace(/^\s*export\s+/gm, "");
+  return userCode
+    .replace(/^\s*export\s+default\s+function\s+/gm, "function ")
+    .replace(/^\s*export\s+/gm, "");
 }
 
 function stringLiteral(value: string): string {
@@ -125,6 +127,14 @@ function argsFor(
   literalBuilder: (value: PracticeProblemTestValue) => string,
 ): string {
   return args.map((arg) => literalBuilder(arg)).join(", ");
+}
+
+function assertFunctionWrapperInputs(testCases: PracticeHarnessTestCase[]): void {
+  for (const testCase of testCases) {
+    if (typeof testCase.input.stdin === "string") {
+      throw new Error("Practice test wrappers require function arguments.");
+    }
+  }
 }
 
 const buildPythonWrapper: Builder = ({ functionName, userCode, testCases }) => {
@@ -290,8 +300,16 @@ ${userCode}
     if (value instanceof Number || value instanceof Boolean) return String.valueOf(value);
     if (value instanceof int[]) return Arrays.toString((int[]) value);
     if (value instanceof boolean[]) return Arrays.toString((boolean[]) value);
-    if (value instanceof String[]) return Arrays.toString((String[]) value);
+    if (value instanceof String[]) return __json((String[]) value);
     return "\\"" + __escape(String.valueOf(value)) + "\\"";
+  }
+
+  static String __json(String[] values) {
+    List<String> items = new ArrayList<>();
+    for (String value : values) {
+      items.add(__json(value));
+    }
+    return "[" + String.join(",", items) + "]";
   }
 
   static String __result(String id, String name, String visibility, boolean passed, Object actual, Object expected, String error) {
@@ -391,7 +409,7 @@ const buildGoWrapper: Builder = ({ functionName, userCode, testCases }) => {
       const args = argsFor(testCase.input.arguments, goLiteral);
       const expected = goLiteral(testCase.expectedOutput);
       return `  func() {
-    expected := ${expected}
+    var expected any = ${expected}
     defer func() {
       if err := recover(); err != nil {
         results = append(results, __codewiseResult{ID: ${stringLiteral(testCase.id)}, Name: ${stringLiteral(testCase.name)}, Visibility: ${stringLiteral(testCase.visibility)}, Passed: false, Actual: nil, Expected: expected, Error: fmt.Sprint(err)})
@@ -473,6 +491,7 @@ export function buildPracticeTestWrapper(
 ): PracticeTestWrapper {
   const functionName = assertValidFunctionName(input.functionName);
   const testCases = PracticeHarnessTestCaseListSchema.parse(input.testCases);
+  assertFunctionWrapperInputs(testCases);
 
   return WRAPPER_BUILDERS[input.language]({
     language: input.language,
