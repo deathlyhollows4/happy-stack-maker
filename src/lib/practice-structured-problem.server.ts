@@ -45,6 +45,16 @@ export function getStructuredStarterCode(
   );
 }
 
+export function getStructuredCallableName(
+  problem: StructuredPracticeProblem,
+  language: PracticeProblemLanguage,
+) {
+  return (
+    problem.functionSignature.languageSignatures.find((item) => item.language === language)
+      ?.callableName ?? problem.functionSignature.functionName
+  );
+}
+
 export function formatStructuredPracticePrompt(problem: StructuredPracticeProblem) {
   const examples = problem.examples
     .map((example, index) =>
@@ -74,6 +84,11 @@ export function formatStructuredPracticePrompt(problem: StructuredPracticeProble
     `${problem.functionSignature.functionName}(${problem.functionSignature.parameters
       .map((parameter) => `${parameter.name}: ${parameter.type}`)
       .join(", ")}) -> ${problem.functionSignature.returnType}`,
+    "",
+    "Language callable names",
+    ...problem.functionSignature.languageSignatures.map(
+      (item) => `- ${item.language}: ${item.callableName}`,
+    ),
     "",
     "Visible tests",
     ...problem.visibleTests.map(

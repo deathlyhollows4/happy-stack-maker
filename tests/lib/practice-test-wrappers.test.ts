@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { buildPracticeTestWrapper } from "@/lib/practice-test-wrappers";
 import type { PracticeHarnessTestCase } from "@/lib/practice-test-harness";
-import type { PracticeProblemLanguage } from "@/lib/practice-problem-contract";
+import type {
+  PracticeProblemLanguage,
+  PracticeProblemLanguageSignature,
+} from "@/lib/practice-problem-contract";
 
 const BASE_TEST_CASE: PracticeHarnessTestCase = {
   id: "visible-1-mixed-values",
@@ -149,6 +152,69 @@ describe("buildPracticeTestWrapper", () => {
     });
 
     expect(wrapper.code).toContain("var expected any = nil");
+  });
+
+  it("uses language-specific callable names from structured signatures", () => {
+    const signatures: PracticeProblemLanguageSignature[] = [
+      {
+        language: "python",
+        callableName: "sum_two",
+        signature: "def sum_two(a: int, b: int) -> int:",
+        starterCode: "def sum_two(a, b):\n    return a + b",
+      },
+      {
+        language: "javascript",
+        callableName: "sumTwo",
+        signature: "function sumTwo(a, b) { }",
+        starterCode: "export function sumTwo(a, b) {\n  return a + b;\n}",
+      },
+      {
+        language: "java",
+        callableName: "sumTwo",
+        signature: "public static int sumTwo(int a, int b)",
+        starterCode: "public static int sumTwo(int a, int b) {\n  return a + b;\n}",
+      },
+      {
+        language: "cpp",
+        callableName: "sum_two",
+        signature: "int sum_two(int a, int b)",
+        starterCode: "int sum_two(int a, int b) {\n  return a + b;\n}",
+      },
+      {
+        language: "go",
+        callableName: "SumTwo",
+        signature: "func SumTwo(a int, b int) int",
+        starterCode: "func SumTwo(a int, b int) int {\n  return a + b\n}",
+      },
+    ];
+
+    const wrappers = signatures.map((signature) =>
+      buildPracticeTestWrapper({
+        language: signature.language,
+        functionName: signature.callableName,
+        userCode: signature.starterCode,
+        testCases: [
+          {
+            ...BASE_TEST_CASE,
+            id: `visible-1-${signature.language}`,
+            input: {
+              arguments: [2, 3],
+            },
+            expectedOutput: 5,
+          },
+        ],
+      }),
+    );
+
+    expect(wrappers.find((wrapper) => wrapper.language === "python")?.code).toContain(
+      'sum_two(*__case["arguments"])',
+    );
+    expect(wrappers.find((wrapper) => wrapper.language === "javascript")?.code).toContain(
+      'eval("sumTwo")',
+    );
+    expect(wrappers.find((wrapper) => wrapper.language === "java")?.code).toContain("sumTwo(2, 3)");
+    expect(wrappers.find((wrapper) => wrapper.language === "cpp")?.code).toContain("sum_two(2, 3)");
+    expect(wrappers.find((wrapper) => wrapper.language === "go")?.code).toContain("SumTwo(2, 3)");
   });
 
   it("rejects stdin-only cases because function wrappers do not consume stdin", () => {

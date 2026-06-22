@@ -8,6 +8,7 @@ import {
   buildStructuredPracticeProblemInsert,
   buildStructuredPracticeProblemSchema,
   formatStructuredPracticePrompt,
+  getStructuredCallableName,
   getStructuredStarterCode,
 } from "@/lib/practice-structured-problem.server";
 
@@ -39,27 +40,32 @@ function validProblem(): StructuredPracticeProblem {
       languageSignatures: [
         {
           language: "python",
+          callableName: "sum_two",
           signature: "def sum_two(a: int, b: int) -> int:",
           starterCode: "def sum_two(a: int, b: int) -> int:\n    # TODO: return the sum\n    pass",
         },
         {
           language: "javascript",
+          callableName: "sumTwo",
           signature: "function sumTwo(a, b) { }",
           starterCode: "export function sumTwo(a, b) {\n  // TODO: return the sum\n  return 0;\n}",
         },
         {
           language: "java",
+          callableName: "sumTwo",
           signature: "public static int sumTwo(int a, int b)",
           starterCode:
             "public static int sumTwo(int a, int b) {\n  // TODO: return the sum\n  return 0;\n}",
         },
         {
           language: "cpp",
+          callableName: "sum_two",
           signature: "int sum_two(int a, int b)",
           starterCode: "int sum_two(int a, int b) {\n  // TODO: return the sum\n  return 0;\n}",
         },
         {
           language: "go",
+          callableName: "SumTwo",
           signature: "func SumTwo(a int, b int) int",
           starterCode: "func SumTwo(a int, b int) int {\n\t// TODO: return the sum\n\treturn 0\n}",
         },
@@ -118,6 +124,7 @@ describe("structured practice problem generation helpers", () => {
     const prompt = formatStructuredPracticePrompt(validProblem());
 
     expect(prompt).toContain("Objective: Read small values");
+    expect(prompt).toContain("Language callable names");
     expect(prompt).toContain("Visible tests");
     expect(prompt).toContain("Hidden-test themes");
   });
@@ -139,5 +146,10 @@ describe("structured practice problem generation helpers", () => {
 
   it("selects starter code for the requested language", () => {
     expect(getStructuredStarterCode(validProblem(), "go")).toContain("func SumTwo");
+  });
+
+  it("selects the callable name for the requested language", () => {
+    expect(getStructuredCallableName(validProblem(), "javascript")).toBe("sumTwo");
+    expect(getStructuredCallableName(validProblem(), "go")).toBe("SumTwo");
   });
 });

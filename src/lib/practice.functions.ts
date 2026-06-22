@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getUserPlan, consumeQuota, getPlanQuotas, dayKey } from "@/lib/entitlements.server";
 import { envInput } from "./codewise.utils";
 import { runJsonAiWorkflow } from "@/lib/ai-workflow.server";
@@ -24,8 +25,9 @@ function practiceSystemPrompt() {
     "Do not include markdown, prose outside JSON, or extra keys.",
     "Required fields: contractVersion, curriculumNodeId, title, topicTags, prerequisiteTags, masteryBand, objective, statement, examples, constraints, functionSignature, visibleTests, hiddenTests, hiddenTestThemes, hintLadder, successCriteria.",
     "The statement must be story-free, direct, and focused on the function behavior.",
-    "Generate function signatures and starterCode for python, javascript, java, cpp, and go.",
-    "Visible and hidden tests must use JSON values for arguments and expected.",
+    "Generate function signatures, callableName, and starterCode for python, javascript, java, cpp, and go.",
+    "Each callableName must be the function identifier used by that language's starterCode.",
+    "Visible and hidden tests must use primitive JSON values or flat primitive arrays for arguments and expected.",
     "Every hiddenTestThemes item must match at least one hidden test theme.",
     "Starter code must include TODO comments but no full solution.",
   ].join(" ");
@@ -159,16 +161,18 @@ export const generatePractice = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Something went wrong. Please try again." };
     }
 
-    const { error: hiddenTestsError } = await supabase.from("practice_problem_hidden_tests").insert(
-      buildStructuredPracticeHiddenTestsInsert({
-        userId,
-        practiceProblemId: row.id,
-        problem: parsed,
-      }),
-    );
+    const { error: hiddenTestsError } = await supabaseAdmin
+      .from("practice_problem_hidden_tests")
+      .insert(
+        buildStructuredPracticeHiddenTestsInsert({
+          userId,
+          practiceProblemId: row.id,
+          problem: parsed,
+        }),
+      );
     if (hiddenTestsError) {
       console.error("generatePractice hidden tests insert failed:", hiddenTestsError);
-      await supabase.from("practice_problems").delete().eq("id", row.id).eq("user_id", userId);
+      await supabaseAdmin.from("practice_problems").delete().eq("id", row.id).eq("user_id", userId);
       return { ok: false as const, error: "Something went wrong. Please try again." };
     }
 

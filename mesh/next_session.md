@@ -2,42 +2,61 @@
 
 ## Objective
 
-Implement Day 2, Sessions 5 and 6 from `version2_implementation_plan.md`.
+Review and improve, if needed, the completed implementation from Day 1 Session 1 through Day 3 Session 2 in `version2_implementation_plan.md`.
 
 ## Current Status
 
-- Kepler completed `mesh/tasks/forge-day2-session5-repair.md`.
-- Euclid completed `mesh/tasks/sentinel-day2-session6-coverage.md`.
-- Prime integrated the repair workflow and updated `version2_implementation_plan.md`.
-- Full tests, production build, whitespace check, and GitNexus change detection passed.
+- Prime spawned three Agent Mesh lanes:
+  - @Scout: read-only implementation gap review.
+  - @Forge: tests-only implementation-readiness lane.
+  - @Sentinel: verification and contract-risk review.
+- @Scout found that hidden-test persistence used the authenticated Supabase client even though the migration only grants hidden-test access to `service_role`.
+- @Forge and @Sentinel found that one canonical `functionName` did not match language-specific starter code identifiers.
+- Prime implemented scoped fixes for hidden-test storage, language-specific callable names, wrapper-supported test-value validation, and hint ladder order validation.
+- Focused tests, full tests, and production build passed.
+- Branch `main` is ahead of `origin/main`; do not push without explicit user approval.
 
 ## Commands Run
 
-- `Get-Content` on `implement` and `agent-mesh` skills.
-- `rg` over memory registry for `happy-stack-maker` context.
+- `Get-Content -Raw C:\Users\brawl\.agents\skills\agent-mesh\SKILL.md`
+- `Get-Content -Raw .agents\skills\implement\SKILL.md`
+- `Select-String` over `C:\Users\brawl\.codex\memories\MEMORY.md` for CodeWise context.
+- `git status --short --branch`
 - `tool_search` for multi-agent tooling.
+- `Get-Content` for Agent Mesh references: dispatch patterns, worker summary contract, verification checklist.
+- Spawned @Scout, @Forge, and @Sentinel subagents.
 - `npx gitnexus impact "Function:src/lib/practice.functions.ts:generatePractice" --direction upstream --repo .`
-- `npx prettier --write src/lib/practice.functions.ts src/lib/practice-generation-repair.server.ts tests/lib/practice-generation-repair.test.ts mesh/tasks/forge-day2-session5-repair.md mesh/tasks/sentinel-day2-session6-coverage.md mesh/next_session.md`
-- `npx vitest run tests\lib\practice-generation-repair.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-generation-plan.test.ts`
+- `npx gitnexus impact "Const:src/lib/practice-problem-contract.ts:StructuredPracticeProblemSchema" --direction upstream --repo .`
+- `npx gitnexus impact "Function:src/lib/practice-test-wrappers.ts:buildPracticeTestWrapper" --direction upstream --repo .`
+- `npx gitnexus impact "Function:src/lib/practice.functions.ts:practiceSystemPrompt" --direction upstream --repo .`
+- `npx gitnexus impact "Function:src/lib/practice-structured-problem.server.ts:formatStructuredPracticePrompt" --direction upstream --repo .`
+- `npx prettier --write src\lib\practice-problem-contract.ts src\lib\practice-structured-problem.server.ts src\lib\practice.functions.ts tests\lib\practice-problem-contract.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-test-wrappers.test.ts mesh\next_session.md mesh\tasks\scout-day1-day3-session2-review.md mesh\tasks\forge-day1-day3-session2-improvements.md mesh\tasks\sentinel-day1-day3-session2-verification.md`
+- `npx vitest run tests\lib\practice-problem-contract.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-test-wrappers.test.ts tests\lib\practice-test-harness.test.ts`
 - `npm test`
 - `npm run build`
-- `git diff --check -- src/lib/practice.functions.ts src/lib/practice-generation-repair.server.ts tests/lib/practice-generation-repair.test.ts version2_implementation_plan.md mesh/next_session.md mesh/tasks/forge-day2-session5-repair.md mesh/tasks/sentinel-day2-session6-coverage.md`
+- `git diff --check`
 - `npx gitnexus detect-changes --repo .`
 
 ## Changed Files
 
-- `mesh/tasks/forge-day2-session5-repair.md`
-- `mesh/tasks/sentinel-day2-session6-coverage.md`
 - `mesh/next_session.md`
-- `src/lib/practice-generation-repair.server.ts`
+- `mesh/tasks/scout-day1-day3-session2-review.md`
+- `mesh/tasks/forge-day1-day3-session2-improvements.md`
+- `mesh/tasks/sentinel-day1-day3-session2-verification.md`
+- `src/lib/practice-problem-contract.ts`
+- `src/lib/practice-structured-problem.server.ts`
 - `src/lib/practice.functions.ts`
-- `tests/lib/practice-generation-repair.test.ts`
-- `version2_implementation_plan.md`
+- `tests/lib/practice-problem-contract.test.ts`
+- `tests/lib/practice-structured-problem.test.ts`
+- `tests/lib/practice-test-wrappers.test.ts`
 
 ## Open Risks
 
-- None known.
+- Go remains contract and wrapper-level only until Day 3 later sessions wire execution/editor support.
+- Wrapper tests still mostly inspect generated code strings; executable wrapper fixtures are planned for Day 3 Session 6.
+- Existing untracked workspace artifacts remain unrelated and should not be mixed into commits.
 
 ## Resume Steps
 
-1. Continue with Day 3, Session 1.
+1. Commit the scoped changes without pushing.
+2. Continue with Day 3 Session 3.

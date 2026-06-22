@@ -32,12 +32,23 @@ export const PracticeProblemParameterSchema = z.object({
 
 export const PracticeProblemLanguageSignatureSchema = z.object({
   language: PracticeProblemLanguageSchema,
+  callableName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "Callable name must be a valid identifier."),
   signature: z.string().trim().min(1).max(500),
   starterCode: z.string().trim().min(1).max(5000),
 });
 
 export const PracticeProblemFunctionSignatureSchema = z.object({
-  functionName: z.string().trim().min(1).max(80),
+  functionName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "Function name must be a valid identifier."),
   parameters: z.array(PracticeProblemParameterSchema).min(1).max(6),
   returnType: z.string().trim().min(1).max(120),
   languageSignatures: z.array(PracticeProblemLanguageSignatureSchema).min(1).max(5),
@@ -48,19 +59,19 @@ export type PracticeProblemTestValue =
   | number
   | boolean
   | null
-  | PracticeProblemTestValue[]
-  | { [key: string]: PracticeProblemTestValue };
+  | string[]
+  | number[]
+  | boolean[];
 
-export const PracticeProblemTestValueSchema: z.ZodType<PracticeProblemTestValue> = z.lazy(() =>
-  z.union([
-    z.string(),
-    z.number().finite(),
-    z.boolean(),
-    z.null(),
-    z.array(PracticeProblemTestValueSchema),
-    z.record(PracticeProblemTestValueSchema),
-  ]),
-);
+export const PracticeProblemTestValueSchema: z.ZodType<PracticeProblemTestValue> = z.union([
+  z.string(),
+  z.number().finite(),
+  z.boolean(),
+  z.null(),
+  z.array(z.string()),
+  z.array(z.number().finite()),
+  z.array(z.boolean()),
+]);
 
 export const PracticeProblemTestCaseSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -108,6 +119,14 @@ export const StructuredPracticeProblemSchema = z
       problem.functionSignature.languageSignatures.map((item) => item.language),
     );
 
+    if (signatureLanguages.size !== problem.functionSignature.languageSignatures.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["functionSignature", "languageSignatures"],
+        message: "Language signatures must include each language once.",
+      });
+    }
+
     for (const language of PracticeProblemLanguageSchema.options) {
       if (!signatureLanguages.has(language)) {
         ctx.addIssue({
@@ -136,6 +155,15 @@ export const StructuredPracticeProblemSchema = z
         code: z.ZodIssueCode.custom,
         path: ["hintLadder"],
         message: "Hint order values must be unique.",
+      });
+    }
+
+    const sortedHintOrders = [...hintOrders].sort((a, b) => a - b);
+    if (sortedHintOrders.some((order, index) => order !== index + 1)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["hintLadder"],
+        message: "Hint order values must start at 1 and have no gaps.",
       });
     }
   });
