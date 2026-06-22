@@ -174,12 +174,21 @@ Session 6 evidence:
 
 ## Day 3: Multi-Language Test Harness
 
-1. Define a language-agnostic test case schema with input, expected output, comparator, timeout, and visibility.
+1. ✅ Define a language-agnostic test case schema with input, expected output, comparator, timeout, and visibility.
 2. Add test wrapper builders for Python, JavaScript, C++, Java, and Go.
 3. Extend the existing code execution flow to run visible tests and normalize results across languages.
 4. Generate and store hidden tests too, but mark them as conservative scoring signals.
 5. Add timeout, compile error, runtime error, wrong answer, and unsupported signature normalization.
 6. Add fixture tests for all five languages using simple beginner functions.
+
+Session 1 evidence:
+
+- Added `src/lib/practice-test-harness.ts` as the language-agnostic runtime test schema foundation.
+- Defined strict test-case fields for id, name, input, expected output, comparator, timeout, and visibility.
+- Added timeout bounds with a conservative default of 3000 ms and support for visible and hidden test visibility.
+- Added normalization helpers that convert generated `visibleTests` and `hiddenTests` from the structured problem contract into harness-ready test cases.
+- Added `tests/lib/practice-test-harness.test.ts` covering valid harness cases, generated-test normalization, hidden visibility preservation, missing input rejection, timeout bounds, and extra-field rejection.
+- Verification: `npx prettier --write src/lib/practice-test-harness.ts tests/lib/practice-test-harness.test.ts` passed, and `npx vitest run tests\lib\practice-test-harness.test.ts` passed with 5 tests.
 
 ## Day 4: Practice UI Redesign
 
