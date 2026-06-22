@@ -61,6 +61,16 @@ export interface PracticeProblemView {
   generationStatus: string | null;
 }
 
+export interface PracticeProblemBody {
+  kind: "structured" | "legacy" | "missing";
+  text: string;
+}
+
+export interface PracticeVisibleTestRunInput {
+  functionName: string;
+  visibleTests: PracticeProblemView["visibleTests"];
+}
+
 function parseArray<T>(schema: z.ZodType<T[]>, input: unknown): T[] {
   const result = schema.safeParse(input);
   return result.success ? result.data : [];
@@ -127,4 +137,39 @@ export function getPracticeLanguageSignature(view: PracticeProblemView, language
       (signature) => signature.language === language,
     ) ?? null
   );
+}
+
+export function getPracticeProblemBody(view: PracticeProblemView): PracticeProblemBody {
+  if (view.statement) {
+    return { kind: "structured", text: view.statement };
+  }
+
+  if (!view.isStructured && view.promptFallback.trim()) {
+    return { kind: "legacy", text: view.promptFallback };
+  }
+
+  return {
+    kind: "missing",
+    text: "Problem statement is unavailable. Generate a new problem or try again.",
+  };
+}
+
+export function getPracticeCallableName(view: PracticeProblemView, language: string) {
+  const languageSignature = getPracticeLanguageSignature(view, language);
+  if (languageSignature?.callableName) return languageSignature.callableName;
+  return view.functionSignature?.functionName ?? null;
+}
+
+export function buildPracticeVisibleTestRunInput(
+  view: PracticeProblemView,
+  language: string,
+): PracticeVisibleTestRunInput | undefined {
+  if (!view.visibleTests.length) return undefined;
+  const functionName = getPracticeCallableName(view, language);
+  if (!functionName) return undefined;
+
+  return {
+    functionName,
+    visibleTests: view.visibleTests,
+  };
 }

@@ -253,7 +253,7 @@ Session 6 evidence:
 ## Day 4: Practice UI Redesign
 
 1. ✅ Redesign `src/routes/_authenticated/practice.tsx` around learner workflow clarity: curriculum node, mastery band, prerequisite status, objective, examples, tests, hints, editor, and results.
-2. Render structured problem fields instead of one markdown prompt.
+2. ✅ Render structured problem fields instead of one markdown prompt.
 3. Add visible test runner UI with per-test pass/fail output.
 4. Add hint ladder UI that records hint usage events.
 5. Add bridge/preview messaging for manual topics above the learner's mastery.
@@ -272,6 +272,24 @@ Session 1 evidence:
 - GitNexus detect-changes reported CRITICAL risk because the authenticated practice route participates in `Practice`, `PracticeWorkspace`, `onRun`, `onGen`, and `onSubmit` flows. The edit is expected for this session and keeps run, submit, review, and telemetry behavior unchanged.
 - Focused verification: `npx vitest run tests\lib\practice-problem-view.test.ts` passed with 4 tests.
 - Build verification: `npm run build` passed with the existing large-chunk and TanStack unused-import warnings.
+
+Session 2 evidence:
+
+- Added structured problem body selection to `src/lib/practice-problem-view.ts`, so structured rows render the stored statement and legacy markdown is used only for legacy rows.
+- Added safe missing-statement behavior for incomplete structured rows instead of showing the stored markdown prompt as the primary problem body.
+- Added normalized visible-test run input helpers so the practice route uses parsed structured fields for callable names and visible tests.
+- Updated `src/routes/_authenticated/practice.tsx` to use the normalized view model for body rendering, visible-test execution metadata, and stdin guidance.
+- Added focused tests for structured body rendering, legacy markdown fallback, missing structured statements, and normalized visible-test run input.
+- GitNexus impact for `hasVisibleTests`: HIGH risk, 2 direct callers, 3 affected processes. The helper was replaced by view-model checks with the same visible-test behavior for valid structured rows.
+- GitNexus impact for route `getCallableName`: LOW risk, 1 direct caller, 1 affected process.
+- GitNexus impact for `buildVisibleTestRunInput`: LOW risk, 1 direct caller, 1 affected process.
+- GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes.
+- GitNexus could not resolve newly added Day 4 symbols `buildPracticeProblemView`, `ProblemBrief`, or `VisibleTestsSection`, returning `UNKNOWN` or not found.
+- Focused verification: `npx vitest run tests\lib\practice-problem-view.test.ts` passed with 7 tests.
+- Related verification: `npx vitest run tests\lib\practice-problem-view.test.ts tests\lib\practice-test-execution.test.ts tests\lib\practice-test-harness.test.ts` passed with 23 tests.
+- Full verification: `npm test` passed with 164 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes reported medium risk across 4 files and 7 symbols, affecting 3 practice-related execution flows.
 
 ## Day 5: Mastery Analytics
 

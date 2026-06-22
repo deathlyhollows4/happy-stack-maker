@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPracticeVisibleTestRunInput,
   buildPracticeProblemView,
+  getPracticeProblemBody,
   getPracticeLanguageSignature,
 } from "@/lib/practice-problem-view";
 import { PRACTICE_PROBLEM_CONTRACT_VERSION } from "@/lib/practice-problem-contract";
@@ -108,6 +110,36 @@ describe("practice problem view", () => {
     expect(getPracticeLanguageSignature(view, "ruby")).toBeNull();
   });
 
+  it("builds visible test run input from normalized structured fields", () => {
+    const view = buildPracticeProblemView(structuredProblemRow());
+    const testRun = buildPracticeVisibleTestRunInput(view, "javascript");
+
+    expect(testRun?.functionName).toBe("countPositive");
+    expect(testRun?.visibleTests).toEqual(view.visibleTests);
+  });
+
+  it("uses the structured statement as the problem body", () => {
+    const view = buildPracticeProblemView(structuredProblemRow());
+
+    expect(getPracticeProblemBody(view)).toEqual({
+      kind: "structured",
+      text: "Given a list of integers, return how many values are greater than zero.",
+    });
+  });
+
+  it("does not render stored markdown as the body for incomplete structured rows", () => {
+    const view = buildPracticeProblemView({
+      ...structuredProblemRow(),
+      prompt: "Fallback markdown should stay hidden for structured rows.",
+      statement: null,
+    });
+
+    expect(getPracticeProblemBody(view)).toEqual({
+      kind: "missing",
+      text: "Problem statement is unavailable. Generate a new problem or try again.",
+    });
+  });
+
   it("keeps legacy markdown rows renderable", () => {
     const view = buildPracticeProblemView({
       prompt: "Solve this practice problem.",
@@ -117,6 +149,10 @@ describe("practice problem view", () => {
     expect(view.isStructured).toBe(false);
     expect(view.promptFallback).toBe("Solve this practice problem.");
     expect(view.visibleTests).toEqual([]);
+    expect(getPracticeProblemBody(view)).toEqual({
+      kind: "legacy",
+      text: "Solve this practice problem.",
+    });
   });
 
   it("ignores malformed JSONB fields instead of leaking invalid UI state", () => {

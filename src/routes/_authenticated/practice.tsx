@@ -45,7 +45,9 @@ import {
   type TopicSlug,
 } from "@/lib/topics";
 import {
+  buildPracticeVisibleTestRunInput,
   buildPracticeProblemView,
+  getPracticeProblemBody,
   getPracticeLanguageSignature,
   type PracticeProblemView,
 } from "@/lib/practice-problem-view";
@@ -144,39 +146,6 @@ interface PracticeAttemptResult {
     total: number;
     passed: number;
     failed: number;
-  };
-}
-
-interface PracticeFunctionSignatureView {
-  functionName?: unknown;
-  languageSignatures?: Array<{
-    language?: unknown;
-    callableName?: unknown;
-  }>;
-}
-
-function hasVisibleTests(problem: PracticeProblem) {
-  return Array.isArray(problem.visible_tests) && problem.visible_tests.length > 0;
-}
-
-function getCallableName(problem: PracticeProblem, language: Lang) {
-  const signature = problem.function_signature as PracticeFunctionSignatureView | null | undefined;
-  const languageSignature = signature?.languageSignatures?.find(
-    (item) => item.language === language && typeof item.callableName === "string",
-  );
-  if (typeof languageSignature?.callableName === "string") return languageSignature.callableName;
-  if (typeof signature?.functionName === "string") return signature.functionName;
-  return null;
-}
-
-function buildVisibleTestRunInput(problem: PracticeProblem, language: Lang) {
-  if (!hasVisibleTests(problem)) return undefined;
-  const functionName = getCallableName(problem, language);
-  if (!functionName) return undefined;
-
-  return {
-    functionName,
-    visibleTests: problem.visible_tests,
   };
 }
 
@@ -315,6 +284,7 @@ function WorkflowStrip({ view }: { view: PracticeProblemView }) {
 
 function ProblemBrief({ problem, view }: { problem: PracticeProblem; view: PracticeProblemView }) {
   const displayTopic = getDisplayTopic(problem);
+  const problemBody = getPracticeProblemBody(view);
 
   return (
     <section className="rounded-lg border border-border bg-card p-4 md:p-5">
@@ -341,10 +311,16 @@ function ProblemBrief({ problem, view }: { problem: PracticeProblem; view: Pract
         </div>
       )}
 
-      {view.statement ? (
-        <p className="text-sm leading-6 text-foreground">{view.statement}</p>
+      {problemBody.kind === "legacy" ? (
+        <Markdown className="text-muted-foreground">{problemBody.text}</Markdown>
       ) : (
-        <Markdown className="text-muted-foreground">{view.promptFallback}</Markdown>
+        <p
+          className={`text-sm leading-6 ${
+            problemBody.kind === "missing" ? "text-muted-foreground" : "text-foreground"
+          }`}
+        >
+          {problemBody.text}
+        </p>
       )}
 
       {(view.topicTags.length > 0 || view.prerequisiteTags.length > 0) && (
@@ -921,7 +897,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
           code,
           language: editorLang,
           stdin,
-          testRun: buildVisibleTestRunInput(problem, editorLang),
+          testRun: buildPracticeVisibleTestRunInput(view, editorLang),
           environment: getBillingEnvironment(),
         },
       });
@@ -1078,7 +1054,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
               className="mt-2 w-full rounded-md border border-border bg-input p-2 text-xs font-mono"
               placeholder="Lines passed to your program's standard input"
             />
-            {hasVisibleTests(problem) && (
+            {view.visibleTests.length > 0 && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Visible tests use the function signature. Stdin is used when no visible test data is
                 stored.
