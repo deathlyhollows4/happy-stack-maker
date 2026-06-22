@@ -17,6 +17,8 @@ import {
   buildStructuredPracticeProblemInsert,
   buildStructuredPracticeProblemSchema,
 } from "@/lib/practice-structured-problem.server";
+import { buildPracticeProblemGeneratedEvent } from "@/lib/practice-event-model";
+import { insertPracticeEvent } from "@/lib/practice-event-log.server";
 
 function practiceSystemPrompt() {
   return [
@@ -175,6 +177,25 @@ export const generatePractice = createServerFn({ method: "POST" })
       await supabaseAdmin.from("practice_problems").delete().eq("id", row.id).eq("user_id", userId);
       return { ok: false as const, error: "Something went wrong. Please try again." };
     }
+
+    await insertPracticeEvent({
+      supabase,
+      userId,
+      logContext: "generatePractice",
+      event: buildPracticeProblemGeneratedEvent({
+        practiceProblemId: row.id,
+        topicSlug: row.topic_slug,
+        curriculumNodeId: row.curriculum_node_id,
+        masteryBand: row.mastery_band,
+        language: data.language as PracticeProblemLanguage,
+        requestedTopicSlug: generationPlan.requestedTopicSlug,
+        plannerSource: generationPlan.practicePlan.source,
+        visibleTestCount: parsed.visibleTests.length,
+        hiddenTestCount: parsed.hiddenTests.length,
+        hintCount: parsed.hintLadder.length,
+        hasBridgePreview: Boolean(generationPlan.practicePlan.preview),
+      }),
+    });
 
     return { ok: true as const, problem: row };
   });

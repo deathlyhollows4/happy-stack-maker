@@ -22,6 +22,16 @@ import {
   type PracticeProblemLanguage,
   type PracticeProblemTestCase,
 } from "@/lib/practice-problem-contract";
+import {
+  PracticeReviewQualityInputSchema,
+  buildPracticeAttemptSubmittedEvent,
+  buildPracticeCompletionEvent,
+  buildPracticeHiddenTestCheckEvent,
+  buildPracticeReviewQualityEvent,
+  buildPracticeReviewQualitySignal,
+  type PracticeAttemptEventInput,
+} from "@/lib/practice-event-model";
+import { insertPracticeEvents } from "@/lib/practice-event-log.server";
 
 const PISTON: Record<
   PracticeProblemLanguage,
@@ -50,6 +60,7 @@ const SubmitPracticeAttemptInputSchema = z
     language: PracticeProblemLanguageSchema,
     hintCount: z.number().int().min(0).max(5).default(0),
     startedAt: z.string().datetime().optional(),
+    reviewQuality: PracticeReviewQualityInputSchema.optional(),
     environment: envInput as z.ZodType<PaymentsEnv>,
   })
   .strict();
@@ -111,15 +122,27 @@ async function executePracticeTests(input: {
     };
   }
 
-  const json: any = await res.json();
+  const json = (await res.json()) as {
+    run?: {
+      stdout?: unknown;
+      stderr?: unknown;
+      code?: unknown;
+      signal?: unknown;
+    };
+    compile?: {
+      stderr?: unknown;
+    };
+  };
+  const run = json.run ?? {};
+  const compile = json.compile ?? {};
   return {
     ok: true as const,
     execution: normalizePracticeExecutionResult({
-      stdout: (json?.run?.stdout ?? "") as string,
-      stderr: (json?.run?.stderr ?? "") as string,
-      exitCode: (json?.run?.code ?? 0) as number,
-      runSignal: (json?.run?.signal ?? null) as string | null,
-      compileStderr: (json?.compile?.stderr ?? "") as string,
+      stdout: typeof run.stdout === "string" ? run.stdout : "",
+      stderr: typeof run.stderr === "string" ? run.stderr : "",
+      exitCode: typeof run.code === "number" ? run.code : 0,
+      runSignal: typeof run.signal === "string" ? run.signal : null,
+      compileStderr: typeof compile.stderr === "string" ? compile.stderr : "",
     }),
   };
 }
@@ -142,7 +165,7 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
 
     const { data: problem, error: problemError } = await supabase
       .from("practice_problems")
-      .select("id, function_signature, visible_tests")
+      .select("id, topic_slug, curriculum_node_id, mastery_band, function_signature, visible_tests")
       .eq("id", data.practiceProblemId)
       .single();
     if (problemError || !problem) {
@@ -197,7 +220,12 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       hasRunnableResults: Boolean(execution.execution.testResults),
     });
 
-    const now = new Date().toISOString();
+    const completedAt = new Date();
+    const now = completedAt.toISOString();
+    const speedSeconds = data.startedAt
+      ? Math.max(0, Math.round((completedAt.getTime() - Date.parse(data.startedAt)) / 1000))
+      : null;
+    const reviewQuality = buildPracticeReviewQualitySignal(data.reviewQuality ?? null);
     const { data: attempt, error: attemptError } = await supabase
       .from("practice_attempts")
       .insert({
@@ -212,6 +240,8 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
         hidden_tests_total: hiddenSummary.total,
         correctness_score: score.correctnessScore,
         hint_count: data.hintCount,
+        review_quality_score: reviewQuality.score,
+        speed_seconds: speedSeconds,
         started_at: data.startedAt ?? now,
         completed_at: now,
       })
@@ -222,6 +252,41 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Could not save this attempt. Try again." };
     }
 
+    const attemptEventInput: PracticeAttemptEventInput = {
+      practiceProblemId: data.practiceProblemId,
+      practiceAttemptId: attempt.id,
+      topicSlug: problem.topic_slug,
+      curriculumNodeId: problem.curriculum_node_id,
+      masteryBand: problem.mastery_band,
+      language: data.language,
+      hintCount: data.hintCount,
+      visibleSummary,
+      hiddenSummary,
+      status: score.status,
+      correctnessScore: score.correctnessScore,
+      executionStatus: execution.execution.testSummary.status,
+      speedSeconds,
+      reviewQualityScore: reviewQuality.score,
+    };
+    const analyticsEvents = [
+      buildPracticeHiddenTestCheckEvent(attemptEventInput),
+      buildPracticeAttemptSubmittedEvent(attemptEventInput),
+      buildPracticeReviewQualityEvent({
+        attempt: attemptEventInput,
+        reviewQuality,
+      }),
+    ];
+    if (score.status === "completed") {
+      analyticsEvents.push(buildPracticeCompletionEvent(attemptEventInput));
+    }
+
+    await insertPracticeEvents({
+      supabase,
+      userId,
+      events: analyticsEvents,
+      logContext: "submitPracticeAttempt",
+    });
+
     return {
       ok: true as const,
       attemptId: attempt.id,
@@ -230,5 +295,7 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       visibleSummary,
       hiddenSummary,
       executionStatus: execution.execution.testSummary.status,
+      reviewQualityScore: reviewQuality.score,
+      speedSeconds,
     };
   });

@@ -358,12 +358,25 @@ Session 6 evidence:
 
 ## Day 5: Mastery Analytics
 
-1. Add event logging for generation, visible test runs, hidden test checks, hint usage, submissions, completion, and review quality.
+1. ✅ Add event logging for generation, visible test runs, hidden test checks, hint usage, submissions, completion, and review quality.
 2. Build derived mastery scoring from correctness, attempts, hint usage, review quality, speed as secondary, and repeat performance.
 3. Update mastery across the primary topic plus prerequisite topics.
 4. Add conservative hidden-test contribution so hidden tests do not become the sole pass/fail gate.
 5. Update dashboard and practice surfaces to show mastery band and next recommended curriculum node.
 6. Add tests for mastery deltas, prerequisite updates, repeated attempts, and spaced review confirmation.
+
+Session 1 evidence:
+
+- Extended the practice event contract with typed events for problem generation, visible-test runs, hint reveals, hidden-test checks, submitted attempts, completed problems, and review-quality records.
+- Added `src/lib/practice-event-log.server.ts` so authenticated server functions and route-triggered events share the same Supabase `practice_events` row mapping.
+- `generatePractice` now records a best-effort generation event after the structured problem and hidden tests are stored.
+- `submitPracticeAttempt` now stores speed seconds and review-quality score on `practice_attempts`, then records hidden-check, submission, completion, and review-quality events without storing hidden test content in event payloads.
+- The practice workspace now records visible-test run summaries and includes optional review notes for complexity and edge cases before submit.
+- Added event-model tests covering all Day 5 Session 1 event shapes and review-quality scoring.
+- Focused lint passed for the touched source and test files.
+- Full unit verification: `npm test` passed with 181 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- Browser verification: `$env:CODEWISE_URL='http://127.0.0.1:5177'; npx playwright test tests/e2e/practice-workspace.spec.ts --project=chromium --workers=1` passed with 2 tests.
 
 ## Day 6: Integration And Reliability
 

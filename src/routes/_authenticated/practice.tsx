@@ -64,7 +64,9 @@ import {
 } from "@/lib/practice-run-output-view";
 import {
   buildPracticeHintUsageEvent,
+  buildPracticeVisibleTestRunEvent,
   markPracticeHintRevealed,
+  type PracticeReviewQualityInput,
   type RecordPracticeEventInput,
 } from "@/lib/practice-event-model";
 import type { PracticeProblemHint } from "@/lib/practice-problem-contract";
@@ -132,6 +134,8 @@ interface PracticeAttemptResult {
     passed: number;
     failed: number;
   };
+  reviewQualityScore?: number | null;
+  speedSeconds?: number | null;
 }
 
 function getDisplayTopic(problem: PracticeProblem) {
@@ -544,6 +548,61 @@ function HintsSection({
       <p className="mt-3 text-xs text-muted-foreground">
         {revealedHintOrders.length} of {view.hintLadder.length} hints revealed.
       </p>
+    </section>
+  );
+}
+
+function emptyPracticeReviewQuality(): PracticeReviewQualityInput {
+  return {
+    complexityExplanation: "",
+    edgeCaseExplanation: "",
+  };
+}
+
+function ReviewQualitySection({
+  value,
+  onChange,
+}: {
+  value: PracticeReviewQualityInput;
+  onChange: (value: PracticeReviewQualityInput) => void;
+}) {
+  return (
+    <section className="rounded-lg border border-border bg-card p-4 md:p-5">
+      <SectionHeader icon={BadgeCheck} eyebrow="Review" title="Review notes" />
+      <div className="grid gap-3">
+        <label className="text-xs font-medium">
+          Complexity
+          <textarea
+            value={value.complexityExplanation}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                complexityExplanation: e.target.value,
+              })
+            }
+            maxLength={1200}
+            rows={3}
+            className="mt-1 w-full rounded-md border border-border bg-input p-2 text-xs leading-5"
+            placeholder="Example: O(n) time and O(1) extra space."
+          />
+        </label>
+        <label className="text-xs font-medium">
+          Edge cases
+          <textarea
+            value={value.edgeCaseExplanation}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                edgeCaseExplanation: e.target.value,
+              })
+            }
+            maxLength={1200}
+            rows={3}
+            className="mt-1 w-full rounded-md border border-border bg-input p-2 text-xs leading-5"
+            placeholder="Example: Empty arrays, single item inputs, and repeated values."
+          />
+        </label>
+      </div>
     </section>
   );
 }
@@ -1015,6 +1074,10 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const [editorSettings, setEditorSettings] = useState<EditorSettings>(loadEditorSettings);
   const [fullscreen, setFullscreen] = useState(false);
   const [revealedHintOrders, setRevealedHintOrders] = useState<number[]>([]);
+  const [reviewQuality, setReviewQuality] = useState<PracticeReviewQualityInput>(
+    emptyPracticeReviewQuality,
+  );
+  const [startedAt, setStartedAt] = useState(() => new Date().toISOString());
 
   const runFn = useServerFn(runCode);
   const submitAttemptFn = useServerFn(submitPracticeAttempt);
@@ -1035,16 +1098,31 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
     setEditorLang(lang);
     setOutput(null);
     setRevealedHintOrders([]);
+    setReviewQuality(emptyPracticeReviewQuality());
+    setStartedAt(new Date().toISOString());
   }, [problem.id, problem.starter_code, lang]);
 
-  const trackHintFallback = (event: RecordPracticeEventInput) => {
-    void track("practice_hint_revealed", {
+  const trackPracticeEventFallback = (event: RecordPracticeEventInput) => {
+    void track(event.eventType, {
       practiceProblemId: event.practiceProblemId ?? null,
+      practiceAttemptId: event.practiceAttemptId ?? null,
       topic: event.topicSlug ?? null,
       curriculumNodeId: event.curriculumNodeId ?? null,
       masteryBand: event.masteryBand ?? null,
       ...event.payload,
     });
+  };
+
+  const recordPracticeEventWithFallback = (event: RecordPracticeEventInput) => {
+    void recordPracticeEventFn({ data: event })
+      .then((result) => {
+        const practiceEvent = result as RecordPracticeEventResult;
+        if (!practiceEvent.ok) trackPracticeEventFallback(event);
+      })
+      .catch((error: unknown) => {
+        console.error("recordPracticeEvent failed:", error);
+        trackPracticeEventFallback(event);
+      });
   };
 
   const onHintReveal = (hint: PracticeProblemHint) => {
@@ -1059,15 +1137,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
       revealedHintOrders,
     });
     setRevealedHintOrders(revealState.revealedHintOrders);
-    void recordPracticeEventFn({ data: event })
-      .then((result) => {
-        const practiceEvent = result as RecordPracticeEventResult;
-        if (!practiceEvent.ok) trackHintFallback(event);
-      })
-      .catch((error: unknown) => {
-        console.error("recordPracticeEvent failed:", error);
-        trackHintFallback(event);
-      });
+    recordPracticeEventWithFallback(event);
   };
 
   const onRun = async () => {
@@ -1077,6 +1147,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
     }
     setRunning(true);
     setOutput(null);
+    const runStartedAt = performance.now();
     try {
       const r = await runFn({
         data: {
@@ -1087,6 +1158,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
           environment: getBillingEnvironment(),
         },
       });
+      const durationMs = Math.round(performance.now() - runStartedAt);
       if (!r.ok) {
         toast.error(r.error);
         return;
@@ -1098,6 +1170,19 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
         testResults: r.testResults,
         testSummary: r.testSummary,
       });
+      if (visibleTestRunInput) {
+        recordPracticeEventWithFallback(
+          buildPracticeVisibleTestRunEvent({
+            practiceProblemId: problem.id,
+            topicSlug: problem.topic_slug,
+            view,
+            language: editorLang,
+            testSummary: r.testSummary ?? null,
+            resultCount: r.testResults?.length ?? null,
+            durationMs,
+          }),
+        );
+      }
     } finally {
       setRunning(false);
     }
@@ -1116,6 +1201,8 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
           code,
           language: editorLang,
           hintCount: revealedHintOrders.length,
+          startedAt,
+          reviewQuality,
           environment: getBillingEnvironment(),
         },
       });
@@ -1138,6 +1225,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
         language: editorLang,
         attemptId: attempt.attemptId ?? null,
         correctnessScore: attempt.correctnessScore ?? null,
+        reviewQualityScore: attempt.reviewQualityScore ?? null,
         hiddenTestsPassed: attempt.hiddenSummary?.passed ?? null,
         hiddenTestsTotal: attempt.hiddenSummary?.total ?? null,
       });
@@ -1185,6 +1273,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
             items={view.hiddenTestThemes}
           />
         </div>
+        <ReviewQualitySection value={reviewQuality} onChange={setReviewQuality} />
       </div>
 
       <div className="min-w-0 space-y-4 xl:sticky xl:top-4">
