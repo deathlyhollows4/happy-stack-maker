@@ -15,6 +15,10 @@ import {
   reviewCode,
   submitPracticeAttempt,
 } from "@/lib/codewise.functions";
+import {
+  recordPracticeEvent,
+  type RecordPracticeEventResult,
+} from "@/lib/practice-event.functions";
 import { Markdown } from "@/components/markdown";
 import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
@@ -58,6 +62,12 @@ import {
   type PracticeRunOutputState,
   type PracticeRunOutputTone,
 } from "@/lib/practice-run-output-view";
+import {
+  buildPracticeHintUsageEvent,
+  markPracticeHintRevealed,
+  type RecordPracticeEventInput,
+} from "@/lib/practice-event-model";
+import type { PracticeProblemHint } from "@/lib/practice-problem-contract";
 
 const practiceSearchSchema = z.object({
   topic: z.string().optional(),
@@ -422,15 +432,29 @@ function VisibleTestsSection({ view }: { view: PracticeProblemView }) {
   );
 }
 
-function HintsSection({ view }: { view: PracticeProblemView }) {
+function HintsSection({
+  view,
+  revealedHintOrders,
+  onHintReveal,
+}: {
+  view: PracticeProblemView;
+  revealedHintOrders: number[];
+  onHintReveal: (hint: PracticeProblemHint) => void;
+}) {
   const [openHints, setOpenHints] = useState<number[]>([]);
 
   if (!view.hintLadder.length) return null;
 
-  const toggleHint = (order: number) => {
+  const toggleHint = (hint: PracticeProblemHint) => {
+    const willOpen = !openHints.includes(hint.order);
     setOpenHints((current) =>
-      current.includes(order) ? current.filter((item) => item !== order) : [...current, order],
+      current.includes(hint.order)
+        ? current.filter((item) => item !== hint.order)
+        : [...current, hint.order],
     );
+    if (willOpen && !revealedHintOrders.includes(hint.order)) {
+      onHintReveal(hint);
+    }
   };
 
   return (
@@ -439,11 +463,12 @@ function HintsSection({ view }: { view: PracticeProblemView }) {
       <div className="space-y-2">
         {view.hintLadder.map((hint) => {
           const isOpen = openHints.includes(hint.order);
+          const isRevealed = revealedHintOrders.includes(hint.order);
           return (
             <div key={hint.order} className="rounded-md border border-border">
               <button
                 type="button"
-                onClick={() => toggleHint(hint.order)}
+                onClick={() => toggleHint(hint)}
                 className="flex w-full items-center justify-between gap-3 p-3 text-left"
               >
                 <span className="min-w-0">
@@ -451,8 +476,15 @@ function HintsSection({ view }: { view: PracticeProblemView }) {
                     Hint {hint.order}: {hint.title}
                   </span>
                 </span>
-                <span className="shrink-0 text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                  {isOpen ? "Hide" : "Show"}
+                <span className="flex shrink-0 items-center gap-2">
+                  {isRevealed && (
+                    <span className="hidden font-mono text-[10px] uppercase tracking-widest text-muted-foreground sm:inline">
+                      Revealed
+                    </span>
+                  )}
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {isOpen ? "Hide" : "Show"}
+                  </span>
                 </span>
               </button>
               {isOpen && (
@@ -464,6 +496,9 @@ function HintsSection({ view }: { view: PracticeProblemView }) {
           );
         })}
       </div>
+      <p className="mt-3 text-xs text-muted-foreground">
+        {revealedHintOrders.length} of {view.hintLadder.length} hints revealed.
+      </p>
     </section>
   );
 }
@@ -934,9 +969,11 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const [output, setOutput] = useState<PracticeRunOutput | null>(null);
   const [editorSettings, setEditorSettings] = useState<EditorSettings>(loadEditorSettings);
   const [fullscreen, setFullscreen] = useState(false);
+  const [revealedHintOrders, setRevealedHintOrders] = useState<number[]>([]);
 
   const runFn = useServerFn(runCode);
   const submitAttemptFn = useServerFn(submitPracticeAttempt);
+  const recordPracticeEventFn = useServerFn(recordPracticeEvent);
   const reviewFn = useServerFn(reviewCode);
   const { track } = useTelemetry();
   const view = buildPracticeProblemView(problem);
@@ -952,7 +989,41 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
     setCode(problem.starter_code || "");
     setEditorLang(lang);
     setOutput(null);
+    setRevealedHintOrders([]);
   }, [problem.id, problem.starter_code, lang]);
+
+  const trackHintFallback = (event: RecordPracticeEventInput) => {
+    void track("practice_hint_revealed", {
+      practiceProblemId: event.practiceProblemId ?? null,
+      topic: event.topicSlug ?? null,
+      curriculumNodeId: event.curriculumNodeId ?? null,
+      masteryBand: event.masteryBand ?? null,
+      ...event.payload,
+    });
+  };
+
+  const onHintReveal = (hint: PracticeProblemHint) => {
+    const revealState = markPracticeHintRevealed(revealedHintOrders, hint.order);
+    if (!revealState.shouldRecord) return;
+
+    const event = buildPracticeHintUsageEvent({
+      practiceProblemId: problem.id,
+      topicSlug: problem.topic_slug,
+      view,
+      hint,
+      revealedHintOrders,
+    });
+    setRevealedHintOrders(revealState.revealedHintOrders);
+    void recordPracticeEventFn({ data: event })
+      .then((result) => {
+        const practiceEvent = result as RecordPracticeEventResult;
+        if (!practiceEvent.ok) trackHintFallback(event);
+      })
+      .catch((error: unknown) => {
+        console.error("recordPracticeEvent failed:", error);
+        trackHintFallback(event);
+      });
+  };
 
   const onRun = async () => {
     if (!code.trim()) {
@@ -999,6 +1070,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
           practiceProblemId: problem.id,
           code,
           language: editorLang,
+          hintCount: revealedHintOrders.length,
           environment: getBillingEnvironment(),
         },
       });
@@ -1055,7 +1127,12 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
           />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <HintsSection key={problem.id} view={view} />
+          <HintsSection
+            key={problem.id}
+            view={view}
+            revealedHintOrders={revealedHintOrders}
+            onHintReveal={onHintReveal}
+          />
           <ChecklistSection
             icon={RouteIcon}
             eyebrow="Review"

@@ -255,7 +255,7 @@ Session 6 evidence:
 1. ✅ Redesign `src/routes/_authenticated/practice.tsx` around learner workflow clarity: curriculum node, mastery band, prerequisite status, objective, examples, tests, hints, editor, and results.
 2. ✅ Render structured problem fields instead of one markdown prompt.
 3. ✅ Add visible test runner UI with per-test pass/fail output.
-4. Add hint ladder UI that records hint usage events.
+4. ✅ Add hint ladder UI that records hint usage events.
 5. Add bridge/preview messaging for manual topics above the learner's mastery.
 6. Browser-check mobile and desktop layouts for text overflow, editor usability, and problem navigation.
 
@@ -306,6 +306,21 @@ Session 3 evidence:
 - Scoped lint verification: `npx eslint src\lib\practice-run-output-view.ts tests\lib\practice-run-output-view.test.ts src\routes\_authenticated\practice.tsx` passed.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes with `--scope staged` reported HIGH risk across 4 files and 7 indexed symbols, affecting 8 existing `PracticeWorkspace` flows. The affected scope is expected because the output panel lives inside the authenticated practice workspace.
+
+Session 4 evidence:
+
+- Added `src/lib/practice-event-model.ts` as the typed practice event model for `practice_hint_revealed`, including Zod input validation, hint reveal dedupe, and deterministic hint usage payloads.
+- Added `src/lib/practice-event.functions.ts` with `recordPracticeEvent`, a server-authenticated insert path for the existing `practice_events` table.
+- Updated `src/routes/_authenticated/practice.tsx` so opening a hint records one event per hint, shows revealed hint count in the ladder, falls back to existing telemetry if the event insert fails, and sends revealed hint count into `submitPracticeAttempt`.
+- Added `tests/lib/practice-event-model.test.ts` for hint reveal dedupe, event payload shape, and event input validation.
+- No new migration was required because Day 1 Session 5 already created `practice_events` with RLS, authenticated grants, and indexes. Supabase changelog and RLS docs were checked before using the existing table.
+- GitNexus index was refreshed with `npx gitnexus analyze --force` after degraded keyword search. GitNexus impact for `HintsSection`: HIGH risk, 1 direct caller, 3 affected processes: `ProblemWorkspace`, `PracticeWorkspace`, and `Practice`. GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes. GitNexus impact for `submitPracticeAttempt`: LOW risk, 0 direct callers, 0 affected processes.
+- Focused verification: `npx vitest run tests\lib\practice-event-model.test.ts` passed with 3 tests.
+- Related verification: `npx vitest run tests\lib\practice-problem-view.test.ts tests\lib\practice-run-output-view.test.ts tests\lib\practice-test-execution.test.ts tests\lib\practice-test-harness.test.ts tests\lib\practice-attempt-scoring.test.ts` passed with 34 tests.
+- Full verification: `npm test` passed with 173 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Scoped lint verification: `npx eslint src\lib\practice-event-model.ts src\lib\practice-event.functions.ts tests\lib\practice-event-model.test.ts src\routes\_authenticated\practice.tsx` passed.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported CRITICAL risk across 5 files and 20 indexed symbols, affecting 16 existing practice execution flows. The affected scope is expected because hint event recording and hint-count submission live inside the authenticated practice workspace.
 
 ## Day 5: Mastery Analytics
 
