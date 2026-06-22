@@ -3,7 +3,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 
-export type Lang = "python" | "javascript" | "java" | "cpp";
+export type Lang = "python" | "javascript" | "java" | "cpp" | "go";
 
 export function langExt(l: Lang) {
   return l === "python"
@@ -28,4 +28,5 @@ export const LANG_LABELS: Record<Lang, string> = {
   javascript: "JavaScript",
   java: "Java",
   cpp: "C++",
+  go: "Go",
 };

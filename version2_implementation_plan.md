@@ -176,7 +176,7 @@ Session 6 evidence:
 
 1. ✅ Define a language-agnostic test case schema with input, expected output, comparator, timeout, and visibility.
 2. ✅ Add test wrapper builders for Python, JavaScript, C++, Java, and Go.
-3. Extend the existing code execution flow to run visible tests and normalize results across languages.
+3. ✅ Extend the existing code execution flow to run visible tests and normalize results across languages.
 4. Generate and store hidden tests too, but mark them as conservative scoring signals.
 5. Add timeout, compile error, runtime error, wrong answer, and unsupported signature normalization.
 6. Add fixture tests for all five languages using simple beginner functions.
@@ -199,6 +199,20 @@ Session 2 evidence:
 - Added JavaScript export stripping so generated starter code can run in the current script-style execution path.
 - Added `tests/lib/practice-test-wrappers.test.ts` covering all five language builders and invalid function-name rejection.
 - Verification: `npx prettier --write src/lib/practice-test-wrappers.ts tests/lib/practice-test-wrappers.test.ts` passed, and `npx vitest run tests\lib\practice-test-wrappers.test.ts tests\lib\practice-test-harness.test.ts` passed with 11 tests.
+
+Session 3 evidence:
+
+- Added `src/lib/practice-test-execution.ts` as the pure bridge between stored visible tests, wrapper generation, and normalized execution results.
+- Extended `runCode` so practice problems can send `testRun` metadata, wrap user code with visible tests, execute through Piston, and return `testResults` plus `testSummary` while preserving raw stdin execution.
+- Added Go to the shared language constants, editor labels, review defaults, and code execution runtime mapping.
+- Updated the practice UI to send visible tests when available and render per-test pass/fail output, expected values, actual values, and runtime errors.
+- Verified Piston currently exposes Go as language `go` version `1.16.2`.
+- GitNexus impact for `runCode`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes: `PracticeWorkspace` and `Practice`.
+- GitNexus impact for `langExt`: HIGH risk because it feeds the shared editor across practice, review, submission detail, and share pages. The edit stayed minimal: add Go to the language union and label map while keeping the existing C++ editor extension fallback.
+- GitNexus impact for `Review`: LOW risk, 0 direct callers, 0 affected processes. GitNexus impact for `LANGS`: LOW risk, 0 direct callers, 0 affected processes.
+- Focused verification: `npx vitest run tests\lib\practice-test-execution.test.ts tests\lib\practice-test-wrappers.test.ts tests\lib\practice-test-harness.test.ts tests\lib\review-constants.test.ts` passed with 44 tests.
+- Build verification: `npm run build` passed with the existing large-chunk and TanStack unused-import warnings.
 
 ## Day 4: Practice UI Redesign
 

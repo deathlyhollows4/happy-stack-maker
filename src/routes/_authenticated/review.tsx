@@ -31,6 +31,7 @@ const DEFAULTS: Record<Lang, string> = {
   javascript: `function twoSum(nums, target) {\n  for (let i = 0; i < nums.length; i++) {\n    for (let j = 0; j < nums.length; j++) {\n      if (nums[i] + nums[j] === target) return [i, j];\n    }\n  }\n}\n`,
   java: `int[] twoSum(int[] nums, int target) {\n  for (int i=0;i<nums.length;i++)\n    for (int j=0;j<nums.length;j++)\n      if (nums[i]+nums[j]==target) return new int[]{i,j};\n  return new int[]{};\n}\n`,
   cpp: `vector<int> twoSum(vector<int>& nums, int target) {\n  for (int i=0;i<nums.size();i++)\n    for (int j=0;j<nums.size();j++)\n      if (nums[i]+nums[j]==target) return {i,j};\n  return {};\n}\n`,
+  go: `func twoSum(nums []int, target int) []int {\n  for i := 0; i < len(nums); i++ {\n    for j := 0; j < len(nums); j++ {\n      if nums[i]+nums[j] == target {\n        return []int{i, j}\n      }\n    }\n  }\n  return []int{}\n}\n`,
 };
 
 function Review() {
@@ -83,6 +84,7 @@ function Review() {
       c: "cpp",
       h: "cpp",
       hpp: "cpp",
+      go: "go",
     };
     if (ext && map[ext]) setLang(map[ext]);
     if (fileInputRef.current) fileInputRef.current.value = "";

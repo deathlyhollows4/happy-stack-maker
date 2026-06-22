@@ -12,15 +12,16 @@ import {
 // ---------------------------------------------------------------------------
 
 describe("LANGS", () => {
-  it("contains exactly 4 supported languages", () => {
-    expect(LANGS).toHaveLength(4);
+  it("contains exactly 5 supported languages", () => {
+    expect(LANGS).toHaveLength(5);
   });
 
-  it("includes python, javascript, java, and cpp", () => {
+  it("includes python, javascript, java, cpp, and go", () => {
     expect(LANGS).toContain("python");
     expect(LANGS).toContain("javascript");
     expect(LANGS).toContain("java");
     expect(LANGS).toContain("cpp");
+    expect(LANGS).toContain("go");
   });
 });
 

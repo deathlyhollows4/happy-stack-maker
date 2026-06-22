@@ -6,7 +6,7 @@ export { VALID_TOPIC_SLUGS } from "@/lib/topics";
 // Supported languages
 // ---------------------------------------------------------------------------
 
-export const LANGS = ["python", "javascript", "java", "cpp"] as const;
+export const LANGS = ["python", "javascript", "java", "cpp", "go"] as const;
 
 // ---------------------------------------------------------------------------
 // Zod schemas for AI review response

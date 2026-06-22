@@ -15,7 +15,7 @@ import { useTelemetry } from "@/hooks/use-telemetry";
 import { runCode } from "@/lib/code-exec.functions";
 import { getBillingEnvironment } from "@/lib/payments";
 import { toast } from "sonner";
-import { Sparkles, ArrowLeft, Play, Send } from "lucide-react";
+import { Sparkles, ArrowLeft, Play, Send, CheckCircle2, XCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   normalizeTopicSlug,
@@ -44,6 +44,8 @@ interface PracticeProblem {
   starter_code: string | null;
   language: string | null;
   topic_slug: string | null;
+  function_signature?: unknown;
+  visible_tests?: unknown;
 }
 
 interface PracticeData {
@@ -54,6 +56,71 @@ interface GeneratePracticeResult {
   ok: boolean;
   error?: string;
   problem?: PracticeProblem;
+}
+
+interface PracticeTestRunResultView {
+  id: string;
+  name: string;
+  visibility: "visible" | "hidden";
+  passed: boolean;
+  actual?: unknown;
+  expected?: unknown;
+  error?: string | null;
+}
+
+interface PracticeRunOutput {
+  stdout: string;
+  stderr: string;
+  exit: number;
+  testResults?: PracticeTestRunResultView[];
+  testSummary?: {
+    total: number;
+    passed: number;
+    failed: number;
+    status: "passed" | "failed" | "compile_error" | "runtime_error" | "no_tests";
+  };
+}
+
+interface PracticeFunctionSignatureView {
+  functionName?: unknown;
+  languageSignatures?: Array<{
+    language?: unknown;
+    callableName?: unknown;
+  }>;
+}
+
+function hasVisibleTests(problem: PracticeProblem) {
+  return Array.isArray(problem.visible_tests) && problem.visible_tests.length > 0;
+}
+
+function getCallableName(problem: PracticeProblem, language: Lang) {
+  const signature = problem.function_signature as PracticeFunctionSignatureView | null | undefined;
+  const languageSignature = signature?.languageSignatures?.find(
+    (item) => item.language === language && typeof item.callableName === "string",
+  );
+  if (typeof languageSignature?.callableName === "string") return languageSignature.callableName;
+  if (typeof signature?.functionName === "string") return signature.functionName;
+  return null;
+}
+
+function buildVisibleTestRunInput(problem: PracticeProblem, language: Lang) {
+  if (!hasVisibleTests(problem)) return undefined;
+  const functionName = getCallableName(problem, language);
+  if (!functionName) return undefined;
+
+  return {
+    functionName,
+    visibleTests: problem.visible_tests,
+  };
+}
+
+function formatTestValue(value: unknown) {
+  if (typeof value === "undefined") return "undefined";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
 
 function Practice() {
@@ -372,9 +439,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const [running, setRunning] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [editorLang, setEditorLang] = useState<Lang>(lang);
-  const [output, setOutput] = useState<{ stdout: string; stderr: string; exit: number } | null>(
-    null,
-  );
+  const [output, setOutput] = useState<PracticeRunOutput | null>(null);
   const [editorSettings, setEditorSettings] = useState<EditorSettings>(loadEditorSettings);
   const [fullscreen, setFullscreen] = useState(false);
 
@@ -397,7 +462,13 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
     setOutput(null);
     try {
       const r = await runFn({
-        data: { code, language: editorLang, stdin, environment: getBillingEnvironment() },
+        data: {
+          code,
+          language: editorLang,
+          stdin,
+          testRun: buildVisibleTestRunInput(problem, editorLang),
+          environment: getBillingEnvironment(),
+        },
       });
       if (!r.ok) {
         toast.error(r.error);
@@ -407,6 +478,8 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
         stdout: r.stdout || r.compileStderr || "",
         stderr: r.stderr || "",
         exit: r.exitCode ?? 0,
+        testResults: r.testResults,
+        testSummary: r.testSummary,
       });
     } finally {
       setRunning(false);
@@ -504,6 +577,12 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
             className="mt-2 w-full rounded-md border border-border bg-input p-2 text-xs font-mono"
             placeholder="Lines passed to your program's standard input"
           />
+          {hasVisibleTests(problem) && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Visible tests run through the function signature. Stdin is used only when a problem
+              has no visible test data.
+            </p>
+          )}
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center justify-between mb-2">
@@ -518,6 +597,48 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
               </span>
             )}
           </div>
+          {output?.testSummary && (
+            <div className="mb-3 rounded-md border border-border bg-background/60 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-medium">Visible tests</span>
+                <span
+                  className={`text-[10px] font-mono ${
+                    output.testSummary.status === "passed" ? "text-success" : "text-destructive"
+                  }`}
+                >
+                  {output.testSummary.passed}/{output.testSummary.total} passed
+                </span>
+              </div>
+              {output.testResults && output.testResults.length > 0 && (
+                <ul className="mt-2 space-y-2">
+                  {output.testResults.map((result) => (
+                    <li
+                      key={result.id}
+                      className="flex items-start gap-2 rounded-sm border border-border/70 p-2"
+                    >
+                      {result.passed ? (
+                        <CheckCircle2 className="mt-0.5 size-3.5 text-success" />
+                      ) : (
+                        <XCircle className="mt-0.5 size-3.5 text-destructive" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium">{result.name}</p>
+                        {!result.passed && (
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Expected {formatTestValue(result.expected)}, got{" "}
+                            {formatTestValue(result.actual)}
+                          </p>
+                        )}
+                        {result.error && (
+                          <p className="mt-1 text-[11px] text-destructive">{result.error}</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           <pre className="text-xs font-mono whitespace-pre-wrap min-h-[80px]">
             {!output && !running && (
               <span className="text-muted-foreground">Run your code to see output.</span>
