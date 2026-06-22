@@ -360,7 +360,7 @@ Session 6 evidence:
 
 1. ✅ Add event logging for generation, visible test runs, hidden test checks, hint usage, submissions, completion, and review quality.
 2. ✅ Build derived mastery scoring from correctness, attempts, hint usage, review quality, speed as secondary, and repeat performance.
-3. Update mastery across the primary topic plus prerequisite topics.
+3. ✅ Update mastery across the primary topic plus prerequisite topics.
 4. Add conservative hidden-test contribution so hidden tests do not become the sole pass/fail gate.
 5. Update dashboard and practice surfaces to show mastery band and next recommended curriculum node.
 6. Add tests for mastery deltas, prerequisite updates, repeated attempts, and spaced review confirmation.
@@ -393,6 +393,21 @@ Session 2 evidence:
 - Related verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts` passed with 20 tests.
 - Scoped lint verification: `npx eslint src\lib\practice-mastery-scoring.ts src\lib\practice-mastery-progress.server.ts src\lib\practice-attempt.functions.ts tests\lib\practice-mastery-scoring.test.ts` passed.
 - Full verification: `npm test` passed with 188 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+
+Session 3 evidence:
+
+- Extended `src/lib/practice-mastery-scoring.ts` with a bounded mastery-delta multiplier so prerequisite updates reuse the same derived mastery score instead of creating a second scoring model.
+- Extended `src/lib/practice-mastery-progress.server.ts` so a submitted practice attempt updates the stored primary topic first, then resolves prerequisite topics from the curriculum node and writes smaller prerequisite progress updates.
+- Prerequisite progress uses a 35% mastery-delta multiplier, skips duplicate primary-topic writes, normalizes topic slugs before upsert, and creates a conservative row when a prerequisite topic has no existing progress row.
+- Updated `submitPracticeAttempt` to pass `curriculum_node_id` into the progress writer and return primary mastery updates plus prerequisite mastery updates in the response payload.
+- Supabase changelog was checked again; no new schema or migration is required because this session reuses the existing `progress` table and authenticated RLS-backed client writes.
+- GitNexus impact for `submitPracticeAttempt`: LOW risk, 0 direct callers, 0 affected processes.
+- GitNexus did not find indexed symbols for `updatePracticeMasteryProgress` or `buildPracticeMasteryProgressUpdate`, so their indexed blast radius was unavailable.
+- Focused verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts` passed with 11 tests.
+- Scoped lint verification: `npx eslint src\lib\practice-mastery-scoring.ts src\lib\practice-mastery-progress.server.ts src\lib\practice-attempt.functions.ts tests\lib\practice-mastery-progress.test.ts` passed.
+- Related analytics verification: `npx vitest run tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts` passed with 24 tests.
+- Full verification: `npm test` passed with 192 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 
 ## Day 6: Integration And Reliability

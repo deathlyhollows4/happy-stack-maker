@@ -25,6 +25,10 @@ export interface BuildPracticeMasterySignalInput {
   now?: Date;
 }
 
+export interface BuildPracticeMasteryProgressUpdateInput extends BuildPracticeMasterySignalInput {
+  masteryDeltaMultiplier?: number;
+}
+
 export interface PracticeMasterySignalComponents {
   correctness: number;
   attempts: number;
@@ -180,6 +184,27 @@ function buildMasteryDelta(input: {
   return -roundScore(Math.min(0.03, 0.005 + (0.5 - input.correctnessScore) * 0.05));
 }
 
+function normalizeMasteryDeltaMultiplier(multiplier: number | null | undefined) {
+  if (multiplier === null || multiplier === undefined) return 1;
+  if (!Number.isFinite(multiplier)) return 1;
+  return clamp(multiplier, 0, 1);
+}
+
+function scalePracticeMasterySignal(
+  signal: PracticeMasterySignal,
+  masteryDeltaMultiplier: number | null | undefined,
+): PracticeMasterySignal {
+  const multiplier = normalizeMasteryDeltaMultiplier(masteryDeltaMultiplier);
+  if (multiplier === 1) return signal;
+
+  const delta = roundScore(signal.delta * multiplier);
+  return {
+    ...signal,
+    delta,
+    nextMastery: roundScore(clamp01(signal.previousMastery + delta)),
+  };
+}
+
 function buildStability(input: BuildPracticeMasterySignalInput, signal: PracticeMasterySignal) {
   const previousStability = input.previousProgress?.stability ?? 2.5;
   if (input.status === "completed") {
@@ -247,10 +272,13 @@ export function buildPracticeMasterySignal(
 }
 
 export function buildPracticeMasteryProgressUpdate(
-  input: BuildPracticeMasterySignalInput,
+  input: BuildPracticeMasteryProgressUpdateInput,
 ): PracticeMasteryProgressResult {
   const now = input.now ?? new Date();
-  const signal = buildPracticeMasterySignal({ ...input, now });
+  const signal = scalePracticeMasterySignal(
+    buildPracticeMasterySignal({ ...input, now }),
+    input.masteryDeltaMultiplier,
+  );
   const stability = buildStability(input, signal);
   const difficulty = buildDifficulty(input, signal);
   const intervalDays = input.status === "completed" ? Math.max(1, Math.round(stability)) : 1;

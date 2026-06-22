@@ -305,6 +305,7 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
       supabase,
       userId,
       topicSlug: problem.topic_slug,
+      curriculumNodeId: problem.curriculum_node_id,
       correctnessScore: score.correctnessScore,
       status: score.status,
       failedAttemptCount: (previousFailedAttemptCount ?? 0) + (score.status === "failed" ? 1 : 0),
@@ -316,6 +317,11 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
     });
     if (!masteryProgress.ok) {
       console.error("submitPracticeAttempt mastery update failed:", masteryProgress.error);
+    } else if (masteryProgress.prerequisiteErrors.length > 0) {
+      console.error(
+        "submitPracticeAttempt prerequisite mastery updates failed:",
+        masteryProgress.prerequisiteErrors,
+      );
     }
     const masteryUpdate =
       masteryProgress.ok && !masteryProgress.skipped
@@ -326,6 +332,14 @@ export const submitPracticeAttempt = createServerFn({ method: "POST" })
             delta: masteryProgress.result.signal.delta,
             signalScore: masteryProgress.result.signal.signalScore,
             failedAttemptCount: masteryProgress.result.signal.failedAttemptCount,
+            prerequisiteUpdates: masteryProgress.prerequisiteUpdates.map((update) => ({
+              topicSlug: update.topicSlug,
+              previousMastery: update.result.signal.previousMastery,
+              nextMastery: update.result.signal.nextMastery,
+              delta: update.result.signal.delta,
+              signalScore: update.result.signal.signalScore,
+              failedAttemptCount: update.result.signal.failedAttemptCount,
+            })),
           }
         : null;
 
