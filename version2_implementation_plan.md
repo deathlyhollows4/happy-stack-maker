@@ -254,7 +254,7 @@ Session 6 evidence:
 
 1. ✅ Redesign `src/routes/_authenticated/practice.tsx` around learner workflow clarity: curriculum node, mastery band, prerequisite status, objective, examples, tests, hints, editor, and results.
 2. ✅ Render structured problem fields instead of one markdown prompt.
-3. Add visible test runner UI with per-test pass/fail output.
+3. ✅ Add visible test runner UI with per-test pass/fail output.
 4. Add hint ladder UI that records hint usage events.
 5. Add bridge/preview messaging for manual topics above the learner's mastery.
 6. Browser-check mobile and desktop layouts for text overflow, editor usability, and problem navigation.
@@ -290,6 +290,22 @@ Session 2 evidence:
 - Full verification: `npm test` passed with 164 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes reported medium risk across 4 files and 7 symbols, affecting 3 practice-related execution flows.
+
+Session 3 evidence:
+
+- Added `src/lib/practice-run-output-view.ts` as a pure visible-test runner view layer for idle, running, visible-test, unsupported-signature, and stdin fallback states.
+- Updated `src/routes/_authenticated/practice.tsx` with a dedicated output panel that shows visible-test status, per-test pass/fail rows, expected values, actual values, errors, and cleaned program output without raw harness JSON.
+- Updated the run button and stdin guidance so learners can see whether the current language will run visible tests or fall back to stdin because the function signature is unsupported.
+- Added `tests/lib/practice-run-output-view.test.ts` covering status formatting, harness-payload stripping, idle state, per-test rows, unsupported-signature errors, and stdin fallback output.
+- GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes: `PracticeWorkspace` and `Practice`.
+- GitNexus impact for `formatTestValue`: LOW risk, 1 direct caller, 2 affected processes: `PracticeWorkspace` and `Practice`.
+- GitNexus impact for `formatExecutionStatus`: LOW risk, 1 direct caller, 2 affected processes: `PracticeWorkspace` and `Practice`.
+- Focused verification: `npx vitest run tests\lib\practice-run-output-view.test.ts` passed with 6 tests.
+- Related verification: `npx vitest run tests\lib\practice-problem-view.test.ts tests\lib\practice-test-execution.test.ts tests\lib\practice-test-harness.test.ts` passed with 23 tests.
+- Full verification: `npm test` passed with 170 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Scoped lint verification: `npx eslint src\lib\practice-run-output-view.ts tests\lib\practice-run-output-view.test.ts src\routes\_authenticated\practice.tsx` passed.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported HIGH risk across 4 files and 7 indexed symbols, affecting 8 existing `PracticeWorkspace` flows. The affected scope is expected because the output panel lives inside the authenticated practice workspace.
 
 ## Day 5: Mastery Analytics
 

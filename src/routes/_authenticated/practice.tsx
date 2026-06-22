@@ -51,6 +51,13 @@ import {
   getPracticeLanguageSignature,
   type PracticeProblemView,
 } from "@/lib/practice-problem-view";
+import {
+  buildPracticeRunOutputState,
+  formatPracticeTestValue,
+  type PracticeRunOutput,
+  type PracticeRunOutputState,
+  type PracticeRunOutputTone,
+} from "@/lib/practice-run-output-view";
 
 const practiceSearchSchema = z.object({
   topic: z.string().optional(),
@@ -98,39 +105,6 @@ interface GeneratePracticeResult {
   problem?: PracticeProblem;
 }
 
-interface PracticeTestRunResultView {
-  id: string;
-  name: string;
-  visibility: "visible" | "hidden";
-  passed: boolean;
-  actual?: unknown;
-  expected?: unknown;
-  error?: string | null;
-}
-
-type PracticeExecutionStatusView =
-  | "passed"
-  | "failed"
-  | "wrong_answer"
-  | "compile_error"
-  | "runtime_error"
-  | "timeout"
-  | "unsupported_signature"
-  | "no_tests";
-
-interface PracticeRunOutput {
-  stdout: string;
-  stderr: string;
-  exit: number;
-  testResults?: PracticeTestRunResultView[];
-  testSummary?: {
-    total: number;
-    passed: number;
-    failed: number;
-    status: PracticeExecutionStatusView;
-  };
-}
-
 interface PracticeAttemptResult {
   ok: boolean;
   error?: string;
@@ -147,35 +121,6 @@ interface PracticeAttemptResult {
     passed: number;
     failed: number;
   };
-}
-
-function formatTestValue(value: unknown) {
-  if (typeof value === "undefined") return "undefined";
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
-}
-
-function formatExecutionStatus(status: PracticeExecutionStatusView) {
-  switch (status) {
-    case "passed":
-      return "Passed";
-    case "wrong_answer":
-    case "failed":
-      return "Wrong answer";
-    case "compile_error":
-      return "Compile error";
-    case "runtime_error":
-      return "Runtime error";
-    case "timeout":
-      return "Time limit exceeded";
-    case "unsupported_signature":
-      return "Unsupported signature";
-    case "no_tests":
-      return "No tests";
-  }
 }
 
 function getDisplayTopic(problem: PracticeProblem) {
@@ -457,13 +402,17 @@ function VisibleTestsSection({ view }: { view: PracticeProblemView }) {
                 <dt className="font-mono uppercase tracking-widest text-muted-foreground">
                   Arguments
                 </dt>
-                <dd className="mt-1 break-words font-mono">{formatTestValue(test.arguments)}</dd>
+                <dd className="mt-1 break-words font-mono">
+                  {formatPracticeTestValue(test.arguments)}
+                </dd>
               </div>
               <div>
                 <dt className="font-mono uppercase tracking-widest text-muted-foreground">
                   Expected
                 </dt>
-                <dd className="mt-1 break-words font-mono">{formatTestValue(test.expected)}</dd>
+                <dd className="mt-1 break-words font-mono">
+                  {formatPracticeTestValue(test.expected)}
+                </dd>
               </div>
             </dl>
           </li>
@@ -860,6 +809,120 @@ function PracticeWorkspace({
   );
 }
 
+function getRunOutputToneClass(tone: PracticeRunOutputTone) {
+  switch (tone) {
+    case "success":
+      return "border-success/30 bg-success/10 text-success";
+    case "destructive":
+      return "border-destructive/30 bg-destructive/10 text-destructive";
+    case "muted":
+      return "border-border bg-background text-muted-foreground";
+  }
+}
+
+function PracticeRunOutputPanel({ state }: { state: PracticeRunOutputState }) {
+  const toneClass = getRunOutputToneClass(state.tone);
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Output
+          </p>
+          <h3 className="text-sm font-semibold leading-snug">{state.title}</h3>
+          <p className="mt-1 text-xs text-muted-foreground">{state.statusDetail}</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {state.exitCode !== null && (
+            <span className="font-mono text-[10px] text-muted-foreground">
+              exit {state.exitCode}
+            </span>
+          )}
+          <span
+            className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-mono uppercase tracking-widest ${toneClass}`}
+          >
+            {state.statusLabel}
+          </span>
+        </div>
+      </div>
+
+      {state.mode === "visible-tests" && state.testResults.length > 0 && (
+        <ul className="space-y-2">
+          {state.testResults.map((result) => (
+            <li
+              key={result.id}
+              className={`rounded-md border p-3 ${
+                result.passed
+                  ? "border-success/25 bg-success/5"
+                  : "border-destructive/25 bg-destructive/5"
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex min-w-0 items-start gap-2">
+                  {result.passed ? (
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
+                  ) : (
+                    <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                  )}
+                  <p className="min-w-0 break-words text-xs font-medium">{result.name}</p>
+                </div>
+                <span
+                  className={`font-mono text-[10px] uppercase tracking-widest ${
+                    result.passed ? "text-success" : "text-destructive"
+                  }`}
+                >
+                  {result.passed ? "Passed" : "Failed"}
+                </span>
+              </div>
+              <dl className="mt-3 grid gap-2 text-[11px] sm:grid-cols-2">
+                <div className="min-w-0 rounded-sm border border-border/70 bg-background/70 p-2">
+                  <dt className="font-mono uppercase tracking-widest text-muted-foreground">
+                    Expected
+                  </dt>
+                  <dd className="mt-1 break-words font-mono">
+                    {formatPracticeTestValue(result.expected)}
+                  </dd>
+                </div>
+                <div className="min-w-0 rounded-sm border border-border/70 bg-background/70 p-2">
+                  <dt className="font-mono uppercase tracking-widest text-muted-foreground">
+                    Actual
+                  </dt>
+                  <dd className="mt-1 break-words font-mono">
+                    {formatPracticeTestValue(result.actual)}
+                  </dd>
+                </div>
+              </dl>
+              {result.error && (
+                <p className="mt-2 rounded-sm border border-destructive/20 bg-destructive/5 p-2 text-[11px] text-destructive">
+                  {result.error}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {state.emptyMessage && (
+        <p className="rounded-md border border-border bg-background/60 p-3 text-xs text-muted-foreground">
+          {state.emptyMessage}
+        </p>
+      )}
+
+      {state.rawOutput && (
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Program output
+          </p>
+          <pre className="mt-2 min-h-[72px] whitespace-pre-wrap break-words rounded-md border border-border bg-background/70 p-3 font-mono text-xs">
+            {state.rawOutput}
+          </pre>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const lang = (problem.language as Lang) ?? "python";
   const nav = useNavigate();
@@ -877,6 +940,13 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
   const reviewFn = useServerFn(reviewCode);
   const { track } = useTelemetry();
   const view = buildPracticeProblemView(problem);
+  const visibleTestRunInput = buildPracticeVisibleTestRunInput(view, editorLang);
+  const runnerState = buildPracticeRunOutputState({
+    output,
+    running,
+    visibleTestCount: view.visibleTests.length,
+    canRunVisibleTests: Boolean(visibleTestRunInput),
+  });
 
   useEffect(() => {
     setCode(problem.starter_code || "");
@@ -897,7 +967,7 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
           code,
           language: editorLang,
           stdin,
-          testRun: buildPracticeVisibleTestRunInput(view, editorLang),
+          testRun: visibleTestRunInput,
           environment: getBillingEnvironment(),
         },
       });
@@ -1028,7 +1098,8 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
                   disabled={running || reviewing}
                   className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[10px] hover:bg-accent/10 disabled:opacity-50"
                 >
-                  <Play className="size-3" /> {running ? "Running..." : "Run"}
+                  <Play className="size-3" />{" "}
+                  {running ? "Running..." : visibleTestRunInput ? "Run tests" : "Run"}
                 </button>
                 <button
                   onClick={onSubmit}
@@ -1054,78 +1125,19 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
               className="mt-2 w-full rounded-md border border-border bg-input p-2 text-xs font-mono"
               placeholder="Lines passed to your program's standard input"
             />
-            {view.visibleTests.length > 0 && (
+            {view.visibleTests.length > 0 && visibleTestRunInput && (
               <p className="mt-2 text-xs text-muted-foreground">
                 Visible tests use the function signature. Stdin is used when no visible test data is
                 stored.
               </p>
             )}
-          </div>
-          <div className="rounded-lg border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                Output
-              </span>
-              {output && (
-                <span
-                  className={`text-[10px] font-mono ${output.exit === 0 ? "text-success" : "text-destructive"}`}
-                >
-                  exit {output.exit}
-                </span>
-              )}
-            </div>
-            {output?.testSummary && (
-              <div className="mb-3 rounded-md border border-border bg-background/60 p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-medium">Visible tests</span>
-                  <span
-                    className={`text-[10px] font-mono ${
-                      output.testSummary.status === "passed" ? "text-success" : "text-destructive"
-                    }`}
-                  >
-                    {formatExecutionStatus(output.testSummary.status)} | {output.testSummary.passed}
-                    /{output.testSummary.total} passed
-                  </span>
-                </div>
-                {output.testResults && output.testResults.length > 0 && (
-                  <ul className="mt-2 space-y-2">
-                    {output.testResults.map((result) => (
-                      <li
-                        key={result.id}
-                        className="flex items-start gap-2 rounded-sm border border-border/70 p-2"
-                      >
-                        {result.passed ? (
-                          <CheckCircle2 className="mt-0.5 size-3.5 text-success" />
-                        ) : (
-                          <XCircle className="mt-0.5 size-3.5 text-destructive" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium">{result.name}</p>
-                          {!result.passed && (
-                            <p className="mt-1 text-[11px] text-muted-foreground">
-                              Expected {formatTestValue(result.expected)}, got{" "}
-                              {formatTestValue(result.actual)}
-                            </p>
-                          )}
-                          {result.error && (
-                            <p className="mt-1 text-[11px] text-destructive">{result.error}</p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+            {view.visibleTests.length > 0 && !visibleTestRunInput && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Visible tests need a supported function signature for this language.
+              </p>
             )}
-            <pre className="text-xs font-mono whitespace-pre-wrap min-h-[80px]">
-              {!output && !running && (
-                <span className="text-muted-foreground">Run your code to see output.</span>
-              )}
-              {running && <span className="text-muted-foreground animate-pulse">Executing...</span>}
-              {output?.stdout && <span>{output.stdout}</span>}
-              {output?.stderr && <span className="text-destructive">{output.stderr}</span>}
-            </pre>
           </div>
+          <PracticeRunOutputPanel state={runnerState} />
         </div>
       </div>
     </article>
