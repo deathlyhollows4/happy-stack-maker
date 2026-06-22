@@ -18,6 +18,31 @@ const BASE_TEST_CASE: PracticeHarnessTestCase = {
   visibility: "visible",
 };
 
+const BEGINNER_COUNT_POSITIVE_TESTS: PracticeHarnessTestCase[] = [
+  {
+    id: "visible-1-empty-array",
+    name: "empty array",
+    input: {
+      arguments: [[]],
+    },
+    expectedOutput: 0,
+    comparator: "deepEqual",
+    timeoutMs: 3_000,
+    visibility: "visible",
+  },
+  {
+    id: "visible-2-mixed-values",
+    name: "mixed values",
+    input: {
+      arguments: [[-1, 2, 0, 4]],
+    },
+    expectedOutput: 2,
+    comparator: "deepEqual",
+    timeoutMs: 3_000,
+    visibility: "visible",
+  },
+];
+
 function wrapperFor(
   language: PracticeProblemLanguage,
   userCode: string,
@@ -32,6 +57,69 @@ function wrapperFor(
 }
 
 describe("buildPracticeTestWrapper", () => {
+  it.each([
+    {
+      language: "python" as const,
+      filename: "main.py",
+      functionName: "count_positive",
+      userCode:
+        "def count_positive(nums):\n    count = 0\n    for value in nums:\n        if value > 0:\n            count += 1\n    return count",
+      callFragment: 'count_positive(*__case["arguments"])',
+    },
+    {
+      language: "javascript" as const,
+      filename: "main.js",
+      functionName: "countPositive",
+      userCode:
+        "function countPositive(nums) {\n  let count = 0;\n  for (const value of nums) {\n    if (value > 0) count += 1;\n  }\n  return count;\n}",
+      callFragment: 'eval("countPositive")',
+    },
+    {
+      language: "java" as const,
+      filename: "Main.java",
+      functionName: "countPositive",
+      userCode:
+        "public static int countPositive(int[] nums) {\n    int count = 0;\n    for (int value : nums) {\n      if (value > 0) count++;\n    }\n    return count;\n  }",
+      callFragment: "countPositive(new int[]{-1, 2, 0, 4})",
+    },
+    {
+      language: "cpp" as const,
+      filename: "main.cpp",
+      functionName: "countPositive",
+      userCode:
+        "int countPositive(vector<int> nums) {\n  int count = 0;\n  for (int value : nums) {\n    if (value > 0) count++;\n  }\n  return count;\n}",
+      callFragment: "countPositive(vector<int>{-1, 2, 0, 4})",
+    },
+    {
+      language: "go" as const,
+      filename: "main.go",
+      functionName: "CountPositive",
+      userCode:
+        "func CountPositive(nums []int) int {\n  count := 0\n  for _, value := range nums {\n    if value > 0 {\n      count++\n    }\n  }\n  return count\n}",
+      callFragment: "CountPositive([]int{-1, 2, 0, 4})",
+    },
+  ])(
+    "builds a beginner count-positive fixture for $language",
+    ({ language, filename, functionName, userCode, callFragment }) => {
+      const wrapper = buildPracticeTestWrapper({
+        language,
+        functionName,
+        userCode,
+        testCases: BEGINNER_COUNT_POSITIVE_TESTS,
+      });
+
+      expect(wrapper).toMatchObject({
+        language,
+        filename,
+        testCount: 2,
+      });
+      expect(wrapper.code).toContain("visible-1-empty-array");
+      expect(wrapper.code).toContain("visible-2-mixed-values");
+      expect(wrapper.code).toContain(callFragment);
+      expect(wrapper.code).toContain("codewiseTestResults");
+    },
+  );
+
   it("builds a Python wrapper that calls the selected function", () => {
     const wrapper = wrapperFor(
       "python",

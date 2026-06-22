@@ -179,7 +179,7 @@ Session 6 evidence:
 3. ✅ Extend the existing code execution flow to run visible tests and normalize results across languages.
 4. ✅ Generate and store hidden tests too, but mark them as conservative scoring signals.
 5. ✅ Add timeout, compile error, runtime error, wrong answer, and unsupported signature normalization.
-6. Add fixture tests for all five languages using simple beginner functions.
+6. ✅ Add fixture tests for all five languages using simple beginner functions.
 
 Session 1 evidence:
 
@@ -239,6 +239,16 @@ Session 5 evidence:
 - GitNexus impact for `ProblemWorkspace`: LOW risk, 1 direct caller, 2 affected processes: `PracticeWorkspace` and `Practice`.
 - GitNexus could not resolve newer Day 3 symbols `normalizePracticeExecutionResult`, `executePracticeTests`, or `PracticeExecutionStatusSchema`, returning `UNKNOWN` or not found.
 - Focused verification: `npx vitest run tests\lib\practice-test-execution.test.ts tests\lib\practice-test-wrappers.test.ts tests\lib\practice-attempt-scoring.test.ts` passed with 27 tests.
+
+Session 6 evidence:
+
+- Added a shared beginner count-positive fixture suite in `tests/lib/practice-test-wrappers.test.ts`.
+- The fixture uses the same two visible tests across Python, JavaScript, Java, C++, and Go: empty input and mixed positive/non-positive values.
+- Verified each wrapper keeps the expected runtime filename, test count, normalized test ids, language-specific callable invocation, and `codewiseTestResults` payload.
+- GitNexus impact for `buildPracticeTestWrapper`: LOW risk, 0 direct callers, 0 affected processes.
+- Focused verification: `npx vitest run tests\lib\practice-test-wrappers.test.ts tests\lib\practice-test-harness.test.ts tests\lib\practice-test-execution.test.ts` passed with 32 tests.
+- Full verification: `npm test` passed with 157 tests and 3 skipped tests.
+- Build verification: `npm run build` passed with the existing large-chunk and TanStack unused-import warnings.
 
 ## Day 4: Practice UI Redesign
 
