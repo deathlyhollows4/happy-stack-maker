@@ -175,7 +175,7 @@ Session 6 evidence:
 ## Day 3: Multi-Language Test Harness
 
 1. ✅ Define a language-agnostic test case schema with input, expected output, comparator, timeout, and visibility.
-2. Add test wrapper builders for Python, JavaScript, C++, Java, and Go.
+2. ✅ Add test wrapper builders for Python, JavaScript, C++, Java, and Go.
 3. Extend the existing code execution flow to run visible tests and normalize results across languages.
 4. Generate and store hidden tests too, but mark them as conservative scoring signals.
 5. Add timeout, compile error, runtime error, wrong answer, and unsupported signature normalization.
@@ -189,6 +189,16 @@ Session 1 evidence:
 - Added normalization helpers that convert generated `visibleTests` and `hiddenTests` from the structured problem contract into harness-ready test cases.
 - Added `tests/lib/practice-test-harness.test.ts` covering valid harness cases, generated-test normalization, hidden visibility preservation, missing input rejection, timeout bounds, and extra-field rejection.
 - Verification: `npx prettier --write src/lib/practice-test-harness.ts tests/lib/practice-test-harness.test.ts` passed, and `npx vitest run tests\lib\practice-test-harness.test.ts` passed with 5 tests.
+
+Session 2 evidence:
+
+- Added `src/lib/practice-test-wrappers.ts` as the language adapter layer for generated practice tests.
+- Added wrapper builders for Python, JavaScript, Java, C++, and Go.
+- Builders embed harness-ready test cases, call the selected function, compare actual output to expected output, and print a normalized `codewiseTestResults` JSON payload.
+- Added conservative literal builders for beginner-friendly primitive values and flat primitive arrays across Java, C++, and Go.
+- Added JavaScript export stripping so generated starter code can run in the current script-style execution path.
+- Added `tests/lib/practice-test-wrappers.test.ts` covering all five language builders and invalid function-name rejection.
+- Verification: `npx prettier --write src/lib/practice-test-wrappers.ts tests/lib/practice-test-wrappers.test.ts` passed, and `npx vitest run tests\lib\practice-test-wrappers.test.ts tests\lib\practice-test-harness.test.ts` passed with 11 tests.
 
 ## Day 4: Practice UI Redesign
 
