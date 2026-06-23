@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 7 Session 1 after Day 6 completion.
+Continue with Day 7 Session 2 after Day 7 Session 1 completion.
 
 ## Current Status
 
@@ -18,6 +18,7 @@ Continue with Day 7 Session 1 after Day 6 completion.
 - Day 6 Session 4 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 5 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 6 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 7 Session 1 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -64,11 +65,18 @@ Continue with Day 7 Session 1 after Day 6 completion.
 - Day 6 Session 6 sandboxed build hit the known OneDrive access boundary while resolving `vite.config.ts`; the same `npm run build` command passed outside the sandbox.
 - Day 6 Session 6 touched-file Prettier passed for `version2_implementation_plan.md` and `mesh/next_session.md`.
 - Day 6 Session 6 GitNexus staged detect reported LOW risk across tracker files only, with 0 affected processes.
+- Day 7 Session 1 Agent Mesh routing created @Scout, @Forge, and @Sentinel lanes for true-beginner discovery, implementation, and verification.
+- Day 7 Session 1 GitNexus impact reported LOW risk for `buildPracticeGenerationPlan` and `buildStructuredPracticeProblemSchema`.
+- Day 7 Session 1 GitNexus impact reported HIGH risk for `planPracticeSession`, affecting `buildPracticeGenerationPlan`, `buildPracticeRecommendationView`, `generatePractice`, and `listPractice`; no planner source behavior was changed.
+- Day 7 Session 1 focused verification now covers empty-mastery generation-plan metadata plus parsed structured JSON and stored insert payload for the true-beginner first generated problem.
+- Day 7 Session 1 focused verification passed outside the sandbox after the known OneDrive `vitest.config.ts` access boundary: `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-recommendation-view.test.ts tests\lib\dsa-curriculum.test.ts` with 29 tests.
+- Day 7 Session 1 full verification passed: `npm test` with 217 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Day 7 Session 1 GitNexus staged detect reported LOW risk across 7 files and 10 symbols, with 0 affected processes.
 
 ## Resume Steps
 
-1. Start Day 7 Session 1: seed or mock a beginner user with empty mastery and verify the first generated problem starts at true beginner level.
-2. Inspect the Day 7 Session 1 requirement in `version2_implementation_plan.md` before changing files.
-3. Inspect the current practice generation, planner, recommendation, and test harness paths before editing behavior.
-4. Run GitNexus impact before editing indexed symbols and keep fixes scoped to true-beginner verification.
+1. Start Day 7 Session 2: verify manual advanced topic selection creates guided bridge plus preview, not a random advanced problem.
+2. Inspect the Day 7 Session 2 requirement in `version2_implementation_plan.md` before changing files.
+3. Inspect the current manual-topic planner, generation metadata, recommendation preview, and practice UI bridge paths before editing behavior.
+4. Run GitNexus impact before editing indexed symbols and keep fixes scoped to manual advanced-topic bridge verification.
 5. Run focused verification plus `npx gitnexus detect-changes --repo . --scope staged` before committing.

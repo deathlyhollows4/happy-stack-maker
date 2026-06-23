@@ -109,6 +109,34 @@ describe("structured practice problem generation helpers", () => {
     expect(result.success).toBe(true);
   });
 
+  it("stores a true-beginner first generated problem for an empty-mastery learner", () => {
+    const generationPlan = buildPracticeGenerationPlan({ progressRows: [] });
+    const parsedProblem =
+      buildStructuredPracticeProblemSchema(generationPlan).parse(validProblem());
+    const insert = buildStructuredPracticeProblemInsert({
+      userId: "beginner-user-1",
+      language: "python",
+      generationPlan,
+      problem: parsedProblem,
+    });
+
+    expect(insert).toMatchObject({
+      user_id: "beginner-user-1",
+      curriculum_node_id: "foundation-io",
+      mastery_band: "0-20",
+      objective: "Read small values, store them in variables, and return or print a direct result.",
+      generation_status: "structured",
+      planning_context: {
+        source: "beginner-start",
+        selectedCurriculumNodeId: "foundation-io",
+        selectedMasteryBand: "0-20",
+        bridgePreview: null,
+      },
+    });
+    expect(insert.prompt).toContain("Objective: Read small values");
+    expect(insert.starter_code).toContain("def sum_two");
+  });
+
   it("rejects structured JSON for the wrong mastery band", () => {
     const generationPlan = buildPracticeGenerationPlan({});
     const result = buildStructuredPracticeProblemSchema(generationPlan).safeParse({

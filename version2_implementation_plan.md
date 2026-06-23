@@ -558,12 +558,24 @@ Session 6 evidence:
 
 ## Day 7: Product Verification And Release Checklist
 
-1. Seed or mock a beginner user with empty mastery and verify first generated problem starts at true beginner level.
+1. ✅ Seed or mock a beginner user with empty mastery and verify first generated problem starts at true beginner level.
 2. Verify manual advanced topic selection creates guided bridge plus preview, not a random advanced problem.
 3. Verify all five language harnesses on the same beginner problem.
 4. Verify visible tests, hidden tests, hint events, attempt events, and mastery deltas.
 5. Browser-test authenticated practice flow, dashboard weak-topic entry, learn-page practice link, and mobile layout.
 6. Prepare release checklist: migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
+
+Session 1 evidence:
+
+- Created Agent Mesh routing lanes for discovery, implementation, and verification in `mesh/tasks/`.
+- Inspected the Day 7 Session 1 requirement plus practice generation, planner, recommendation, structured-problem, curriculum, authenticated practice route, and focused test harness paths before editing.
+- GitNexus impact before the test edit reported LOW risk for `buildPracticeGenerationPlan` and `buildStructuredPracticeProblemSchema`.
+- GitNexus impact for `planPracticeSession` reported HIGH risk with 2 direct callers and 4 affected processes (`buildPracticeGenerationPlan`, `buildPracticeRecommendationView`, `generatePractice`, and `listPractice`), so no planner source behavior was changed.
+- Added an explicit empty-mastery generation-plan test proving the first generated insert metadata stays on `beginner-start`, `foundation-io`, mastery band `0-20`, no selected topic, and no bridge preview.
+- Added structured generated-problem coverage proving an empty-mastery learner's parsed JSON validates against the true-beginner plan and stores `foundation-io`, mastery band `0-20`, the matching objective, `generation_status: "structured"`, and bridge-free planning context.
+- Focused verification passed after rerunning outside the OneDrive sandbox boundary: `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-recommendation-view.test.ts tests\lib\dsa-curriculum.test.ts` with 29 tests.
+- Full verification passed: `npm test` with 217 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- GitNexus staged detect-changes reported LOW risk across 7 files and 10 symbols, with 0 affected processes.
 
 ## Execution Order
 

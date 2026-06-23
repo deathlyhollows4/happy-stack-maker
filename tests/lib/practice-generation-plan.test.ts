@@ -2,6 +2,35 @@ import { describe, expect, it } from "vitest";
 import { buildPracticeGenerationPlan } from "@/lib/practice-generation-plan.server";
 
 describe("practice generation plan", () => {
+  it("builds true-beginner insert metadata for an empty-mastery learner", () => {
+    const generationPlan = buildPracticeGenerationPlan({
+      progressRows: [],
+    });
+
+    expect(generationPlan.requestedTopicSlug).toBeNull();
+    expect(generationPlan.topicSlug).toBeNull();
+    expect(generationPlan.aiPromptTopicSlug).toBeNull();
+    expect(generationPlan.practicePlan.source).toBe("beginner-start");
+    expect(generationPlan.practicePlan.node.id).toBe("foundation-io");
+    expect(generationPlan.practicePlan.masteryBand.id).toBe("0-20");
+    expect(generationPlan.practicePlan.preview).toBeNull();
+    expect(generationPlan.problemInsertPlan).toMatchObject({
+      topic_slug: null,
+      curriculum_node_id: "foundation-io",
+      mastery_band: "0-20",
+      objective: "Read small values, store them in variables, and return or print a direct result.",
+      planning_context: {
+        source: "beginner-start",
+        requestedTopicSlug: null,
+        selectedTopicSlug: null,
+        selectedCurriculumNodeId: "foundation-io",
+        selectedCurriculumNodeTitle: "Input, Output, And Values",
+        selectedMasteryBand: "0-20",
+        bridgePreview: null,
+      },
+    });
+  });
+
   it("builds insert metadata from a manual topic bridge before AI generation", () => {
     const generationPlan = buildPracticeGenerationPlan({
       topicSlug: "two-pointers",
