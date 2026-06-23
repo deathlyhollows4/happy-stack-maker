@@ -6,6 +6,7 @@ import {
   shapeSubmissionExport,
   summarizePracticeMetadata,
 } from "@/lib/export-data-view";
+import { PRACTICE_PROBLEM_CONTRACT_VERSION } from "@/lib/practice-problem-contract";
 
 describe("export data view", () => {
   it("keeps review submission links and sanitizes practice metadata", () => {
@@ -79,7 +80,7 @@ describe("export data view", () => {
       starter_code: "def count_positive(nums):\n    pass",
       language: "python",
       created_at: "2026-06-23T10:00:00.000Z",
-      contract_version: "practice-problem.v1",
+      contract_version: PRACTICE_PROBLEM_CONTRACT_VERSION,
       curriculum_node_id: "foundation-arrays",
       mastery_band: "0-20",
       objective: "Use one loop to count positives.",
@@ -101,6 +102,69 @@ describe("export data view", () => {
       hidden_test_themes: ["empty input"],
     });
     expect(row).not.toHaveProperty("hidden_tests");
+  });
+
+  it("exports markdown-only legacy problems with safe defaults", () => {
+    const row = shapePracticeProblemExport({
+      id: "problem-legacy",
+      topic_slug: "arrays",
+      title: "Legacy Array Prompt",
+      prompt: "### Problem\nCount array values.",
+      starter_code: null,
+      language: "python",
+      created_at: "2026-06-20T10:00:00.000Z",
+    });
+
+    expect(row).toMatchObject({
+      id: "problem-legacy",
+      prompt: "### Problem\nCount array values.",
+      contract_version: null,
+      curriculum_node_id: null,
+      statement: null,
+      visible_tests: [],
+      generation_status: "legacy",
+    });
+  });
+
+  it("keeps legacy status for partially structured exports", () => {
+    const row = shapePracticeProblemExport({
+      id: "problem-partial",
+      topic_slug: "conditionals",
+      title: "Legacy Branch Prompt",
+      prompt: "Return the larger number.",
+      starter_code: null,
+      language: "javascript",
+      created_at: "2026-06-20T10:00:00.000Z",
+      curriculum_node_id: "foundation-conditionals",
+      mastery_band: "0-20",
+      objective: "Choose a branch.",
+      statement: "Given two integers, return the larger value.",
+      generation_status: "legacy",
+    });
+
+    expect(row).toMatchObject({
+      curriculum_node_id: "foundation-conditionals",
+      mastery_band: "0-20",
+      statement: "Given two integers, return the larger value.",
+      visible_tests: [],
+      generation_status: "legacy",
+    });
+  });
+
+  it("defaults v1 problem exports to structured status when the status predates backfill", () => {
+    const row = shapePracticeProblemExport({
+      id: "problem-backfilled-structured",
+      topic_slug: "arrays",
+      title: "Count Positive Numbers",
+      prompt: "Structured prompt",
+      starter_code: null,
+      language: "python",
+      created_at: "2026-06-23T10:00:00.000Z",
+      contract_version: PRACTICE_PROBLEM_CONTRACT_VERSION,
+      statement: "Given integers, return the count of positive values.",
+    });
+
+    expect(row.generation_status).toBe("structured");
   });
 
   it("exports attempt summaries without hidden pass or total counts", () => {

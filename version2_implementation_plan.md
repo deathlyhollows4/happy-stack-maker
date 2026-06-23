@@ -464,7 +464,7 @@ Session 6 evidence:
 1. ✅ Update `listPractice` and practice history to include structured fields and attempt summaries.
 2. ✅ Update review submission flow so practice attempts can feed review quality and topic mastery.
 3. ✅ Add admin/export compatibility for new practice fields and event logs.
-4. Add migration backfill behavior for old markdown-only `practice_problems`.
+4. âœ… Add migration backfill behavior for old markdown-only `practice_problems`.
 5. Run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
 6. Run `npm run build`, touched-file Prettier, and GitNexus detect-changes.
 
@@ -513,6 +513,24 @@ Session 3 evidence:
 - Full verification: `npm test` passed with 210 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed after rerunning outside the sandbox, with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes with `--scope staged` reported LOW risk across 9 files and 60 symbols, with 0 affected processes.
+
+Session 4 evidence:
+
+- Inspected practice generation, practice problem view helpers, export shaping, and existing practice migrations before changing behavior.
+- Added `supabase/migrations/20260623112000_backfill_legacy_practice_problems.sql` to mark v1 contract rows as structured and mark old markdown-only rows as legacy with a `planning_context.legacyBackfill` marker.
+- The Supabase CLI was not installed on this machine, so the migration file was added manually using the repo's timestamp naming pattern and was not applied.
+- Updated `buildPracticeProblemView` so explicit legacy rows remain legacy even when a partial backfill includes structured-looking fields.
+- Legacy rows keep safe metadata such as curriculum node, mastery band, objective, and tags, but structured-only sections such as executable visible tests, function signatures, hints, and hidden-test themes stay hidden unless the row is structured.
+- Updated `getPracticeProblemBody` so structured rows use `statement`, while legacy rows render markdown from `prompt` with a statement fallback for safely backfilled legacy rows.
+- Updated export shaping so rows without `generation_status` default to `structured` when the contract version is the current v1 contract, otherwise they default to `legacy`.
+- Added focused tests for markdown-only legacy rows, partially structured legacy rows, backfilled legacy rows, structured export defaults, and legacy export defaults.
+- GitNexus impact for `buildPracticeProblemView` reported HIGH risk with 2 direct callers and 3 affected practice processes: `PracticeWorkspace`, `ProblemWorkspace`, and `Practice`. The edit stayed scoped to legacy normalization and structured-field gating.
+- GitNexus impact for `getPracticeProblemBody` reported LOW risk with 0 affected processes. `shapePracticeProblemExport` and `buildPracticeProblemListItem` were not indexed by GitNexus.
+- Focused verification: `npx vitest run tests\lib\practice-problem-view.test.ts tests\lib\export-data-view.test.ts` passed with 22 tests after rerunning outside the sandbox because Vitest config loading hit a OneDrive sandbox access boundary.
+- Scoped lint verification passed for the touched TypeScript source and test files.
+- Content-style scan found no em dashes or banned phrases in touched source, test, or migration files.
+- Full verification: `npm test` passed with 215 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 
 ## Day 7: Product Verification And Release Checklist
 

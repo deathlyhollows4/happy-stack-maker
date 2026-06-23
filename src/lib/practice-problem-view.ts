@@ -200,6 +200,17 @@ function compareAttemptSummary(a: PracticeAttemptSummary, b: PracticeAttemptSumm
   return timestampMs(b.completedAt) - timestampMs(a.completedAt);
 }
 
+function hasStructuredProblemFields(input: {
+  statement: string | null;
+  objective: string | null;
+  examples: PracticeProblemExample[];
+  visibleTests: Array<PracticeProblemTestCase & { visibility: "visible" }>;
+}) {
+  return Boolean(
+    input.statement || input.objective || input.examples.length || input.visibleTests.length,
+  );
+}
+
 function buildBridgePreview(input: PracticeProblemViewInput, currentNodeId: string | null) {
   const planningContext = planningContextSchema.safeParse(input.planning_context);
   if (!planningContext.success) return null;
@@ -245,12 +256,20 @@ export function buildPracticeProblemView(input: PracticeProblemViewInput): Pract
     (a, b) => a.order - b.order,
   );
   const successCriteria = parseArray(textArraySchema, input.success_criteria);
+  const explicitLegacy = generationStatus === "legacy";
+  const isStructured =
+    generationStatus === "structured" ||
+    contractVersion === PRACTICE_PROBLEM_CONTRACT_VERSION ||
+    (!explicitLegacy &&
+      hasStructuredProblemFields({
+        statement,
+        objective,
+        examples,
+        visibleTests,
+      }));
 
   return {
-    isStructured:
-      generationStatus === "structured" ||
-      contractVersion === PRACTICE_PROBLEM_CONTRACT_VERSION ||
-      Boolean(statement || objective || examples.length || visibleTests.length),
+    isStructured,
     promptFallback: input.prompt ?? "",
     contractVersion,
     curriculumNodeId,
@@ -261,13 +280,13 @@ export function buildPracticeProblemView(input: PracticeProblemViewInput): Pract
     topicTags,
     prerequisiteTags,
     bridgePreview: buildBridgePreview(input, curriculumNodeId),
-    examples,
-    constraints,
-    functionSignature: functionSignature.success ? functionSignature.data : null,
-    visibleTests,
-    hiddenTestThemes,
-    hintLadder,
-    successCriteria,
+    examples: isStructured ? examples : [],
+    constraints: isStructured ? constraints : [],
+    functionSignature: isStructured && functionSignature.success ? functionSignature.data : null,
+    visibleTests: isStructured ? visibleTests : [],
+    hiddenTestThemes: isStructured ? hiddenTestThemes : [],
+    hintLadder: isStructured ? hintLadder : [],
+    successCriteria: isStructured ? successCriteria : [],
     generationStatus,
   };
 }
@@ -281,12 +300,13 @@ export function getPracticeLanguageSignature(view: PracticeProblemView, language
 }
 
 export function getPracticeProblemBody(view: PracticeProblemView): PracticeProblemBody {
-  if (view.statement) {
+  if (view.isStructured && view.statement) {
     return { kind: "structured", text: view.statement };
   }
 
-  if (!view.isStructured && view.promptFallback.trim()) {
-    return { kind: "legacy", text: view.promptFallback };
+  if (!view.isStructured) {
+    const legacyBody = view.promptFallback.trim() || view.statement?.trim();
+    if (legacyBody) return { kind: "legacy", text: legacyBody };
   }
 
   return {

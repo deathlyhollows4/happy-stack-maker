@@ -1,4 +1,5 @@
 import type { Json } from "@/integrations/supabase/types";
+import { PRACTICE_PROBLEM_CONTRACT_VERSION } from "@/lib/practice-problem-contract";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -87,6 +88,11 @@ function stringOrNull(input: unknown): string | null {
 
 function booleanOrNull(input: unknown): boolean | null {
   return typeof input === "boolean" ? input : null;
+}
+
+function exportedPracticeGenerationStatus(row: ExportPracticeProblemInput) {
+  if (stringOrNull(row.generation_status)) return row.generation_status;
+  return row.contract_version === PRACTICE_PROBLEM_CONTRACT_VERSION ? "structured" : "legacy";
 }
 
 function summarizeVisibleSummary(input: unknown) {
@@ -187,7 +193,7 @@ export function shapePracticeProblemExport(row: ExportPracticeProblemInput) {
     hidden_test_themes: row.hidden_test_themes ?? [],
     hint_ladder: row.hint_ladder ?? [],
     success_criteria: row.success_criteria ?? [],
-    generation_status: row.generation_status ?? null,
+    generation_status: exportedPracticeGenerationStatus(row),
   };
 }
 

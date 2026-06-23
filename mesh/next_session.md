@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 6 Session 4 after Day 6 Session 3 completion.
+Continue with Day 6 Session 5 after Day 6 Session 4 completion.
 
 ## Current Status
 
@@ -15,6 +15,7 @@ Continue with Day 6 Session 4 after Day 6 Session 3 completion.
 - Day 6 Session 1 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 3 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 6 Session 4 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -50,11 +51,16 @@ Continue with Day 6 Session 4 after Day 6 Session 3 completion.
 - Day 6 Session 3 scoped lint passed for all touched source and test files.
 - Day 6 Session 3 full verification passed: `npm test` with 210 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
 - Day 6 Session 3 GitNexus staged detect reported LOW risk across 9 files and 60 symbols, with 0 affected processes.
+- Day 6 Session 4 focused tests passed: `npx vitest run tests\lib\practice-problem-view.test.ts tests\lib\export-data-view.test.ts` with 22 tests.
+- Day 6 Session 4 scoped lint passed for touched source and test files.
+- Day 6 Session 4 full verification passed: `npm test` with 215 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
+- Day 6 Session 4 GitNexus impact for `buildPracticeProblemView` reported HIGH risk with 2 direct callers and 3 affected practice processes, but the edit was scoped to legacy row normalization. `getPracticeProblemBody` reported LOW risk.
+- Day 6 Session 4 added `supabase/migrations/20260623112000_backfill_legacy_practice_problems.sql`; the migration was not applied from this session.
 
 ## Resume Steps
 
-1. Start Day 6 Session 4: add migration backfill behavior for old markdown-only `practice_problems`.
-2. Inspect practice generation, problem view helpers, export shaping, and existing migrations before changing behavior.
-3. Preserve structured v1 behavior while keeping legacy markdown rows renderable and safely backfillable.
-4. Add focused tests for markdown-only rows, partially structured rows, and backfilled rows where possible.
+1. Start Day 6 Session 5: run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
+2. Inspect the existing focused test groups before adding or changing coverage.
+3. Preserve hidden-test boundaries while checking end-to-end compatibility across generated structured fields and legacy backfilled rows.
+4. Add or tighten focused tests only where Day 6 integration coverage is still thin.
 5. Run GitNexus impact before editing indexed symbols, then run `npx gitnexus detect-changes --repo . --scope staged` before committing.

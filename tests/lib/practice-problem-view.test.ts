@@ -223,6 +223,71 @@ describe("practice problem view", () => {
     });
   });
 
+  it("keeps partially structured legacy rows renderable without enabling structured execution", () => {
+    const view = buildPracticeProblemView({
+      prompt: "### Problem\nReturn the larger number.",
+      generation_status: "legacy",
+      curriculum_node_id: "foundation-conditionals",
+      mastery_band: "0-20",
+      objective: "Choose a branch with an if statement.",
+      statement: "Given two integers, return the larger value.",
+      visible_tests: [
+        {
+          name: "first larger",
+          arguments: [4, 2],
+          expected: 4,
+          theme: "branching",
+          visibility: "visible",
+        },
+      ],
+    });
+
+    expect(view.isStructured).toBe(false);
+    expect(view.curriculumNodeId).toBe("foundation-conditionals");
+    expect(view.masteryBandLabel).toBe("Concept drill");
+    expect(view.visibleTests).toEqual([]);
+    expect(buildPracticeVisibleTestRunInput(view, "python")).toBeUndefined();
+    expect(getPracticeProblemBody(view)).toEqual({
+      kind: "legacy",
+      text: "### Problem\nReturn the larger number.",
+    });
+  });
+
+  it("renders backfilled legacy rows from prompt or statement without treating them as structured", () => {
+    const promptBackfilledView = buildPracticeProblemView({
+      prompt: "Legacy markdown body",
+      generation_status: "legacy",
+      planning_context: {
+        legacyBackfill: {
+          version: "legacy-practice-problem.v1",
+          renderMode: "markdown",
+        },
+      },
+    });
+    const statementBackfilledView = buildPracticeProblemView({
+      prompt: "",
+      statement: "Backfilled legacy body",
+      generation_status: "legacy",
+      planning_context: {
+        legacyBackfill: {
+          version: "legacy-practice-problem.v1",
+          renderMode: "markdown",
+        },
+      },
+    });
+
+    expect(promptBackfilledView.isStructured).toBe(false);
+    expect(getPracticeProblemBody(promptBackfilledView)).toEqual({
+      kind: "legacy",
+      text: "Legacy markdown body",
+    });
+    expect(statementBackfilledView.isStructured).toBe(false);
+    expect(getPracticeProblemBody(statementBackfilledView)).toEqual({
+      kind: "legacy",
+      text: "Backfilled legacy body",
+    });
+  });
+
   it("ignores malformed JSONB fields instead of leaking invalid UI state", () => {
     const view = buildPracticeProblemView({
       ...structuredProblemRow(),
