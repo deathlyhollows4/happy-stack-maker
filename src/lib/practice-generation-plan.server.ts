@@ -63,7 +63,7 @@ export function buildPracticeGenerationPlan(
     prerequisiteMasteryThreshold: request.prerequisiteMasteryThreshold,
   };
   const practicePlan = planPracticeSession(plannerRequest);
-  const topicSlug = practicePlan.topicSlug ?? practicePlan.requestedTopicSlug;
+  const topicSlug = practicePlan.topicSlug;
 
   return {
     requestedTopicSlug,

@@ -235,7 +235,50 @@ const legacyMarkdownProblem = {
   generation_status: "legacy",
 };
 
-const practiceProblems = [countPositiveProblem, maxValueProblem, legacyMarkdownProblem];
+const manualBridgeProblem = {
+  ...countPositiveProblem,
+  id: "66666666-6666-4666-8666-666666666666",
+  title: "Bridge Before Two Pointers",
+  topic_slug: null,
+  planning_context: {
+    source: "manual-topic",
+    requestedTopicSlug: "two-pointers",
+    selectedTopicSlug: null,
+    selectedCurriculumNodeId: "foundation-io",
+    selectedCurriculumNodeTitle: "Input, Output, And Values",
+    selectedMasteryBand: "0-20",
+    bridgePreview: {
+      targetTopicSlug: "two-pointers",
+      targetCurriculumNodeId: "two-pointers-basics",
+      targetCurriculumNodeTitle: "Two Pointers",
+      targetMasteryBand: "21-40",
+    },
+  },
+  curriculum_node_id: "foundation-io",
+  objective: "Read small values, store them in variables, and return or print a direct result.",
+  statement: "Write a function that returns the sum of two integers.",
+  topic_tags: [{ label: "Foundation", slug: "foundation" }],
+  prerequisite_tags: [],
+  hidden_tests: [
+    {
+      id: "hidden-bridge-1",
+      name: "advanced two pointers hidden case should stay server side",
+      arguments: [2, 3],
+      expected: 5,
+      theme: "small values",
+      comparator: "deepEqual",
+      visibility: "hidden",
+    },
+  ],
+  hidden_test_themes: ["small values"],
+};
+
+const practiceProblems = [
+  countPositiveProblem,
+  maxValueProblem,
+  legacyMarkdownProblem,
+  manualBridgeProblem,
+];
 
 const practiceHistory = [
   {
@@ -530,6 +573,31 @@ test.describe("practice workspace", () => {
     await expect(page.getByRole("heading", { name: "Visible tests" })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Hidden-test themes" })).toHaveCount(0);
     await expect(page.getByText("Backfilled statement should remain a fallback.")).toHaveCount(0);
+
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("renders manual advanced-topic bridge preview without hidden-test details", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await openPracticeWorkspace(page);
+
+    await page.getByRole("button", { name: /Bridge Before Two Pointers/ }).click();
+    await expect(
+      page.locator("h3").filter({ hasText: "Bridge Before Two Pointers" }),
+    ).toBeVisible();
+    await expect(page.getByText("Bridge preview").first()).toBeVisible();
+    await expect(
+      page.locator("h4").filter({ hasText: "Bridge before Two Pointers" }),
+    ).toBeVisible();
+    await expect(page.getByText("Current step")).toBeVisible();
+    await expect(page.getByText("Input, Output, And Values").first()).toBeVisible();
+    await expect(page.getByText("Target preview")).toBeVisible();
+    await expect(page.locator("dd").filter({ hasText: "Two Pointers" })).toBeVisible();
+    await expect(
+      page.getByText("advanced two pointers hidden case should stay server side"),
+    ).toHaveCount(0);
 
     await expectNoHorizontalOverflow(page);
   });

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 7 Session 2 after Day 7 Session 1 completion.
+Continue with Day 7 Session 3 after Day 7 Session 2 completion.
 
 ## Current Status
 
@@ -19,6 +19,7 @@ Continue with Day 7 Session 2 after Day 7 Session 1 completion.
 - Day 6 Session 5 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 6 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 7 Session 1 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 7 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -72,11 +73,21 @@ Continue with Day 7 Session 2 after Day 7 Session 1 completion.
 - Day 7 Session 1 focused verification passed outside the sandbox after the known OneDrive `vitest.config.ts` access boundary: `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-recommendation-view.test.ts tests\lib\dsa-curriculum.test.ts` with 29 tests.
 - Day 7 Session 1 full verification passed: `npm test` with 217 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Day 7 Session 1 GitNexus staged detect reported LOW risk across 7 files and 10 symbols, with 0 affected processes.
+- Day 7 Session 2 Agent Mesh routing created @Scout, @Sentinel, and @Forge lanes for manual bridge discovery, preview verification, and integration.
+- Day 7 Session 2 GitNexus impact reported LOW risk for `buildPracticeGenerationPlan`, LOW risk for `buildPracticeRecommendationView`, HIGH risk for `planPracticeSession` with 2 direct callers and 4 affected processes, and CRITICAL risk for `buildPracticeProblemView` with 3 direct callers and 5 affected processes. Planner and problem-view source behavior were not changed.
+- Day 7 Session 2 fixed manual bridge generation metadata so a manual advanced-topic bridge generates against the selected prerequisite node instead of sending the advanced preview target as the AI prompt topic.
+- Day 7 Session 2 focused verification passed outside the sandbox after the known OneDrive `vitest.config.ts` access boundary: `npx vitest run tests\lib\practice-generation-plan.test.ts tests\lib\practice-structured-problem.test.ts tests\lib\practice-planner.test.ts tests\lib\practice-recommendation-view.test.ts tests\lib\practice-problem-view.test.ts` with 37 tests.
+- Day 7 Session 2 Playwright practice UI verification passed on `http://127.0.0.1:3001`: `$env:CODEWISE_URL='http://127.0.0.1:3001'; npx playwright test --project=chromium tests/e2e/practice-workspace.spec.ts` with 4 Chromium tests.
+- Day 7 Session 2 scoped lint passed for the touched source and test files.
+- Day 7 Session 2 full verification passed: `npm test` with 218 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Day 7 Session 2 build verification passed: `npm run build` with existing Lovable context notices, chunk-size warning, and TanStack unused-import warnings.
+- Day 7 Session 2 review lanes passed with no standards or spec findings.
+- Day 7 Session 2 GitNexus staged detect reported MEDIUM risk across 9 files and 8 symbols, affecting 5 `buildPracticeGenerationPlan` execution flows. The scope is expected because the session intentionally changes manual bridge generation metadata.
 
 ## Resume Steps
 
-1. Start Day 7 Session 2: verify manual advanced topic selection creates guided bridge plus preview, not a random advanced problem.
-2. Inspect the Day 7 Session 2 requirement in `version2_implementation_plan.md` before changing files.
-3. Inspect the current manual-topic planner, generation metadata, recommendation preview, and practice UI bridge paths before editing behavior.
-4. Run GitNexus impact before editing indexed symbols and keep fixes scoped to manual advanced-topic bridge verification.
+1. Start Day 7 Session 3: verify all five language harnesses on the same beginner problem.
+2. Inspect the Day 7 Session 3 requirement in `version2_implementation_plan.md` before changing files.
+3. Inspect current multi-language test harness, wrappers, execution normalization, and practice UI run paths before editing behavior.
+4. Run GitNexus impact before editing indexed symbols and keep fixes scoped to all-language beginner harness verification.
 5. Run focused verification plus `npx gitnexus detect-changes --repo . --scope staged` before committing.

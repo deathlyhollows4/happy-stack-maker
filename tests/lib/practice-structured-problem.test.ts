@@ -11,6 +11,7 @@ import {
   getStructuredCallableName,
   getStructuredStarterCode,
 } from "@/lib/practice-structured-problem.server";
+import { buildPracticeProblemView } from "@/lib/practice-problem-view";
 
 function validProblem(): StructuredPracticeProblem {
   return {
@@ -135,6 +136,50 @@ describe("structured practice problem generation helpers", () => {
     });
     expect(insert.prompt).toContain("Objective: Read small values");
     expect(insert.starter_code).toContain("def sum_two");
+  });
+
+  it("stores a manual advanced-topic request as a beginner bridge problem with preview", () => {
+    const generationPlan = buildPracticeGenerationPlan({
+      topicSlug: "two-pointers",
+      progressRows: [{ topic_slug: "two-pointers", mastery: 0.1 }],
+    });
+    const parsedProblem =
+      buildStructuredPracticeProblemSchema(generationPlan).parse(validProblem());
+    const insert = buildStructuredPracticeProblemInsert({
+      userId: "bridge-user-1",
+      language: "python",
+      generationPlan,
+      problem: parsedProblem,
+    });
+    const view = buildPracticeProblemView(insert);
+
+    expect(generationPlan.aiPromptTopicSlug).toBeNull();
+    expect(insert).toMatchObject({
+      user_id: "bridge-user-1",
+      topic_slug: null,
+      curriculum_node_id: "foundation-io",
+      mastery_band: "0-20",
+      objective: "Read small values, store them in variables, and return or print a direct result.",
+      generation_status: "structured",
+      planning_context: {
+        source: "manual-topic",
+        requestedTopicSlug: "two-pointers",
+        selectedCurriculumNodeId: "foundation-io",
+        selectedMasteryBand: "0-20",
+        bridgePreview: {
+          targetTopicSlug: "two-pointers",
+          targetCurriculumNodeId: "two-pointers-basics",
+          targetMasteryBand: "21-40",
+        },
+      },
+    });
+    expect(insert.prompt).toContain("Objective: Read small values");
+    expect(insert.prompt).not.toContain("Two Pointers");
+    expect(view.bridgePreview).toMatchObject({
+      currentNodeId: "foundation-io",
+      targetTopicSlug: "two-pointers",
+      targetNodeId: "two-pointers-basics",
+    });
   });
 
   it("rejects structured JSON for the wrong mastery band", () => {

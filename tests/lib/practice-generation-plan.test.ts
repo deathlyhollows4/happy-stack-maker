@@ -38,12 +38,13 @@ describe("practice generation plan", () => {
     });
 
     expect(generationPlan.requestedTopicSlug).toBe("two-pointers");
+    expect(generationPlan.topicSlug).toBeNull();
+    expect(generationPlan.aiPromptTopicSlug).toBeNull();
     expect(generationPlan.practicePlan.source).toBe("manual-topic");
     expect(generationPlan.practicePlan.node.id).toBe("foundation-io");
     expect(generationPlan.practicePlan.preview?.node.id).toBe("two-pointers-basics");
-    expect(generationPlan.aiPromptTopicSlug).toBe("two-pointers");
     expect(generationPlan.problemInsertPlan).toMatchObject({
-      topic_slug: "two-pointers",
+      topic_slug: null,
       curriculum_node_id: "foundation-io",
       mastery_band: "0-20",
       objective: "Read small values, store them in variables, and return or print a direct result.",
