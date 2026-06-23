@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 6 Session 2 after Day 6 Session 1 completion.
+Continue with Day 6 Session 3 after Day 6 Session 2 completion.
 
 ## Current Status
 
@@ -13,6 +13,7 @@ Continue with Day 6 Session 2 after Day 6 Session 1 completion.
 - Day 5 Session 5 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 5 Session 6 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 1 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 6 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -23,7 +24,8 @@ Continue with Day 6 Session 2 after Day 6 Session 1 completion.
 - `tests/lib/practice-mastery-progress.test.ts` now covers primary mastery deltas, prerequisite smaller deltas from the same signal score, repeated failed attempts, missing prerequisite rows, and spaced review confirmation through stored progress rows.
 - `listPractice` now returns raw `problems` plus structured `practiceHistory` metadata with visible attempt summaries, correctness percent, hint count, speed, and attempt status. Hidden test details and hidden pass/fail counts stay out of the learner-facing history.
 - The authenticated practice sidebar now shows structured problem history metadata and latest visible-attempt progress.
-- No new Supabase migration was created in Session 2, Session 3, or Session 4. The existing attempt and progress tables support the stored fields.
+- Day 6 Session 2 added `supabase/migrations/20260623091000_add_practice_review_submission_context.sql` for nullable review-submission links to practice problems and attempts plus practice metadata.
+- No new Supabase migration was created in Day 5 Session 2, Session 3, or Session 4. The existing attempt and progress tables support those stored fields.
 - Branch `main` is ahead of `origin/main`; do not push without explicit user approval.
 
 ## Verification
@@ -38,11 +40,15 @@ Continue with Day 6 Session 2 after Day 6 Session 1 completion.
 - Day 6 Session 1 scoped lint passed for the touched practice files.
 - Day 6 Session 1 full verification passed: `npm test` with 204 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
 - Day 6 Session 1 GitNexus staged detect reported HIGH risk across 6 files and 19 symbols, affecting 12 existing practice execution flows. The scope is expected for the practice list, view helper, and authenticated practice workspace changes.
+- Day 6 Session 2 focused tests passed: `npx vitest run tests\lib\practice-review-context.test.ts tests\lib\practice-problem-view.test.ts` with 15 tests.
+- Day 6 Session 2 scoped lint passed for the review context, review function, practice route, generated Supabase types, and focused test.
+- Day 6 Session 2 full verification passed: `npm test` with 206 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
+- Day 6 Session 2 GitNexus staged detect reported MEDIUM risk across 8 files and 13 symbols, affecting 2 existing `ReviewCode` execution flows. The scope is expected for the review submission persistence and practice workspace call changes.
 
 ## Resume Steps
 
-1. Start Day 6 Session 2: update review submission flow so practice attempts can feed review quality and topic mastery.
-2. Inspect `src/lib/practice-attempt.functions.ts`, review submission routes, `src/lib/review.functions.ts`, and mastery progress writes before changing behavior.
-3. Reuse the existing attempt scoring, review-quality signal, and mastery progress writer.
-4. Add focused tests for review-quality propagation from practice attempts into review and mastery metadata.
+1. Start Day 6 Session 3: add admin/export compatibility for new practice fields, review-submission links, event logs, and practice metadata.
+2. Inspect `src/lib/admin.functions.ts`, authenticated admin export route, settings export route, account export/delete paths, and Supabase types before changing behavior.
+3. Preserve hidden-test boundaries in exports by exposing metadata summaries, not hidden test content.
+4. Add focused tests or helper coverage for export row shaping where possible.
 5. Run GitNexus impact before editing indexed symbols, then run `npx gitnexus detect-changes --repo . --scope staged` before committing.

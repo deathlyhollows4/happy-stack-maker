@@ -521,6 +521,9 @@ export type Database = {
           created_at: string;
           id: string;
           language: string;
+          practice_attempt_id: string | null;
+          practice_metadata: Json;
+          practice_problem_id: string | null;
           summary: string | null;
           user_id: string;
         };
@@ -530,6 +533,9 @@ export type Database = {
           created_at?: string;
           id?: string;
           language: string;
+          practice_attempt_id?: string | null;
+          practice_metadata?: Json;
+          practice_problem_id?: string | null;
           summary?: string | null;
           user_id: string;
         };
@@ -539,10 +545,28 @@ export type Database = {
           created_at?: string;
           id?: string;
           language?: string;
+          practice_attempt_id?: string | null;
+          practice_metadata?: Json;
+          practice_problem_id?: string | null;
           summary?: string | null;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "submissions_practice_attempt_id_fkey";
+            columns: ["practice_attempt_id"];
+            isOneToOne: false;
+            referencedRelation: "practice_attempts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "submissions_practice_problem_id_fkey";
+            columns: ["practice_problem_id"];
+            isOneToOne: false;
+            referencedRelation: "practice_problems";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       subscriptions: {
         Row: {

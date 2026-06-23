@@ -140,6 +140,22 @@ interface PracticeAttemptResult {
   };
   reviewQualityScore?: number | null;
   speedSeconds?: number | null;
+  masteryUpdate?: {
+    topicSlug: string;
+    previousMastery: number;
+    nextMastery: number;
+    delta: number;
+    signalScore: number;
+    failedAttemptCount: number;
+    prerequisiteUpdates: Array<{
+      topicSlug: string;
+      previousMastery: number;
+      nextMastery: number;
+      delta: number;
+      signalScore: number;
+      failedAttemptCount: number;
+    }>;
+  } | null;
 }
 
 function getDisplayTopic(problem: PracticeProblem) {
@@ -1336,7 +1352,17 @@ function ProblemWorkspace({ problem }: { problem: PracticeProblem }) {
       }
 
       const r = await reviewFn({
-        data: { code, language: editorLang, environment: getBillingEnvironment() },
+        data: {
+          code,
+          language: editorLang,
+          environment: getBillingEnvironment(),
+          practiceContext: attempt.attemptId
+            ? {
+                practiceProblemId: problem.id,
+                practiceAttemptId: attempt.attemptId,
+              }
+            : undefined,
+        },
       });
       if (!r.ok) {
         toast.error(r.error);

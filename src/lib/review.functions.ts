@@ -12,6 +12,17 @@ import {
   VALID_TOPIC_SLUGS,
   SYSTEM_PROMPT,
 } from "@/lib/review.constants";
+import {
+  resolvePracticeReviewSubmissionContext,
+  type PracticeReviewContextInput,
+} from "@/lib/practice-review-context.server";
+
+const PracticeReviewContextInputSchema = z
+  .object({
+    practiceProblemId: z.string().uuid(),
+    practiceAttemptId: z.string().uuid(),
+  })
+  .strict() satisfies z.ZodType<PracticeReviewContextInput>;
 
 export const reviewCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -20,6 +31,7 @@ export const reviewCode = createServerFn({ method: "POST" })
       .object({
         code: z.string().min(1).max(20_000),
         language: z.enum(LANGS),
+        practiceContext: PracticeReviewContextInputSchema.optional(),
         environment: envInput,
       })
       .parse(input),
@@ -46,6 +58,15 @@ export const reviewCode = createServerFn({ method: "POST" })
             : `Free plan limit reached (${limit} reviews / month). Upgrade to Pro for ${proLimit}/month.`,
         upgradeRequired: plan === "free",
       };
+    }
+
+    const practiceContext = await resolvePracticeReviewSubmissionContext({
+      supabase,
+      userId,
+      practiceContext: data.practiceContext ?? null,
+    });
+    if (practiceContext && !practiceContext.ok) {
+      return { ok: false as const, error: practiceContext.error };
     }
 
     const userPrompt = `Language: ${data.language}\n\nStudent code:\n\`\`\`${data.language}\n${data.code}\n\`\`\`\n\nReview it.`;
@@ -76,6 +97,9 @@ export const reviewCode = createServerFn({ method: "POST" })
         code: data.code,
         summary: parsed.summary,
         concepts: parsed.concepts.filter((c) => VALID_TOPIC_SLUGS.has(c)),
+        practice_problem_id: practiceContext?.practiceProblemId ?? null,
+        practice_attempt_id: practiceContext?.practiceAttemptId ?? null,
+        practice_metadata: practiceContext?.metadata ?? {},
       })
       .select("id")
       .single();
@@ -133,6 +157,13 @@ export const reviewCode = createServerFn({ method: "POST" })
       summary: parsed.summary,
       concepts,
       issues: parsed.issues,
+      practiceContext:
+        practiceContext && practiceContext.ok
+          ? {
+              practiceProblemId: practiceContext.practiceProblemId,
+              practiceAttemptId: practiceContext.practiceAttemptId,
+            }
+          : null,
     };
   });
 

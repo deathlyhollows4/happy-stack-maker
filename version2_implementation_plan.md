@@ -462,7 +462,7 @@ Session 6 evidence:
 ## Day 6: Integration And Reliability
 
 1. ✅ Update `listPractice` and practice history to include structured fields and attempt summaries.
-2. Update review submission flow so practice attempts can feed review quality and topic mastery.
+2. ✅ Update review submission flow so practice attempts can feed review quality and topic mastery.
 3. Add admin/export compatibility for new practice fields and event logs.
 4. Add migration backfill behavior for old markdown-only `practice_problems`.
 5. Run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
@@ -482,6 +482,22 @@ Session 1 evidence:
 - Full verification: `npm test` passed with 204 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes with `--scope staged` reported HIGH risk across 6 files and 19 symbols, affecting 12 existing practice execution flows. The affected scope is expected because this session intentionally updates `listPractice`, shared practice-problem view helpers, and the authenticated practice workspace history surface.
+
+Session 2 evidence:
+
+- Inspected `src/lib/practice-attempt.functions.ts`, `src/lib/review.functions.ts`, `src/routes/_authenticated/practice.tsx`, `src/routes/_authenticated/review.tsx`, `src/lib/practice-mastery-progress.server.ts`, and the submissions/practice schema before changing behavior.
+- Added `src/lib/practice-review-context.server.ts` to resolve a practice attempt into review-submission metadata after the existing attempt scoring and mastery progress writer have saved their results.
+- Updated `reviewCode` to accept optional practice context, verify the attempt and problem belong to the user, and persist `practice_problem_id`, `practice_attempt_id`, and `practice_metadata` on the review submission.
+- Updated the practice submit flow to pass the created practice attempt into `reviewCode`; the server re-reads saved attempt and progress rows instead of trusting mastery metadata from the browser.
+- Added `supabase/migrations/20260623091000_add_practice_review_submission_context.sql` with nullable submission links and a JSON metadata column.
+- Updated `src/integrations/supabase/types.ts` for the new submission fields and relationships.
+- Added focused tests in `tests/lib/practice-review-context.test.ts` covering review-quality propagation, visible attempt summary, topic mastery metadata, and hidden-test boundary preservation.
+- GitNexus impact for `reviewCode` reported LOW risk with 0 direct callers and 0 affected processes. GitNexus impact for practice `onSubmit` reported LOW risk with 0 direct callers and 0 affected processes.
+- Focused verification: `npx vitest run tests\lib\practice-review-context.test.ts tests\lib\practice-problem-view.test.ts` passed with 15 tests.
+- Scoped lint verification: `npx eslint src\lib\practice-review-context.server.ts tests\lib\practice-review-context.test.ts src\lib\review.functions.ts src\routes\_authenticated\practice.tsx src\integrations\supabase\types.ts` passed.
+- Full verification: `npm test` passed with 206 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported MEDIUM risk across 8 files and 13 symbols, affecting 2 existing `ReviewCode` execution flows. The affected scope is expected because this session intentionally updates review submission persistence and the practice workspace review call.
 
 ## Day 7: Product Verification And Release Checklist
 
