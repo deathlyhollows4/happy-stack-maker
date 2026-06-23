@@ -14,11 +14,28 @@ const fakeUser = {
   updated_at: new Date("2026-06-22T00:00:00.000Z").toISOString(),
 };
 
+const fakeExpiresAt = Math.floor(Date.now() / 1000) + 3600;
+const fakeAccessToken = [
+  Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"),
+  Buffer.from(
+    JSON.stringify({
+      iss: `https://${PROJECT_REF}.supabase.co/auth/v1`,
+      sub: fakeUser.id,
+      aud: "authenticated",
+      role: "authenticated",
+      email: fakeUser.email,
+      exp: fakeExpiresAt,
+      iat: fakeExpiresAt - 3600,
+    }),
+  ).toString("base64url"),
+  "codex-test-signature",
+].join(".");
+
 const fakeSession = {
-  access_token: "codex-day4-session6-token",
+  access_token: fakeAccessToken,
   token_type: "bearer",
   expires_in: 3600,
-  expires_at: Math.floor(Date.now() / 1000) + 3600,
+  expires_at: fakeExpiresAt,
   refresh_token: "codex-day4-session6-refresh",
   user: fakeUser,
 };
@@ -41,12 +58,12 @@ const countPositiveProblem = {
     selectedTopicSlug: "arrays",
     selectedCurriculumNodeId: "arrays-counting-001",
     selectedCurriculumNodeTitle: "Counting With Arrays",
-    selectedMasteryBand: "foundation",
+    selectedMasteryBand: "0-20",
     bridgePreview: null,
   },
-  contract_version: "practice_problem_v1",
+  contract_version: "codewise-dsa-problem.v1",
   curriculum_node_id: "arrays-counting-001",
-  mastery_band: "foundation",
+  mastery_band: "0-20",
   objective: "Count elements that match a simple condition.",
   statement:
     "Write a function that returns the number of values in nums that are greater than zero.",
@@ -119,6 +136,17 @@ const countPositiveProblem = {
     },
   ],
   hidden_test_themes: ["all non-positive values", "single positive value"],
+  hidden_tests: [
+    {
+      id: "hidden-1",
+      name: "hidden exact case should stay server side",
+      arguments: [[-3, -2, 0]],
+      expected: 0,
+      theme: "all non-positive values",
+      comparator: "deepEqual",
+      visibility: "hidden",
+    },
+  ],
   hint_ladder: [
     {
       order: 1,
@@ -177,7 +205,113 @@ const maxValueProblem = {
   ],
 };
 
-const practiceProblems = [countPositiveProblem, maxValueProblem];
+const legacyMarkdownProblem = {
+  id: "44444444-4444-4444-8444-444444444444",
+  title: "Legacy Practice Prompt",
+  prompt: "Read two numbers and print their sum.",
+  starter_code: "a = int(input())\nb = int(input())\nprint(a + b)\n",
+  language: "python",
+  topic_slug: "foundation",
+  planning_context: {
+    legacyBackfill: {
+      version: "legacy-practice-problem.v1",
+      renderMode: "markdown",
+    },
+  },
+  contract_version: null,
+  curriculum_node_id: null,
+  mastery_band: null,
+  objective: null,
+  statement: "Backfilled statement should remain a fallback.",
+  topic_tags: [],
+  prerequisite_tags: [],
+  examples: null,
+  constraints: null,
+  function_signature: null,
+  visible_tests: null,
+  hidden_test_themes: null,
+  hint_ladder: null,
+  success_criteria: null,
+  generation_status: "legacy",
+};
+
+const practiceProblems = [countPositiveProblem, maxValueProblem, legacyMarkdownProblem];
+
+const practiceHistory = [
+  {
+    id: countPositiveProblem.id,
+    title: countPositiveProblem.title,
+    topicSlug: "arrays",
+    topicLabel: "Arrays",
+    language: "python",
+    createdAt: "2026-06-23T09:00:00.000Z",
+    isStructured: true,
+    curriculumNodeId: countPositiveProblem.curriculum_node_id,
+    masteryBand: countPositiveProblem.mastery_band,
+    masteryBandLabel: "Concept drill",
+    objective: countPositiveProblem.objective,
+    topicTags: countPositiveProblem.topic_tags,
+    prerequisiteTags: countPositiveProblem.prerequisite_tags,
+    visibleTestCount: 2,
+    hiddenThemeCount: 2,
+    hintCount: 2,
+    attemptCount: 1,
+    completedAttemptCount: 1,
+    attempts: [
+      {
+        id: "55555555-5555-4555-8555-555555555555",
+        practiceProblemId: countPositiveProblem.id,
+        language: "python",
+        status: "completed",
+        visible: { passed: 2, total: 2, failed: 0 },
+        hiddenChecksRun: true,
+        correctnessPercent: 88,
+        hintCount: 1,
+        reviewQualityScore: 0.8,
+        speedSeconds: 410,
+        completedAt: "2026-06-23T09:12:00.000Z",
+      },
+    ],
+    latestAttempt: {
+      id: "55555555-5555-4555-8555-555555555555",
+      practiceProblemId: countPositiveProblem.id,
+      language: "python",
+      status: "completed",
+      visible: { passed: 2, total: 2, failed: 0 },
+      hiddenChecksRun: true,
+      correctnessPercent: 88,
+      hintCount: 1,
+      reviewQualityScore: 0.8,
+      speedSeconds: 410,
+      completedAt: "2026-06-23T09:12:00.000Z",
+    },
+  },
+];
+
+const practiceRecommendation = {
+  source: "manual-topic",
+  sourceLabel: "Selected topic",
+  currentMastery: {
+    topicSlug: "arrays",
+    topicLabel: "Arrays",
+    mastery: 0.18,
+    masteryPercent: 18,
+    attempts: 2,
+    bandId: "0-20",
+    bandLabel: "Concept drill",
+  },
+  nextNode: {
+    curriculumNodeId: "arrays-counting-001",
+    title: "Counting With Arrays",
+    objective: "Count elements that match a simple condition.",
+    topicSlug: "arrays",
+    topicLabel: "Arrays",
+    masteryBandId: "0-20",
+    masteryBandLabel: "Concept drill",
+  },
+  bridgePreview: null,
+  summary: "Next recommended node: Counting With Arrays.",
+};
 
 function decodeServerFunction(url: string) {
   const id = new URL(url).pathname.split("/_serverFn/")[1] ?? "";
@@ -229,7 +363,13 @@ async function installPracticeWorkspaceMocks(page: Page) {
       return route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(serverFunctionResult({ problems: practiceProblems })),
+        body: JSON.stringify(
+          serverFunctionResult({
+            problems: practiceProblems,
+            practiceHistory,
+            recommendation: practiceRecommendation,
+          }),
+        ),
       });
     }
 
@@ -301,7 +441,7 @@ async function installPracticeWorkspaceMocks(page: Page) {
 
 async function openPracticeWorkspace(page: Page) {
   await installPracticeWorkspaceMocks(page);
-  await page.goto("/practice");
+  await page.goto("/practice", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { name: "Practice" })).toBeVisible();
   await page.getByRole("button", { name: "Show all options" }).click();
   await expect(page.getByRole("button", { name: /Count Positive Numbers/ })).toBeVisible();
@@ -346,6 +486,11 @@ test.describe("practice workspace", () => {
     await expect(page.getByRole("heading", { name: "Find Maximum Value" })).toBeVisible();
     await expect(editor).toContainText("return nums[0]");
 
+    await expect(page.getByText("Counting With Arrays").first()).toBeVisible();
+    await expect(page.getByText("Arrays: 18% (Concept drill)").first()).toBeVisible();
+    await expect(page.getByText("Last: completed, 2/2 visible, 88% score").first()).toBeVisible();
+    await expect(page.getByText("hidden exact case should stay server side")).toHaveCount(0);
+
     await expectNoHorizontalOverflow(page);
     await page.screenshot({
       path: testInfo.outputPath("practice-workspace-desktop.png"),
@@ -369,5 +514,23 @@ test.describe("practice workspace", () => {
       path: testInfo.outputPath("practice-workspace-mobile.png"),
       fullPage: true,
     });
+  });
+
+  test("renders a legacy backfilled problem without structured execution controls", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await openPracticeWorkspace(page);
+
+    await page.getByRole("button", { name: /Legacy Practice Prompt/ }).click();
+    await expect(page.getByRole("heading", { name: "Legacy Practice Prompt" })).toBeVisible();
+    await expect(page.getByText("Read two numbers and print their sum.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Run" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Run tests" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Visible tests" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Hidden-test themes" })).toHaveCount(0);
+    await expect(page.getByText("Backfilled statement should remain a fallback.")).toHaveCount(0);
+
+    await expectNoHorizontalOverflow(page);
   });
 });

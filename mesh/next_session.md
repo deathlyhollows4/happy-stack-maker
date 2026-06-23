@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 6 Session 5 after Day 6 Session 4 completion.
+Continue with Day 6 Session 6 after Day 6 Session 5 completion.
 
 ## Current Status
 
@@ -16,6 +16,7 @@ Continue with Day 6 Session 5 after Day 6 Session 4 completion.
 - Day 6 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 3 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 4 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 6 Session 5 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -56,11 +57,14 @@ Continue with Day 6 Session 5 after Day 6 Session 4 completion.
 - Day 6 Session 4 full verification passed: `npm test` with 215 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
 - Day 6 Session 4 GitNexus impact for `buildPracticeProblemView` reported HIGH risk with 2 direct callers and 3 affected practice processes, but the edit was scoped to legacy row normalization. `getPracticeProblemBody` reported LOW risk.
 - Day 6 Session 4 added `supabase/migrations/20260623112000_backfill_legacy_practice_problems.sql`; the migration was not applied from this session.
+- Day 6 Session 5 focused Vitest coverage passed for curriculum, generation, planner, harness, practice problem view, recommendation, and mastery analytics with 91 tests.
+- Day 6 Session 5 Playwright practice UI verification passed locally on `http://127.0.0.1:3001` with 3 Chromium tests covering structured problem execution, recommendation and visible-attempt metadata, mobile navigation, hidden-test boundary preservation, and legacy backfilled markdown rendering.
+- Day 6 Session 5 full verification passed: `npm test` with 215 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
 
 ## Resume Steps
 
-1. Start Day 6 Session 5: run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
-2. Inspect the existing focused test groups before adding or changing coverage.
-3. Preserve hidden-test boundaries while checking end-to-end compatibility across generated structured fields and legacy backfilled rows.
-4. Add or tighten focused tests only where Day 6 integration coverage is still thin.
+1. Start Day 6 Session 6: run `npm run build`, touched-file Prettier, and GitNexus detect-changes.
+2. Inspect Day 6 Session 6 requirements in `version2_implementation_plan.md` before changing files.
+3. Keep this as a closeout verification session unless the build, formatting, or GitNexus checks surface a concrete issue.
+4. If any issue appears, run GitNexus impact before editing indexed symbols and keep fixes tightly scoped.
 5. Run GitNexus impact before editing indexed symbols, then run `npx gitnexus detect-changes --repo . --scope staged` before committing.

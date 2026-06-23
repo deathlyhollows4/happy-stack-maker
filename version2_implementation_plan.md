@@ -465,7 +465,7 @@ Session 6 evidence:
 2. ✅ Update review submission flow so practice attempts can feed review quality and topic mastery.
 3. ✅ Add admin/export compatibility for new practice fields and event logs.
 4. âœ… Add migration backfill behavior for old markdown-only `practice_problems`.
-5. Run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
+5. ✅ Run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
 6. Run `npm run build`, touched-file Prettier, and GitNexus detect-changes.
 
 Session 1 evidence:
@@ -529,6 +529,21 @@ Session 4 evidence:
 - Focused verification: `npx vitest run tests\lib\practice-problem-view.test.ts tests\lib\export-data-view.test.ts` passed with 22 tests after rerunning outside the sandbox because Vitest config loading hit a OneDrive sandbox access boundary.
 - Scoped lint verification passed for the touched TypeScript source and test files.
 - Content-style scan found no em dashes or banned phrases in touched source, test, or migration files.
+- Full verification: `npm test` passed with 215 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+
+Session 5 evidence:
+
+- Inspected the focused curriculum, generation, planner, harness, practice problem view, recommendation, mastery analytics, and practice workspace test groups before changing coverage.
+- Ran the focused Vitest group for curriculum, generation plan, generation repair, structured problem inserts, planner, harness, execution, wrappers, problem view, recommendation, mastery scoring, and mastery progress. It passed with 91 tests.
+- Tightened `tests/e2e/practice-workspace.spec.ts` so the mocked structured problem uses the current `codewise-dsa-problem.v1` contract and `0-20` mastery band.
+- Added practice UI coverage for planner-backed recommendation metadata, visible-only attempt history summaries, and hidden-test boundary preservation. The fixture includes a hidden test case name and asserts it is not rendered.
+- Added a legacy backfilled practice problem to the Playwright workspace flow and verified it renders markdown while keeping structured execution controls, visible tests, and hidden-test themes hidden.
+- Updated the Playwright auth fixture to use a JWT-shaped fake access token so Supabase session restoration resolves in the local browser harness.
+- GitNexus impact for the edited Playwright helper symbols `openPracticeWorkspace`, `installPracticeWorkspaceMocks`, and `countPositiveProblem` returned `UNKNOWN` because those test helpers are not indexed; no HIGH or CRITICAL blast radius was reported.
+- Focused practice UI verification: `$env:CODEWISE_URL='http://127.0.0.1:3001'; npx playwright test --project=chromium tests/e2e/practice-workspace.spec.ts` passed with 3 tests against the local dev server.
+- Scoped lint verification: `npx eslint tests\e2e\practice-workspace.spec.ts` passed.
+- Content-style scan found no em dashes or banned phrases in the touched test and tracker files.
 - Full verification: `npm test` passed with 215 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 
