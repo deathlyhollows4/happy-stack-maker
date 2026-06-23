@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 6 Session 3 after Day 6 Session 2 completion.
+Continue with Day 6 Session 4 after Day 6 Session 3 completion.
 
 ## Current Status
 
@@ -14,6 +14,7 @@ Continue with Day 6 Session 3 after Day 6 Session 2 completion.
 - Day 5 Session 6 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 1 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 6 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 6 Session 3 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -25,6 +26,7 @@ Continue with Day 6 Session 3 after Day 6 Session 2 completion.
 - `listPractice` now returns raw `problems` plus structured `practiceHistory` metadata with visible attempt summaries, correctness percent, hint count, speed, and attempt status. Hidden test details and hidden pass/fail counts stay out of the learner-facing history.
 - The authenticated practice sidebar now shows structured problem history metadata and latest visible-attempt progress.
 - Day 6 Session 2 added `supabase/migrations/20260623091000_add_practice_review_submission_context.sql` for nullable review-submission links to practice problems and attempts plus practice metadata.
+- Day 6 Session 3 added safe admin and user export compatibility for review-practice links, structured practice problem fields, practice attempt summaries, practice event summaries, and sanitized practice metadata.
 - No new Supabase migration was created in Day 5 Session 2, Session 3, or Session 4. The existing attempt and progress tables support those stored fields.
 - Branch `main` is ahead of `origin/main`; do not push without explicit user approval.
 
@@ -44,11 +46,15 @@ Continue with Day 6 Session 3 after Day 6 Session 2 completion.
 - Day 6 Session 2 scoped lint passed for the review context, review function, practice route, generated Supabase types, and focused test.
 - Day 6 Session 2 full verification passed: `npm test` with 206 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
 - Day 6 Session 2 GitNexus staged detect reported MEDIUM risk across 8 files and 13 symbols, affecting 2 existing `ReviewCode` execution flows. The scope is expected for the review submission persistence and practice workspace call changes.
+- Day 6 Session 3 focused tests passed: `npx vitest run tests/lib/export-data-view.test.ts` with 4 tests.
+- Day 6 Session 3 scoped lint passed for all touched source and test files.
+- Day 6 Session 3 full verification passed: `npm test` with 210 tests and 3 skipped tests, and `npm run build` with existing build warnings only.
+- Day 6 Session 3 GitNexus staged detect reported LOW risk across 9 files and 60 symbols, with 0 affected processes.
 
 ## Resume Steps
 
-1. Start Day 6 Session 3: add admin/export compatibility for new practice fields, review-submission links, event logs, and practice metadata.
-2. Inspect `src/lib/admin.functions.ts`, authenticated admin export route, settings export route, account export/delete paths, and Supabase types before changing behavior.
-3. Preserve hidden-test boundaries in exports by exposing metadata summaries, not hidden test content.
-4. Add focused tests or helper coverage for export row shaping where possible.
+1. Start Day 6 Session 4: add migration backfill behavior for old markdown-only `practice_problems`.
+2. Inspect practice generation, problem view helpers, export shaping, and existing migrations before changing behavior.
+3. Preserve structured v1 behavior while keeping legacy markdown rows renderable and safely backfillable.
+4. Add focused tests for markdown-only rows, partially structured rows, and backfilled rows where possible.
 5. Run GitNexus impact before editing indexed symbols, then run `npx gitnexus detect-changes --repo . --scope staged` before committing.

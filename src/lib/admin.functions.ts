@@ -4,6 +4,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isAdmin } from "./codewise.utils";
 import { monthKey, refreshPlanQuotas } from "@/lib/entitlements.server";
+import {
+  shapePracticeAttemptExport,
+  shapePracticeEventExport,
+  shapePracticeProblemExport,
+  shapeSubmissionExport,
+} from "@/lib/export-data-view";
 
 export type CurriculumMapping = {
   topic_slug: string;
@@ -15,6 +21,18 @@ export type CurriculumMapping = {
 };
 
 export type AppConfig = Record<string, string>;
+
+type CurriculumMappingClient = {
+  from(table: "curriculum_mappings"): {
+    select(columns: string): {
+      order(column: string): Promise<{ data: CurriculumMapping[] | null }>;
+    };
+    upsert(
+      row: CurriculumMapping & { updated_at: string },
+      options: { onConflict: string },
+    ): Promise<{ error: unknown }>;
+  };
+};
 
 export const getAdminDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -36,7 +54,9 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false }),
       admin
         .from("subscriptions")
-        .select("user_id, status, current_period_end, environment, external_status_updated_at, created_at"),
+        .select(
+          "user_id, status, current_period_end, environment, external_status_updated_at, created_at",
+        ),
       admin.from("usage_counters").select("user_id, kind, count").eq("period_key", mk),
     ]);
 
@@ -54,7 +74,9 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       }
     >();
     for (const s of subs) {
-      const endMs = s.current_period_end ? new Date(s.current_period_end as string).getTime() : null;
+      const endMs = s.current_period_end
+        ? new Date(s.current_period_end as string).getTime()
+        : null;
       const inPeriod = endMs === null || endMs > now.getTime();
       const entitled =
         (["active", "trialing", "past_due"].includes(s.status as string) && inPeriod) ||
@@ -202,39 +224,124 @@ export const exportAllUserData = createServerFn({ method: "GET" })
 
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden", data: null };
 
-    const [submissionsRes, issuesRes, progressRes, practiceRes] = await Promise.all([
-      supabaseAdmin
-        .from("submissions")
-        .select("id, user_id, language, code, summary, concepts, created_at")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("review_issues")
-        .select(
-          "id, submission_id, user_id, line, severity, concept_slug, title, explanation, fix_hint",
-        ),
-      supabaseAdmin
-        .from("progress")
-        .select("user_id, topic_slug, mastery, attempts, last_reviewed"),
-      supabaseAdmin
-        .from("practice_problems")
-        .select("id, user_id, topic_slug, title, prompt, starter_code, language, created_at"),
-    ]);
+    const [submissionsRes, issuesRes, progressRes, practiceRes, attemptRes, eventRes] =
+      await Promise.all([
+        supabaseAdmin
+          .from("submissions")
+          .select(
+            [
+              "id",
+              "user_id",
+              "language",
+              "code",
+              "summary",
+              "concepts",
+              "created_at",
+              "practice_problem_id",
+              "practice_attempt_id",
+              "practice_metadata",
+            ].join(", "),
+          )
+          .order("created_at", { ascending: false }),
+        supabaseAdmin
+          .from("review_issues")
+          .select(
+            "id, submission_id, user_id, line, severity, concept_slug, title, explanation, fix_hint",
+          ),
+        supabaseAdmin
+          .from("progress")
+          .select(
+            "user_id, topic_slug, mastery, attempts, last_reviewed, next_review_date, retrievability, difficulty, stability",
+          ),
+        supabaseAdmin
+          .from("practice_problems")
+          .select(
+            [
+              "id",
+              "user_id",
+              "topic_slug",
+              "title",
+              "prompt",
+              "starter_code",
+              "language",
+              "created_at",
+              "contract_version",
+              "curriculum_node_id",
+              "mastery_band",
+              "objective",
+              "statement",
+              "topic_tags",
+              "prerequisite_tags",
+              "examples",
+              "constraints",
+              "function_signature",
+              "visible_tests",
+              "hidden_test_themes",
+              "hint_ladder",
+              "success_criteria",
+              "generation_status",
+            ].join(", "),
+          )
+          .order("created_at", { ascending: false }),
+        supabaseAdmin
+          .from("practice_attempts")
+          .select(
+            [
+              "id",
+              "user_id",
+              "practice_problem_id",
+              "language",
+              "status",
+              "visible_tests_passed",
+              "visible_tests_total",
+              "hidden_tests_passed",
+              "hidden_tests_total",
+              "correctness_score",
+              "hint_count",
+              "review_quality_score",
+              "speed_seconds",
+              "started_at",
+              "completed_at",
+              "created_at",
+            ].join(", "),
+          )
+          .order("created_at", { ascending: false }),
+        supabaseAdmin
+          .from("practice_events")
+          .select(
+            [
+              "id",
+              "user_id",
+              "event_type",
+              "practice_problem_id",
+              "practice_attempt_id",
+              "topic_slug",
+              "curriculum_node_id",
+              "mastery_band",
+              "payload",
+              "created_at",
+            ].join(", "),
+          )
+          .order("created_at", { ascending: false }),
+      ]);
 
     return {
       ok: true as const,
       data: {
         exported_at: new Date().toISOString(),
-        submissions: submissionsRes.data ?? [],
+        submissions: (submissionsRes.data ?? []).map(shapeSubmissionExport),
         review_issues: issuesRes.data ?? [],
         progress: progressRes.data ?? [],
-        practice_problems: practiceRes.data ?? [],
+        practice_problems: (practiceRes.data ?? []).map(shapePracticeProblemExport),
+        practice_attempts: (attemptRes.data ?? []).map(shapePracticeAttemptExport),
+        practice_events: (eventRes.data ?? []).map(shapePracticeEventExport),
       },
     };
   });
 
 export const getCurriculumMappings = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ mappings: CurriculumMapping[] }> => {
-    const admin = supabaseAdmin as any;
+    const admin = supabaseAdmin as unknown as CurriculumMappingClient;
     const { data } = await admin
       .from("curriculum_mappings")
       .select("topic_slug, sppu_course, sppu_module, nptel_course, nptel_module, year_semester")
@@ -262,7 +369,8 @@ export const upsertCurriculumMapping = createServerFn({ method: "POST" })
 
     if (!(await isAdmin(userId))) return { ok: false as const, error: "Forbidden" };
 
-    const { error } = await (supabaseAdmin as any).from("curriculum_mappings").upsert(
+    const admin = supabaseAdmin as unknown as CurriculumMappingClient;
+    const { error } = await admin.from("curriculum_mappings").upsert(
       {
         topic_slug: data.topic_slug,
         sppu_course: data.sppu_course ?? null,

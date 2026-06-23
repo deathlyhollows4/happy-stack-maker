@@ -463,7 +463,7 @@ Session 6 evidence:
 
 1. ✅ Update `listPractice` and practice history to include structured fields and attempt summaries.
 2. ✅ Update review submission flow so practice attempts can feed review quality and topic mastery.
-3. Add admin/export compatibility for new practice fields and event logs.
+3. ✅ Add admin/export compatibility for new practice fields and event logs.
 4. Add migration backfill behavior for old markdown-only `practice_problems`.
 5. Run focused tests for curriculum, generation, planner, harness, practice UI, and mastery analytics.
 6. Run `npm run build`, touched-file Prettier, and GitNexus detect-changes.
@@ -498,6 +498,21 @@ Session 2 evidence:
 - Full verification: `npm test` passed with 206 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification: `npm run build` passed with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
 - GitNexus detect-changes with `--scope staged` reported MEDIUM risk across 8 files and 13 symbols, affecting 2 existing `ReviewCode` execution flows. The affected scope is expected because this session intentionally updates review submission persistence and the practice workspace review call.
+
+Session 3 evidence:
+
+- Inspected `src/lib/admin.functions.ts`, `src/routes/_authenticated/admin.export.tsx`, `src/routes/_authenticated/settings.export.tsx`, `src/lib/account.functions.ts`, `src/lib/dashboard.functions.ts`, and `src/integrations/supabase/types.ts` before changing export behavior.
+- Added `src/lib/export-data-view.ts` as a whitelist export mapper for review-practice links, structured practice problem fields, practice attempt summaries, event-log summaries, and sanitized practice metadata.
+- Updated admin and user data exports to include practice attempt summaries and practice event logs while omitting hidden test rows and hidden pass/fail counts.
+- Updated admin and settings export pages so JSON and CSV downloads include submissions, review issues, progress, practice problems, attempts, and activity logs.
+- Updated account deletion cleanup so practice events, attempts, hidden-test rows, and practice problems are removed in dependency order.
+- Added `tests/lib/export-data-view.test.ts` covering structured problem export fields, review submission links, practice metadata sanitization, hidden-boundary preservation, attempt summaries, and event-log payload summaries.
+- GitNexus impact for `exportAllUserData`, `exportUserData`, `deleteAccount`, `AdminExport`, `ExportPage`, `toCSV`, `getProfile`, `getCurriculumMappings`, and `upsertCurriculumMapping` reported LOW risk with no HIGH or CRITICAL warnings.
+- Focused verification: `npx vitest run tests/lib/export-data-view.test.ts` passed with 4 tests after rerunning outside the sandbox because Vitest config loading hit a OneDrive sandbox access boundary.
+- Scoped lint verification passed for all touched source and test files.
+- Full verification: `npm test` passed with 210 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
+- Build verification: `npm run build` passed after rerunning outside the sandbox, with the existing Lovable context notice, large-chunk warning, and TanStack unused-import warnings.
+- GitNexus detect-changes with `--scope staged` reported LOW risk across 9 files and 60 symbols, with 0 affected processes.
 
 ## Day 7: Product Verification And Release Checklist
 

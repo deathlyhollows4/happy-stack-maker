@@ -9,7 +9,16 @@ export const Route = createFileRoute("/_authenticated/settings/export")({
   component: ExportPage,
 });
 
-function toCSV(rows: Record<string, any>[]): string {
+type CsvRow = Record<string, unknown>;
+type SubmissionPreviewRow = {
+  id: string;
+  language: string;
+  code: string;
+  concepts?: string[] | null;
+  created_at: string;
+};
+
+function toCSV(rows: CsvRow[]): string {
   if (rows.length === 0) return "";
   const keys = Object.keys(rows[0]!);
   const header = keys.join(",");
@@ -76,6 +85,8 @@ function ExportPage() {
     issues: d.review_issues.length,
     progress: d.progress.length,
     practice: d.practice_problems.length,
+    attempts: d.practice_attempts.length,
+    events: d.practice_events.length,
   };
 
   const handleDownloadJSON = () => {
@@ -103,6 +114,16 @@ function ExportPage() {
         (zipParts.length ? "\n\n" : "") + "# Practice Problems\n" + toCSV(d.practice_problems),
       );
     }
+    if (d.practice_attempts.length > 0) {
+      zipParts.push(
+        (zipParts.length ? "\n\n" : "") + "# Practice Attempts\n" + toCSV(d.practice_attempts),
+      );
+    }
+    if (d.practice_events.length > 0) {
+      zipParts.push(
+        (zipParts.length ? "\n\n" : "") + "# Practice Events\n" + toCSV(d.practice_events),
+      );
+    }
     downloadBlob(
       zipParts.join("\n\n"),
       `codewise-export-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -115,14 +136,17 @@ function ExportPage() {
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">Settings</p>
       <h1 className="mt-2 font-display text-5xl tracking-tight">Export your data</h1>
       <p className="text-muted-foreground mt-2">
-        Download all your submissions, reviews, mastery progress, and practice problems.
+        Download your submissions, reviews, mastery progress, practice problems, attempts, and
+        practice activity logs.
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard label="Submissions" value={counts.submissions} />
         <StatCard label="Review issues" value={counts.issues} />
         <StatCard label="Progress rows" value={counts.progress} />
         <StatCard label="Practice problems" value={counts.practice} />
+        <StatCard label="Practice attempts" value={counts.attempts} />
+        <StatCard label="Activity logs" value={counts.events} />
       </div>
 
       <div className="mt-8 flex flex-wrap gap-4">
@@ -140,15 +164,19 @@ function ExportPage() {
         </button>
       </div>
 
-      {counts.submissions === 0 && counts.progress === 0 && counts.practice === 0 && (
-        <div className="mt-8 rounded-lg border border-border bg-card p-8 text-center">
-          <Download className="mx-auto size-6 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">
-            No data to export yet. Submit a code review or generate a practice problem to get
-            started.
-          </p>
-        </div>
-      )}
+      {counts.submissions === 0 &&
+        counts.progress === 0 &&
+        counts.practice === 0 &&
+        counts.attempts === 0 &&
+        counts.events === 0 && (
+          <div className="mt-8 rounded-lg border border-border bg-card p-8 text-center">
+            <Download className="mx-auto size-6 text-muted-foreground" />
+            <p className="mt-4 text-muted-foreground">
+              No data to export yet. Submit a code review or generate a practice problem to get
+              started.
+            </p>
+          </div>
+        )}
 
       {counts.submissions > 0 && (
         <div className="mt-8 rounded-lg border border-border bg-card overflow-hidden">
@@ -176,7 +204,7 @@ function ExportPage() {
                 </tr>
               </thead>
               <tbody>
-                {d.submissions.slice(0, 10).map((s: any) => (
+                {d.submissions.slice(0, 10).map((s: SubmissionPreviewRow) => (
                   <tr key={s.id} className="border-b border-border/60 last:border-0">
                     <td className="px-5 py-2 font-mono text-xs">{s.language}</td>
                     <td className="px-5 py-2 font-mono text-xs max-w-xs truncate">

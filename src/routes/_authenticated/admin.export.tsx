@@ -11,7 +11,16 @@ export const Route = createFileRoute("/_authenticated/admin/export")({
   component: AdminExport,
 });
 
-function toCSV(rows: Record<string, any>[]): string {
+type CsvRow = Record<string, unknown>;
+type UserScopedRow = { user_id?: string | null };
+type SubmissionPreviewRow = UserScopedRow & {
+  id: string;
+  language: string;
+  concepts?: string[] | null;
+  created_at: string;
+};
+
+function toCSV(rows: CsvRow[]): string {
   if (rows.length === 0) return "";
   const keys = Object.keys(rows[0]!);
   const header = keys.join(",");
@@ -87,13 +96,17 @@ function AdminExport() {
     issues: d.review_issues.length,
     progress: d.progress.length,
     practice: d.practice_problems.length,
+    attempts: d.practice_attempts.length,
+    events: d.practice_events.length,
   };
 
   const totalUsers = new Set([
-    ...d.submissions.map((s: any) => s.user_id),
-    ...d.review_issues.map((i: any) => i.user_id),
-    ...d.progress.map((p: any) => p.user_id),
-    ...d.practice_problems.map((p: any) => p.user_id),
+    ...d.submissions.map((s: UserScopedRow) => s.user_id),
+    ...d.review_issues.map((i: UserScopedRow) => i.user_id),
+    ...d.progress.map((p: UserScopedRow) => p.user_id),
+    ...d.practice_problems.map((p: UserScopedRow) => p.user_id),
+    ...d.practice_attempts.map((a: UserScopedRow) => a.user_id),
+    ...d.practice_events.map((e: UserScopedRow) => e.user_id),
   ]).size;
 
   const handleDownloadJSON = () => {
@@ -116,6 +129,12 @@ function AdminExport() {
       parts.push(
         (parts.length ? "\n\n" : "") + "# Practice Problems\n" + toCSV(d.practice_problems),
       );
+    if (d.practice_attempts.length > 0)
+      parts.push(
+        (parts.length ? "\n\n" : "") + "# Practice Attempts\n" + toCSV(d.practice_attempts),
+      );
+    if (d.practice_events.length > 0)
+      parts.push((parts.length ? "\n\n" : "") + "# Practice Events\n" + toCSV(d.practice_events));
     downloadBlob(
       parts.join("\n\n"),
       `codewise-admin-export-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -158,6 +177,8 @@ function AdminExport() {
         />
         <StatCard icon={<Database className="size-4" />} label="Progress" value={counts.progress} />
         <StatCard icon={<Database className="size-4" />} label="Practice" value={counts.practice} />
+        <StatCard icon={<Database className="size-4" />} label="Attempts" value={counts.attempts} />
+        <StatCard icon={<Database className="size-4" />} label="Events" value={counts.events} />
       </div>
 
       <div className="flex flex-wrap gap-4 mb-10">
@@ -201,7 +222,7 @@ function AdminExport() {
                 </tr>
               </thead>
               <tbody>
-                {d.submissions.slice(0, 10).map((s: any) => (
+                {d.submissions.slice(0, 10).map((s: SubmissionPreviewRow) => (
                   <tr
                     key={s.id}
                     className="border-b border-border/60 last:border-0 hover:bg-muted/30 transition-colors"

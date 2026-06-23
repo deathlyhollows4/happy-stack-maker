@@ -2,6 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProfileRow = Pick<
+  Database["public"]["Tables"]["profiles"]["Row"],
+  "id" | "display_name" | "avatar_url" | "created_at"
+>;
 
 export const updateDisplayName = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -25,12 +31,12 @@ export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("profiles")
       .select("id, display_name, avatar_url, created_at")
       .eq("id", userId)
       .maybeSingle();
-    return { profile: data as any };
+    return { profile: data as ProfileRow | null };
   });
 
 /**
@@ -47,22 +53,19 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const tables = [
       "review_issues",
       "submissions",
+      "practice_events",
+      "practice_attempts",
+      "practice_problem_hidden_tests",
       "practice_problems",
       "progress",
       "usage_counters",
       "subscriptions",
       "user_roles",
-      "profiles",
     ] as const;
 
     for (const t of tables) {
-      const { error } = await (sb as any).from(t).delete().eq("user_id", userId);
-      // profiles uses id, not user_id
-      if (error && t === "profiles") {
-        await sb.from("profiles").delete().eq("id", userId);
-      }
+      await sb.from(t).delete().eq("user_id", userId);
     }
-    // Profile by id (in case the user_id pass above was a no-op)
     await sb.from("profiles").delete().eq("id", userId);
 
     const { error: delErr } = await sb.auth.admin.deleteUser(userId);
