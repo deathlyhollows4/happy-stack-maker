@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 7 Session 5 after Day 7 Session 4 completion.
+Continue with Day 7 Session 6 after Day 7 Session 5 completion.
 
 ## Current Status
 
@@ -22,6 +22,7 @@ Continue with Day 7 Session 5 after Day 7 Session 4 completion.
 - Day 7 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 7 Session 3 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 7 Session 4 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 7 Session 5 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -97,11 +98,15 @@ Continue with Day 7 Session 5 after Day 7 Session 4 completion.
 - Day 7 Session 4 added `tests/lib/practice-analytics-flow.test.ts` to verify that visible-test run events, hint reveal events, conservative hidden-test scoring, hidden-test check events, submitted-attempt events, conditional completion events, and mastery deltas stay aligned for the same beginner attempt.
 - Day 7 Session 4 focused verification passed outside the sandbox after the known OneDrive `vitest.config.ts` access boundary: `npx vitest run tests\lib\practice-analytics-flow.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts` with 31 tests.
 - Day 7 Session 4 scoped lint passed for `tests/lib/practice-analytics-flow.test.ts`.
+- Day 7 Session 5 GitNexus impact reported LOW risk for `installPracticeWorkspaceMocks`, `openPracticeWorkspace`, `expectNoHorizontalOverflow`, `Dashboard`, and `LearnPage`.
+- Day 7 Session 5 added browser coverage for the authenticated dashboard weakest-topic card linking to `/practice?topic=hashing`, the public learn topic CTA linking to `/practice?topic=arrays`, and topic-picker initialization after crossing into the authenticated practice route.
+- Day 7 Session 5 focused browser verification passed locally on `http://127.0.0.1:3001`: `$env:CODEWISE_URL='http://127.0.0.1:3001'; npx playwright test --project=chromium tests/e2e/practice-workspace.spec.ts` with 6 Chromium tests covering authenticated practice, dashboard weak-topic entry, learn-page practice link, mobile workspace layout, hidden-test boundary preservation, and legacy backfilled rendering.
+- Day 7 Session 5 scoped lint passed for `tests/e2e/practice-workspace.spec.ts`.
 
 ## Resume Steps
 
-1. Start Day 7 Session 5: browser-test authenticated practice flow, dashboard weak-topic entry, learn-page practice link, and mobile layout.
-2. Inspect the Day 7 Session 5 requirement in `version2_implementation_plan.md` before changing files.
-3. Inspect current authenticated practice flow, dashboard weak-topic entry, learn-page practice link, mobile layout, and existing Playwright coverage before editing behavior.
-4. Run GitNexus impact before editing indexed symbols and keep fixes scoped to browser-flow verification.
+1. Start Day 7 Session 6: prepare release checklist with migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
+2. Inspect the Day 7 Session 6 requirement in `version2_implementation_plan.md` before changing files.
+3. Inspect current migration files, environment documentation, deploy workflow notes, test evidence, and GitNexus risk summaries before editing checklist content.
+4. Run GitNexus impact before editing indexed symbols if any source symbols need changes; otherwise keep this as a documentation closeout session.
 5. Run focused verification plus `npx gitnexus detect-changes --repo . --scope staged` before committing.

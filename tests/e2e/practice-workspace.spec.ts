@@ -356,6 +356,44 @@ const practiceRecommendation = {
   summary: "Next recommended node: Counting With Arrays.",
 };
 
+const weakTopicDashboardData = {
+  submissions: [
+    {
+      id: "77777777-7777-4777-8777-777777777777",
+      language: "python",
+      summary: "Reviewed a hashmap solution.",
+      created_at: "2026-06-24T09:00:00.000Z",
+    },
+  ],
+  progress: [
+    {
+      topic_slug: "arrays",
+      mastery: 0.64,
+      attempts: 5,
+      last_reviewed: "2026-06-23T09:00:00.000Z",
+      retrievability: 0.8,
+      next_review_date: "2026-06-27T09:00:00.000Z",
+      difficulty: 4.5,
+      stability: 3.2,
+    },
+    {
+      topic_slug: "hashing",
+      mastery: 0.12,
+      attempts: 2,
+      last_reviewed: "2026-06-22T09:00:00.000Z",
+      retrievability: 0.52,
+      next_review_date: "2026-06-25T09:00:00.000Z",
+      difficulty: 6.1,
+      stability: 2.1,
+    },
+  ],
+  topics: [
+    { slug: "arrays", name: "Arrays", category: "Data Structures" },
+    { slug: "hashing", name: "Hashing", category: "Data Structures" },
+  ],
+  practiceRecommendation: null,
+};
+
 function decodeServerFunction(url: string) {
   const id = new URL(url).pathname.split("/_serverFn/")[1] ?? "";
   try {
@@ -372,7 +410,10 @@ function serverFunctionResult(result: unknown) {
   return { result, context: {} };
 }
 
-async function installPracticeWorkspaceMocks(page: Page) {
+async function installPracticeWorkspaceMocks(
+  page: Page,
+  options: { dashboardData?: typeof weakTopicDashboardData } = {},
+) {
   await page.route("**/auth/v1/**", (route) =>
     route.fulfill({
       status: 200,
@@ -413,6 +454,14 @@ async function installPracticeWorkspaceMocks(page: Page) {
             recommendation: practiceRecommendation,
           }),
         ),
+      });
+    }
+
+    if (exportName.includes("getDashboard")) {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(serverFunctionResult(options.dashboardData ?? weakTopicDashboardData)),
       });
     }
 
@@ -599,6 +648,43 @@ test.describe("practice workspace", () => {
       page.getByText("advanced two pointers hidden case should stay server side"),
     ).toHaveCount(0);
 
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("opens practice from the dashboard weakest-topic entry", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await installPracticeWorkspaceMocks(page, { dashboardData: weakTopicDashboardData });
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+
+    await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Practice Hashing" })).toBeVisible();
+    await expect(page.getByText("This is your lowest mastery topic at 12%.")).toBeVisible();
+
+    const weakTopicCard = page.locator("section").filter({
+      has: page.getByRole("heading", { name: "Practice Hashing" }),
+    });
+    const practiceNowLink = weakTopicCard.getByRole("link", { name: /Practice now/ });
+    await expect(practiceNowLink).toHaveAttribute("href", "/practice?topic=hashing");
+    await practiceNowLink.evaluate((link) => (link as HTMLAnchorElement).click());
+    await expect(page).toHaveURL(/\/practice\?topic=hashing/);
+    await expect(page.getByRole("heading", { name: "Practice" })).toBeVisible();
+    await expect(page.locator("select").first()).toHaveValue("hashing");
+    await expectNoHorizontalOverflow(page);
+  });
+
+  test("opens the authenticated practice flow from a learn topic practice link", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 820 });
+    await installPracticeWorkspaceMocks(page);
+    await page.goto("/learn/arrays", { waitUntil: "domcontentloaded" });
+
+    await expect(page.getByRole("heading", { name: "Arrays" })).toBeVisible();
+    await page.getByRole("link", { name: /Practice Arrays with CodeWise/ }).click();
+
+    await expect(page).toHaveURL(/\/practice\?topic=arrays/);
+    await expect(page.getByRole("heading", { name: "Practice" })).toBeVisible();
+    await expect(page.locator("select").first()).toHaveValue("arrays");
     await expectNoHorizontalOverflow(page);
   });
 });

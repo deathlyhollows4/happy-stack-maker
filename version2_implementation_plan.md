@@ -562,7 +562,7 @@ Session 6 evidence:
 2. ✅ Verify manual advanced topic selection creates guided bridge plus preview, not a random advanced problem.
 3. ✅ Verify all five language harnesses on the same beginner problem.
 4. ✅ Verify visible tests, hidden tests, hint events, attempt events, and mastery deltas.
-5. Browser-test authenticated practice flow, dashboard weak-topic entry, learn-page practice link, and mobile layout.
+5. ✅ Browser-test authenticated practice flow, dashboard weak-topic entry, learn-page practice link, and mobile layout.
 6. Prepare release checklist: migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
 
 Session 1 evidence:
@@ -613,6 +613,17 @@ Session 4 evidence:
 - The lifecycle test verifies partial hidden failures reduce mastery gain without exposing hidden-test themes, while severe hidden failures keep the attempt failed, skip the completion event, and avoid mastery gain.
 - Focused verification passed after rerunning outside the OneDrive sandbox boundary: `npx vitest run tests\lib\practice-analytics-flow.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts` with 31 tests.
 - Scoped lint passed for `tests/lib/practice-analytics-flow.test.ts`.
+
+Session 5 evidence:
+
+- Inspected the Day 7 Session 5 requirement plus the authenticated practice route, dashboard weak-topic and recommendation entry points, learn-topic practice link, authenticated mobile shell, existing Playwright coverage, and Playwright config before editing.
+- GitNexus impact before the Playwright test edit reported LOW risk for `installPracticeWorkspaceMocks`, `openPracticeWorkspace`, `expectNoHorizontalOverflow`, `Dashboard`, and `LearnPage`.
+- Extended `tests/e2e/practice-workspace.spec.ts` with dashboard data mocks for a weakest-topic fallback state where Hashing is the lowest mastery topic.
+- Added browser coverage proving the authenticated dashboard weakest-topic card links to `/practice?topic=hashing`, loads the practice flow, and initializes the topic picker to Hashing.
+- Added browser coverage proving the public learn topic CTA links to `/practice?topic=arrays`, crosses the authenticated route boundary, loads practice, and initializes the topic picker to Arrays.
+- Re-ran the focused Chromium practice workspace suite against the local dev server at `http://127.0.0.1:3001`; it passed with 6 tests covering authenticated practice, dashboard weak-topic entry, learn-page practice link, mobile workspace layout, hidden-test boundary preservation, and legacy backfilled rendering.
+- Scoped lint passed for `tests/e2e/practice-workspace.spec.ts`.
+- Playwright report and test-result artifacts generated during failed selector attempts were cleaned before staging.
 
 ## Execution Order
 
