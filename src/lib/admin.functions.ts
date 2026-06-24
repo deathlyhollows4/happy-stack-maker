@@ -5,11 +5,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isAdmin } from "./codewise.utils";
 import { monthKey, refreshPlanQuotas } from "@/lib/entitlements.server";
 import {
-  shapePracticeAttemptExport,
-  shapePracticeEventExport,
-  shapePracticeProblemExport,
-  shapeSubmissionExport,
-} from "@/lib/export-data-view";
+  practiceAttemptExportColumns,
+  practiceEventExportColumns,
+  practiceProblemExportColumns,
+  practiceSubmissionExportColumns,
+  shapePracticeExportRows,
+} from "@/lib/practice-data-ownership";
 
 export type CurriculumMapping = {
   topic_slug: string;
@@ -228,20 +229,7 @@ export const exportAllUserData = createServerFn({ method: "GET" })
       await Promise.all([
         supabaseAdmin
           .from("submissions")
-          .select(
-            [
-              "id",
-              "user_id",
-              "language",
-              "code",
-              "summary",
-              "concepts",
-              "created_at",
-              "practice_problem_id",
-              "practice_attempt_id",
-              "practice_metadata",
-            ].join(", "),
-          )
+          .select(practiceSubmissionExportColumns({ includeUserId: true }))
           .order("created_at", { ascending: false }),
         supabaseAdmin
           .from("review_issues")
@@ -255,86 +243,34 @@ export const exportAllUserData = createServerFn({ method: "GET" })
           ),
         supabaseAdmin
           .from("practice_problems")
-          .select(
-            [
-              "id",
-              "user_id",
-              "topic_slug",
-              "title",
-              "prompt",
-              "starter_code",
-              "language",
-              "created_at",
-              "contract_version",
-              "curriculum_node_id",
-              "mastery_band",
-              "objective",
-              "statement",
-              "topic_tags",
-              "prerequisite_tags",
-              "examples",
-              "constraints",
-              "function_signature",
-              "visible_tests",
-              "hidden_test_themes",
-              "hint_ladder",
-              "success_criteria",
-              "generation_status",
-            ].join(", "),
-          )
+          .select(practiceProblemExportColumns({ includeUserId: true }))
           .order("created_at", { ascending: false }),
         supabaseAdmin
           .from("practice_attempts")
-          .select(
-            [
-              "id",
-              "user_id",
-              "practice_problem_id",
-              "language",
-              "status",
-              "visible_tests_passed",
-              "visible_tests_total",
-              "hidden_tests_passed",
-              "hidden_tests_total",
-              "correctness_score",
-              "hint_count",
-              "review_quality_score",
-              "speed_seconds",
-              "started_at",
-              "completed_at",
-              "created_at",
-            ].join(", "),
-          )
+          .select(practiceAttemptExportColumns({ includeUserId: true }))
           .order("created_at", { ascending: false }),
         supabaseAdmin
           .from("practice_events")
-          .select(
-            [
-              "id",
-              "user_id",
-              "event_type",
-              "practice_problem_id",
-              "practice_attempt_id",
-              "topic_slug",
-              "curriculum_node_id",
-              "mastery_band",
-              "payload",
-              "created_at",
-            ].join(", "),
-          )
+          .select(practiceEventExportColumns({ includeUserId: true }))
           .order("created_at", { ascending: false }),
       ]);
+    const practiceExportRows = shapePracticeExportRows({
+      submissions: submissionsRes.data ?? [],
+      practiceProblems: practiceRes.data ?? [],
+      practiceAttempts: attemptRes.data ?? [],
+      practiceEvents: eventRes.data ?? [],
+    });
 
     return {
       ok: true as const,
       data: {
         exported_at: new Date().toISOString(),
-        submissions: (submissionsRes.data ?? []).map(shapeSubmissionExport),
+        submissions: practiceExportRows.submissions,
         review_issues: issuesRes.data ?? [],
         progress: progressRes.data ?? [],
-        practice_problems: (practiceRes.data ?? []).map(shapePracticeProblemExport),
-        practice_attempts: (attemptRes.data ?? []).map(shapePracticeAttemptExport),
-        practice_events: (eventRes.data ?? []).map(shapePracticeEventExport),
+        practice_problems: practiceExportRows.practice_problems,
+        practice_attempts: practiceExportRows.practice_attempts,
+        practice_events: practiceExportRows.practice_events,
       },
     };
   });

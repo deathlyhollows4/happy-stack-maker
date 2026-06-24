@@ -6,11 +6,12 @@ import { getUserPlan, getPlanQuotas, readUsage, monthKey, dayKey } from "@/lib/e
 import { envInput } from "./codewise.utils";
 import { buildPracticeRecommendationView } from "@/lib/practice-recommendation-view";
 import {
-  shapePracticeAttemptExport,
-  shapePracticeEventExport,
-  shapePracticeProblemExport,
-  shapeSubmissionExport,
-} from "@/lib/export-data-view";
+  practiceAttemptExportColumns,
+  practiceEventExportColumns,
+  practiceProblemExportColumns,
+  practiceSubmissionExportColumns,
+  shapePracticeExportRows,
+} from "@/lib/practice-data-ownership";
 
 export const getDueReviews = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -106,19 +107,7 @@ export const exportUserData = createServerFn({ method: "GET" })
     const [submissionsRes, progressRes, practiceRes, attemptRes, eventRes] = await Promise.all([
       supabase
         .from("submissions")
-        .select(
-          [
-            "id",
-            "language",
-            "code",
-            "summary",
-            "concepts",
-            "created_at",
-            "practice_problem_id",
-            "practice_attempt_id",
-            "practice_metadata",
-          ].join(", "),
-        )
+        .select(practiceSubmissionExportColumns())
         .eq("user_id", userId)
         .order("created_at", { ascending: false }),
       supabase
@@ -129,77 +118,28 @@ export const exportUserData = createServerFn({ method: "GET" })
         .eq("user_id", userId),
       supabase
         .from("practice_problems")
-        .select(
-          [
-            "id",
-            "topic_slug",
-            "title",
-            "prompt",
-            "starter_code",
-            "language",
-            "created_at",
-            "contract_version",
-            "curriculum_node_id",
-            "mastery_band",
-            "objective",
-            "statement",
-            "topic_tags",
-            "prerequisite_tags",
-            "examples",
-            "constraints",
-            "function_signature",
-            "visible_tests",
-            "hidden_test_themes",
-            "hint_ladder",
-            "success_criteria",
-            "generation_status",
-          ].join(", "),
-        )
+        .select(practiceProblemExportColumns())
         .eq("user_id", userId)
         .order("created_at", { ascending: false }),
       supabase
         .from("practice_attempts")
-        .select(
-          [
-            "id",
-            "practice_problem_id",
-            "language",
-            "status",
-            "visible_tests_passed",
-            "visible_tests_total",
-            "hidden_tests_passed",
-            "hidden_tests_total",
-            "correctness_score",
-            "hint_count",
-            "review_quality_score",
-            "speed_seconds",
-            "started_at",
-            "completed_at",
-            "created_at",
-          ].join(", "),
-        )
+        .select(practiceAttemptExportColumns())
         .eq("user_id", userId)
         .order("created_at", { ascending: false }),
       supabase
         .from("practice_events")
-        .select(
-          [
-            "id",
-            "event_type",
-            "practice_problem_id",
-            "practice_attempt_id",
-            "topic_slug",
-            "curriculum_node_id",
-            "mastery_band",
-            "payload",
-            "created_at",
-          ].join(", "),
-        )
+        .select(practiceEventExportColumns())
         .eq("user_id", userId)
         .order("created_at", { ascending: false }),
     ]);
 
-    const submissions = (submissionsRes.data ?? []).map(shapeSubmissionExport);
+    const practiceExportRows = shapePracticeExportRows({
+      submissions: submissionsRes.data ?? [],
+      practiceProblems: practiceRes.data ?? [],
+      practiceAttempts: attemptRes.data ?? [],
+      practiceEvents: eventRes.data ?? [],
+    });
+    const submissions = practiceExportRows.submissions;
     const submissionIds = submissions.map((s) => s.id);
 
     let issues: Array<{
@@ -226,8 +166,8 @@ export const exportUserData = createServerFn({ method: "GET" })
       submissions,
       review_issues: issues,
       progress: progressRes.data ?? [],
-      practice_problems: (practiceRes.data ?? []).map(shapePracticeProblemExport),
-      practice_attempts: (attemptRes.data ?? []).map(shapePracticeAttemptExport),
-      practice_events: (eventRes.data ?? []).map(shapePracticeEventExport),
+      practice_problems: practiceExportRows.practice_problems,
+      practice_attempts: practiceExportRows.practice_attempts,
+      practice_events: practiceExportRows.practice_events,
     };
   });

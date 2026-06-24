@@ -9,60 +9,15 @@ import {
   verifyRazorpayWebhookSignature,
 } from "@/lib/payments.server";
 import {
-  addBillingPeriod,
+  asRecord,
+  firstString,
   getPlanAmountInPaise,
-  isProBillingPlanCode,
+  isStillEntitled,
+  normalizeCurrencyCode,
+  normalizeSubscriptionStatus,
+  resolvePaidPeriod,
+  toPositiveNumber,
 } from "@/lib/razorpay-lifecycle.server";
-import { subscriptionHasAccess } from "@/lib/entitlement-policy";
-
-function firstString(...values: unknown[]): string | null {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim()) return value.trim();
-  }
-  return null;
-}
-
-function normalizeCurrencyCode(value: unknown): string | null {
-  return typeof value === "string" && value.trim().length === 3 ? value.trim().toUpperCase() : null;
-}
-
-function toPositiveNumber(value: unknown): number | null {
-  const amount = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(amount) && amount > 0 ? amount : null;
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function isStillEntitled(row: {
-  status?: string | null;
-  current_period_end?: string | null;
-}): boolean {
-  return subscriptionHasAccess(row);
-}
-
-function normalizeSubscriptionStatus(eventType: string, fallback: string): string {
-  switch (eventType) {
-    case "subscription.activated":
-    case "subscription.charged":
-    case "subscription.resumed":
-      return "active";
-    case "subscription.authenticated":
-      return "authenticated";
-    case "subscription.paused":
-    case "subscription.halted":
-      return "paused";
-    case "subscription.cancelled":
-      return "canceled";
-    case "subscription.completed":
-      return "completed";
-    default:
-      return fallback;
-  }
-}
 
 async function resolveBillingPlanCode(input: {
   env: PaymentsEnv;
@@ -314,15 +269,14 @@ async function handleOrderPaymentCaptured(
 
   const existingActive = existing ? isStillEntitled(existing) : false;
   const occurredAtIso = unixSecondsToIso(payload.created_at) ?? new Date().toISOString();
-  const periodStart = existingActive
-    ? (existing?.current_period_start ?? occurredAtIso)
-    : new Date(occurredAtIso).toISOString();
-  const periodEnd =
-    existingActive && existing?.current_period_end
-      ? existing.current_period_end
-      : isProBillingPlanCode(billingPlanCode)
-        ? addBillingPeriod(new Date(periodStart), billingPlanCode).toISOString()
-        : null;
+  const period = resolvePaidPeriod({
+    existingActive,
+    existingStart: existing?.current_period_start ?? occurredAtIso,
+    existingEnd: existing?.current_period_end ?? null,
+    canActivate: true,
+    billingPlanCode,
+    start: new Date(occurredAtIso),
+  });
 
   await supabaseAdmin.from("subscriptions").upsert(
     {
@@ -335,8 +289,8 @@ async function handleOrderPaymentCaptured(
       price_id: billingPlanCode,
       product_id: existing?.product_id ?? "pro",
       status: "active",
-      current_period_start: periodStart,
-      current_period_end: periodEnd,
+      current_period_start: period.currentPeriodStart,
+      current_period_end: period.currentPeriodEnd,
       cancel_at_period_end: false,
       currency_code: currencyCode ?? existing?.currency_code ?? null,
       environment: env,

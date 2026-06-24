@@ -12,8 +12,10 @@ import {
 } from "@/lib/payments.server";
 import { envInput } from "@/lib/codewise.utils";
 import {
+  buildCreatedOrderSubscriptionRow,
+  buildVerifiedPaymentSubscriptionRow,
   getPlanAmountInPaise,
-  isProBillingPlanCode,
+  resolveRazorpayPaymentCaptureState,
   resolvePaidPeriod,
 } from "@/lib/razorpay-lifecycle.server";
 import { subscriptionHasAccess } from "@/lib/entitlement-policy";
@@ -102,31 +104,16 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       },
     });
 
+    const nowIso = new Date().toISOString();
     await supabaseAdmin.from("subscriptions").upsert(
-      {
-        user_id: context.userId,
-        provider: "razorpay",
-        provider_subscription_id: order.id,
-        provider_customer_id: null,
-        provider_plan_id: data.billingPlanCode,
-        billing_plan_code: data.billingPlanCode,
-        price_id: data.billingPlanCode,
-        product_id: "pro",
-        status: "created",
-        current_period_start: null,
-        current_period_end: null,
-        cancel_at_period_end: false,
-        currency_code: data.currencyCode,
+      buildCreatedOrderSubscriptionRow({
+        userId: context.userId,
         environment: data.environment,
-        external_status_updated_at: new Date().toISOString(),
-        metadata: {
-          source: "createSubscriptionCheckout",
-          checkout_mode: "order",
-          razorpay_order_id: order.id,
-          razorpay_order_amount: order.amount,
-        },
-        updated_at: new Date().toISOString(),
-      },
+        billingPlanCode: data.billingPlanCode,
+        currencyCode: data.currencyCode,
+        order,
+        nowIso,
+      }),
       { onConflict: "provider,environment,provider_subscription_id" },
     );
 
@@ -171,20 +158,22 @@ export const verifyRazorpaySubscriptionPayment = createServerFn({ method: "POST"
       ? await getPlanAmountInPaise(data.billingPlanCode)
       : null;
     let payment = await fetchRazorpayPayment(data.environment, data.razorpayPaymentId);
-    let paidAmount = Number.isFinite(payment.amount) ? payment.amount : 0;
-    let amountMatches = expectedAmount !== null && paidAmount === expectedAmount;
+    let paymentState = resolveRazorpayPaymentCaptureState({
+      payment,
+      expectedAmount,
+    });
 
-    if (payment.status === "authorized" && amountMatches) {
+    if (payment.status === "authorized" && paymentState.amountMatches) {
       payment = await captureRazorpayPayment(data.environment, data.razorpayPaymentId, {
-        amount: paidAmount,
+        amount: paymentState.paidAmount,
         currency: "INR",
       });
-      paidAmount = Number.isFinite(payment.amount) ? payment.amount : 0;
-      amountMatches = expectedAmount !== null && paidAmount === expectedAmount;
+      paymentState = resolveRazorpayPaymentCaptureState({
+        payment,
+        expectedAmount,
+      });
     }
 
-    const paymentCaptured = payment.captured === true && payment.status === "captured";
-    const hasPaidCharge = paymentCaptured && paidAmount > 0;
     const lookupId = orderId ?? subscriptionId;
     if (!lookupId) {
       return { ok: false as const, error: "Razorpay checkout reference is missing." };
@@ -215,7 +204,7 @@ export const verifyRazorpaySubscriptionPayment = createServerFn({ method: "POST"
     }
 
     const existingActive = !!existing && subscriptionHasAccess(existing);
-    const canActivate = hasPaidCharge && amountMatches;
+    const canActivate = paymentState.hasPaidCharge && paymentState.amountMatches;
     const periodStart = new Date();
     const billingPlanCode = data.billingPlanCode ?? existing?.billing_plan_code ?? "pro_monthly";
     const { currentPeriodStart, currentPeriodEnd } = resolvePaidPeriod({
@@ -228,44 +217,33 @@ export const verifyRazorpaySubscriptionPayment = createServerFn({ method: "POST"
     });
 
     await supabaseAdmin.from("subscriptions").upsert(
-      {
-        user_id: context.userId,
-        provider: "razorpay",
-        provider_subscription_id: lookupId,
-        provider_plan_id: existing?.provider_plan_id ?? null,
-        billing_plan_code: billingPlanCode,
-        price_id: billingPlanCode,
-        product_id: existing?.product_id ?? "pro",
-        status: existingActive || canActivate ? "active" : "authenticated",
-        current_period_start: currentPeriodStart,
-        current_period_end: currentPeriodEnd,
-        cancel_at_period_end: false,
-        currency_code: data.currencyCode ?? payment.currency ?? existing?.currency_code ?? null,
+      buildVerifiedPaymentSubscriptionRow({
+        userId: context.userId,
+        lookupId,
         environment: data.environment,
-        external_status_updated_at: nowIso,
-        metadata: {
-          source: "verifyRazorpaySubscriptionPayment",
-          checkout_mode: orderId ? "order" : "subscription",
-          razorpay_order_id: orderId ?? null,
-          razorpay_payment_id: data.razorpayPaymentId,
-          razorpay_payment_status: payment.status,
-          razorpay_payment_amount: paidAmount,
-          razorpay_payment_captured: paymentCaptured,
-          expected_amount: expectedAmount,
-          amount_matches: amountMatches,
-          razorpay_payment_method: payment.method ?? null,
-          razorpay_invoice_id: payment.invoice_id ?? null,
-        },
-        updated_at: nowIso,
-      },
+        orderId,
+        razorpayPaymentId: data.razorpayPaymentId,
+        billingPlanCode,
+        currencyCode: data.currencyCode,
+        existing,
+        payment,
+        paidAmount: paymentState.paidAmount,
+        expectedAmount,
+        amountMatches: paymentState.amountMatches,
+        paymentCaptured: paymentState.paymentCaptured,
+        active: existingActive || canActivate,
+        currentPeriodStart,
+        currentPeriodEnd,
+        nowIso,
+      }),
       { onConflict: "provider,environment,provider_subscription_id" },
     );
 
     return {
       ok: true as const,
       active: existingActive || canActivate,
-      paymentCaptured,
-      paidAmount,
+      paymentCaptured: paymentState.paymentCaptured,
+      paidAmount: paymentState.paidAmount,
       paymentStatus: payment.status,
       message: canActivate
         ? "Payment captured. Pro access is ready."
