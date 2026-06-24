@@ -563,7 +563,7 @@ Session 6 evidence:
 3. ✅ Verify all five language harnesses on the same beginner problem.
 4. ✅ Verify visible tests, hidden tests, hint events, attempt events, and mastery deltas.
 5. ✅ Browser-test authenticated practice flow, dashboard weak-topic entry, learn-page practice link, and mobile layout.
-6. Prepare release checklist: migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
+6. ✅ Prepare release checklist: migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
 
 Session 1 evidence:
 
@@ -624,6 +624,53 @@ Session 5 evidence:
 - Re-ran the focused Chromium practice workspace suite against the local dev server at `http://127.0.0.1:3001`; it passed with 6 tests covering authenticated practice, dashboard weak-topic entry, learn-page practice link, mobile workspace layout, hidden-test boundary preservation, and legacy backfilled rendering.
 - Scoped lint passed for `tests/e2e/practice-workspace.spec.ts`.
 - Playwright report and test-result artifacts generated during failed selector attempts were cleaned before staging.
+
+Session 6 evidence:
+
+- Inspected the Day 7 Session 6 requirement before changing files and kept this as a documentation closeout session. No indexed source symbols were edited, so no pre-edit GitNexus impact run was required.
+- Reviewed the current practice release migrations:
+  - `supabase/migrations/20260621094500_dsa_practice_schema_foundation.sql` adds the structured practice-problem fields, hidden-test storage table, practice attempts, practice events, indexes, RLS, service-role hidden-test access, and structured generation status checks.
+  - `supabase/migrations/20260622170000_add_practice_planning_context.sql` adds `practice_problems.planning_context` as a JSON object for curriculum planner and bridge-preview metadata.
+  - `supabase/migrations/20260623091000_add_practice_review_submission_context.sql` links review submissions to practice problems and attempts, adds sanitized practice metadata, and indexes the links.
+  - `supabase/migrations/20260623112000_backfill_legacy_practice_problems.sql` marks existing structured rows as structured and marks old markdown-only rows as legacy with a safe backfill marker.
+- Reviewed environment documentation and usage paths. Production needs Supabase URL, publishable key, service-role key, Lovable API key, Razorpay live credentials, Razorpay live webhook secret, public Vite Supabase variables, public Razorpay key, and optional Plausible and payment client tokens. Secret values must not be committed or printed.
+- Reviewed deploy workflow notes. This repo is built for GitHub-connected Lovable deploys from `main`, with Lovable `Publish` then `Update`, followed by cache-busted live verification on `https://happy-stack-maker.lovable.app/`. Supabase project identity must be verified before applying migrations because local MCP project names can differ from the live Lovable database.
+- Release checklist:
+  1. Confirm `main` contains the Day 1 through Day 7 commits and no unrelated local files are staged.
+  2. Take or confirm a Supabase production backup before applying practice migrations.
+  3. Apply the four practice migrations above to the correct live Supabase project in chronological order.
+  4. Verify the production database has `practice_problem_hidden_tests`, `practice_attempts`, `practice_events`, `practice_problems.planning_context`, and review-submission practice links.
+  5. Confirm production env names are present for Supabase, Lovable AI Gateway, Razorpay live checkout and webhook handling, public Vite Supabase keys, public Razorpay key, optional Plausible, and any payment client token still required by the deployed billing surface.
+  6. Run `npm test`, `npm run build`, and the focused practice Playwright suite against local or preview before publishing.
+  7. Push `main` only after the final staged GitNexus detect pass is clean for the intended files.
+  8. In Lovable, confirm GitHub is connected to `deathlyhollows4/happy-stack-maker` on `main`, then use `Publish` and `Update`.
+  9. Verify the live app with a cache-busted URL. Check practice generation, dashboard weakest-topic entry, learn-topic practice link, mobile practice layout, billing checkout availability, and admin/export access where credentials allow.
+  10. Keep hidden-test content out of learner-facing UI and exports during live verification. Only summaries should surface outside service-role paths.
+- Rollback plan:
+  - If migration application fails before publish, stop the deploy, keep the old Lovable build live, and restore or repair the Supabase database from the pre-migration backup.
+  - If Lovable publish fails or the live app does not load, republish the previous known-good commit from `main` or revert the release commit and publish/update again.
+  - If structured practice generation fails after publish, disable new practice rollout at the product entry point or revert the code while preserving legacy markdown rendering and the applied additive columns.
+  - If hidden-test, event-log, or review-link writes fail, keep learner-facing visible tests and legacy rendering available while blocking completion/mastery updates until the database issue is repaired.
+- Known risks:
+  - The migrations must be applied before production code relies on structured fields, `planning_context`, attempt/event tables, or review-submission links.
+  - Day 7 Session 3 verified Java wrapper generation, but local Java runtime execution was not available on this machine.
+  - Existing build output includes Lovable context notices, a large-chunk warning, and TanStack unused-import warnings. These were present during passing builds and are not new release blockers.
+  - `main` is ahead of `origin/main`; pushing production release commits requires an explicit push step.
+  - Live Supabase identity must be verified before migration because applying these migrations to the wrong project would not update the Lovable production database.
+- Test evidence inspected for release readiness:
+  - Day 7 Session 1 true-beginner focused tests passed with 29 tests, and full `npm test` passed with 217 tests and 3 skipped tests.
+  - Day 7 Session 2 manual bridge focused tests passed with 37 tests, Playwright passed with 4 Chromium tests, full `npm test` passed with 218 tests and 3 skipped tests, and `npm run build` passed.
+  - Day 7 Session 3 harness tests passed with 56 focused tests, full `npm test` passed with 227 tests and 3 skipped tests, and `npm run build` passed.
+  - Day 7 Session 4 analytics tests passed with 31 focused tests.
+  - Day 7 Session 5 browser verification passed locally on `http://127.0.0.1:3001` with 6 Chromium tests covering authenticated practice, dashboard weakest-topic entry, learn-page practice link, mobile workspace layout, hidden-test boundary preservation, and legacy backfilled rendering.
+  - Day 7 Session 6 closeout verification passed: touched-file Prettier for the tracker files, full `npm test` with 229 tests and 3 skipped tests, and `npm run build` with the existing Lovable context notices, chunk-size warning, and TanStack unused-import warnings.
+- GitNexus risk summary:
+  - Day 7 Session 1 reported LOW impact for generation-plan and structured-problem schema tests, with HIGH impact noted for `planPracticeSession`; planner source behavior was not changed.
+  - Day 7 Session 2 reported LOW impact for generation-plan and recommendation-view symbols, HIGH impact for `planPracticeSession`, and CRITICAL impact for `buildPracticeProblemView`; planner and problem-view behavior were not changed during the high-risk findings.
+  - Day 7 Session 3 reported HIGH impact for shared harness normalization and wrapper paths; shared harness source behavior was not changed.
+  - Day 7 Session 4 reported LOW impact for attempt, event, hidden-test scoring, and mastery-progress symbols.
+  - Day 7 Session 5 reported LOW impact for the Playwright helper symbols and route components inspected before the browser-flow tests.
+  - Day 7 Session 6 is documentation-only. GitNexus staged detect reported LOW risk across 2 tracker files and 5 markdown symbols, with 0 affected processes.
 
 ## Execution Order
 

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 7 Session 6 after Day 7 Session 5 completion.
+Day 7 is complete. Continue with release execution only after the live Supabase project, production environment variables, GitHub push, and Lovable publish/update path are confirmed.
 
 ## Current Status
 
@@ -23,6 +23,7 @@ Continue with Day 7 Session 6 after Day 7 Session 5 completion.
 - Day 7 Session 3 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 7 Session 4 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 7 Session 5 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 7 Session 6 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -102,11 +103,16 @@ Continue with Day 7 Session 6 after Day 7 Session 5 completion.
 - Day 7 Session 5 added browser coverage for the authenticated dashboard weakest-topic card linking to `/practice?topic=hashing`, the public learn topic CTA linking to `/practice?topic=arrays`, and topic-picker initialization after crossing into the authenticated practice route.
 - Day 7 Session 5 focused browser verification passed locally on `http://127.0.0.1:3001`: `$env:CODEWISE_URL='http://127.0.0.1:3001'; npx playwright test --project=chromium tests/e2e/practice-workspace.spec.ts` with 6 Chromium tests covering authenticated practice, dashboard weak-topic entry, learn-page practice link, mobile workspace layout, hidden-test boundary preservation, and legacy backfilled rendering.
 - Day 7 Session 5 scoped lint passed for `tests/e2e/practice-workspace.spec.ts`.
+- Day 7 Session 6 prepared the release checklist in `version2_implementation_plan.md`, covering required practice migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
+- Day 7 Session 6 reviewed the four practice release migrations: structured practice schema, planner context, review-submission links, and legacy markdown backfill.
+- Day 7 Session 6 was documentation-only. No indexed source symbols were edited, so no pre-edit GitNexus impact run was required.
+- Day 7 Session 6 closeout verification passed: touched-file Prettier for `version2_implementation_plan.md` and `mesh/next_session.md`, full `npm test` with 229 tests and 3 skipped tests, and `npm run build` with existing Lovable context notices, chunk-size warning, and TanStack unused-import warnings.
+- Day 7 Session 6 GitNexus staged detect reported LOW risk across 2 tracker files and 5 markdown symbols, with 0 affected processes.
 
 ## Resume Steps
 
-1. Start Day 7 Session 6: prepare release checklist with migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
-2. Inspect the Day 7 Session 6 requirement in `version2_implementation_plan.md` before changing files.
-3. Inspect current migration files, environment documentation, deploy workflow notes, test evidence, and GitNexus risk summaries before editing checklist content.
-4. Run GitNexus impact before editing indexed symbols if any source symbols need changes; otherwise keep this as a documentation closeout session.
-5. Run focused verification plus `npx gitnexus detect-changes --repo . --scope staged` before committing.
+1. Confirm the live Supabase project used by Lovable before applying migrations. Do not assume a local MCP project name is production.
+2. Apply the four practice migrations in chronological order only after confirming a production backup is available.
+3. Push `main` to GitHub when the user approves the release push.
+4. In Lovable, confirm GitHub is connected to `deathlyhollows4/happy-stack-maker` on `main`, then use `Publish` and `Update`.
+5. Verify the cache-busted live app for practice generation, dashboard weakest-topic entry, learn-topic practice link, mobile practice layout, hidden-test boundary preservation, billing checkout availability, and admin/export access where credentials allow.
