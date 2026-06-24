@@ -1,11 +1,20 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildPracticeExecutionFailure,
   buildPracticeVisibleTestWrapper,
   normalizePracticeExecutionResult,
   parsePracticeTestRunOutput,
+  type PracticeExecutionSummary,
 } from "@/lib/practice-test-execution";
-import type { PracticeProblemTestCase } from "@/lib/practice-problem-contract";
+import type { PracticeTestWrapper } from "@/lib/practice-test-wrappers";
+import type {
+  PracticeProblemLanguage,
+  PracticeProblemTestCase,
+} from "@/lib/practice-problem-contract";
 
 const VISIBLE_TESTS: PracticeProblemTestCase[] = [
   {
@@ -26,6 +35,120 @@ const VISIBLE_TESTS: PracticeProblemTestCase[] = [
   },
 ];
 
+const BEGINNER_LANGUAGE_FIXTURES: Array<{
+  language: PracticeProblemLanguage;
+  functionName: string;
+  userCode: string;
+  filename: string;
+  callFragment: string;
+}> = [
+  {
+    language: "python",
+    functionName: "count_positive",
+    userCode:
+      "def count_positive(nums):\n    count = 0\n    for value in nums:\n        if value > 0:\n            count += 1\n    return count",
+    filename: "main.py",
+    callFragment: 'count_positive(*__case["arguments"])',
+  },
+  {
+    language: "javascript",
+    functionName: "countPositive",
+    userCode:
+      "export function countPositive(nums) {\n  let count = 0;\n  for (const value of nums) {\n    if (value > 0) count += 1;\n  }\n  return count;\n}",
+    filename: "main.js",
+    callFragment: 'eval("countPositive")',
+  },
+  {
+    language: "java",
+    functionName: "countPositive",
+    userCode:
+      "public static int countPositive(int[] nums) {\n    int count = 0;\n    for (int value : nums) {\n      if (value > 0) count++;\n    }\n    return count;\n  }",
+    filename: "Main.java",
+    callFragment: "countPositive(new int[]{-1, 2, 0, 4})",
+  },
+  {
+    language: "cpp",
+    functionName: "countPositive",
+    userCode:
+      "int countPositive(vector<int> nums) {\n  int count = 0;\n  for (int value : nums) {\n    if (value > 0) count++;\n  }\n  return count;\n}",
+    filename: "main.cpp",
+    callFragment: "countPositive(vector<int>{-1, 2, 0, 4})",
+  },
+  {
+    language: "go",
+    functionName: "CountPositive",
+    userCode:
+      "func CountPositive(nums []int) int {\n  count := 0\n  for _, value := range nums {\n    if value > 0 {\n      count++\n    }\n  }\n  return count\n}",
+    filename: "main.go",
+    callFragment: "CountPositive([]int{-1, 2, 0, 4})",
+  },
+];
+
+function hasCommand(command: string, args: string[] = ["--version"]) {
+  try {
+    execFileSync(command, args, { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const AVAILABLE_EXECUTION_LANGUAGES = new Set<PracticeProblemLanguage>(
+  BEGINNER_LANGUAGE_FIXTURES.filter(({ language }) => {
+    switch (language) {
+      case "python":
+        return hasCommand("python", ["--version"]);
+      case "javascript":
+        return hasCommand("node", ["--version"]);
+      case "java":
+        return hasCommand("javac", ["-version"]) && hasCommand("java", ["-version"]);
+      case "cpp":
+        return hasCommand("g++", ["--version"]);
+      case "go":
+        return hasCommand("go", ["version"]);
+    }
+  }).map(({ language }) => language),
+);
+
+function executeWrapper(wrapper: PracticeTestWrapper) {
+  const directory = mkdtempSync(path.join(tmpdir(), "codewise-harness-"));
+  const filePath = path.join(directory, wrapper.filename);
+  writeFileSync(filePath, wrapper.code);
+
+  try {
+    switch (wrapper.language) {
+      case "python":
+        return execFileSync("python", [filePath], { cwd: directory, encoding: "utf8" });
+      case "javascript":
+        return execFileSync("node", [filePath], { cwd: directory, encoding: "utf8" });
+      case "java":
+        execFileSync("javac", [filePath], { cwd: directory, stdio: "pipe" });
+        return execFileSync("java", ["Main"], { cwd: directory, encoding: "utf8" });
+      case "cpp": {
+        const binaryPath = path.join(directory, "main.exe");
+        execFileSync("g++", [filePath, "-std=c++17", "-o", binaryPath], {
+          cwd: directory,
+          stdio: "pipe",
+        });
+        return execFileSync(binaryPath, { cwd: directory, encoding: "utf8" });
+      }
+      case "go":
+        return execFileSync("go", ["run", filePath], { cwd: directory, encoding: "utf8" });
+    }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+function expectPassedSummary(summary: PracticeExecutionSummary) {
+  expect(summary).toEqual({
+    total: 2,
+    passed: 2,
+    failed: 0,
+    status: "passed",
+  });
+}
+
 describe("buildPracticeVisibleTestWrapper", () => {
   it("normalizes stored visible tests and builds a language wrapper", () => {
     const wrapper = buildPracticeVisibleTestWrapper({
@@ -43,6 +166,58 @@ describe("buildPracticeVisibleTestWrapper", () => {
     expect(wrapper.code).toContain("visible-1-empty-array");
     expect(wrapper.code).toContain("visible-2-mixed-values");
   });
+
+  it.each(BEGINNER_LANGUAGE_FIXTURES)(
+    "builds the same beginner visible-test harness for $language",
+    ({ language, functionName, userCode, filename, callFragment }) => {
+      const wrapper = buildPracticeVisibleTestWrapper({
+        language,
+        functionName,
+        userCode,
+        visibleTests: VISIBLE_TESTS,
+      });
+
+      expect(wrapper).toMatchObject({
+        language,
+        filename,
+        testCount: 2,
+      });
+      expect(wrapper.code).toContain("visible-1-empty-array");
+      expect(wrapper.code).toContain("visible-2-mixed-values");
+      expect(wrapper.code).toContain(callFragment);
+      expect(wrapper.code).toContain("codewiseTestResults");
+    },
+  );
+
+  it.each(
+    BEGINNER_LANGUAGE_FIXTURES.filter(({ language }) =>
+      AVAILABLE_EXECUTION_LANGUAGES.has(language),
+    ),
+  )(
+    "executes the beginner visible-test harness for $language",
+    (fixture) => {
+      const wrapper = buildPracticeVisibleTestWrapper({
+        language: fixture.language,
+        functionName: fixture.functionName,
+        userCode: fixture.userCode,
+        visibleTests: VISIBLE_TESTS,
+      });
+      const stdout = executeWrapper(wrapper);
+      const normalized = normalizePracticeExecutionResult({
+        stdout,
+        stderr: "",
+        compileStderr: "",
+        exitCode: 0,
+      });
+
+      expectPassedSummary(normalized.testSummary);
+      expect(normalized.testResults?.map((result) => result.name)).toEqual([
+        "empty array",
+        "mixed values",
+      ]);
+    },
+    30_000,
+  );
 
   it("builds a Go wrapper for the execution flow", () => {
     const wrapper = buildPracticeVisibleTestWrapper({
