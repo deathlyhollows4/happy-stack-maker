@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PRACTICE_PROBLEM_CONTRACT_VERSION,
+  buildStructuredPracticeProblemContractInstructions,
   parseStructuredPracticeProblem,
   validateStructuredPracticeProblem,
 } from "@/lib/practice-problem-contract";
@@ -120,6 +121,87 @@ describe("StructuredPracticeProblemSchema", () => {
     );
   });
 
+  it("normalizes common AI aliases before validating the stored contract", () => {
+    type AiAliasProblem = Omit<
+      ReturnType<typeof validProblem>,
+      "functionSignature" | "visibleTests" | "hiddenTests"
+    > & {
+      functionSignature: Omit<
+        ReturnType<typeof validProblem>["functionSignature"],
+        "languageSignatures"
+      > & {
+        languageSignatures: unknown;
+      };
+      visibleTests: unknown[];
+      hiddenTests: unknown[];
+    };
+
+    const baseProblem = validProblem();
+    const visibleTest = baseProblem.visibleTests[0]!;
+    const hiddenTest = baseProblem.hiddenTests[0]!;
+    const problem: AiAliasProblem = {
+      ...baseProblem,
+      functionSignature: {
+        ...baseProblem.functionSignature,
+        languageSignatures: {
+          python: {
+            callableName: "count_positive",
+            signature: "def count_positive(nums: list[int]) -> int:",
+            starterCode: "def count_positive(nums: list[int]) -> int:\n    pass",
+          },
+          javascript: {
+            callableName: "countPositive",
+            signature: "function countPositive(nums) { }",
+            starterCode: "export function countPositive(nums) {\n  return 0;\n}",
+          },
+          java: {
+            callableName: "countPositive",
+            signature: "public static int countPositive(int[] nums)",
+            starterCode: "public static int countPositive(int[] nums) {\n  return 0;\n}",
+          },
+          cpp: {
+            callableName: "count_positive",
+            signature: "int count_positive(vector<int> nums)",
+            starterCode: "int count_positive(vector<int> nums) {\n  return 0;\n}",
+          },
+          go: {
+            callableName: "CountPositive",
+            signature: "func CountPositive(nums []int) int",
+            starterCode: "func CountPositive(nums []int) int {\n\treturn 0\n}",
+          },
+        },
+      },
+      visibleTests: [
+        {
+          name: visibleTest.name,
+          arguments: visibleTest.arguments,
+          expectedOutput: visibleTest.expected,
+          theme: visibleTest.theme,
+          visibility: "visible",
+        },
+      ],
+      hiddenTests: [
+        {
+          name: hiddenTest.name,
+          args: hiddenTest.arguments,
+          expectedOutput: hiddenTest.expected,
+          theme: hiddenTest.theme,
+          visibility: "hidden",
+        },
+      ],
+    };
+
+    const parsed = parseStructuredPracticeProblem(problem);
+
+    expect(parsed.functionSignature.languageSignatures).toHaveLength(5);
+    expect(parsed.functionSignature.languageSignatures[0]).toMatchObject({
+      language: "python",
+      callableName: "count_positive",
+    });
+    expect(parsed.visibleTests[0]?.expected).toBe(2);
+    expect(parsed.hiddenTests[0]?.arguments).toEqual([[]]);
+  });
+
   it("rejects hidden-test themes without generated hidden tests", () => {
     const problem = validProblem();
     problem.hiddenTestThemes = ["empty list", "negative values"];
@@ -158,6 +240,16 @@ describe("StructuredPracticeProblemSchema", () => {
     expect(result.issues).toContain(
       "hintLadder: Hint order values must start at 1 and have no gaps.",
     );
+  });
+
+  it("documents nested JSON fields for generated practice problems", () => {
+    const instructions = buildStructuredPracticeProblemContractInstructions();
+
+    expect(instructions).toContain("functionSignature.languageSignatures");
+    expect(instructions).toContain("visibleTests and hiddenTests");
+    expect(instructions).toContain("arguments");
+    expect(instructions).toContain("expected");
+    expect(instructions).toContain("hiddenTestThemes");
   });
 
   it("rejects nested or object test values that wrappers cannot execute", () => {

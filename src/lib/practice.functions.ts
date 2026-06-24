@@ -10,7 +10,10 @@ import { getTopicBySlug } from "@/lib/topics";
 import type { PracticePlannerResult } from "@/lib/practice-planner.server";
 import { buildPracticeGenerationPlan } from "@/lib/practice-generation-plan.server";
 import { runPracticeGenerationWithRepair } from "@/lib/practice-generation-repair.server";
-import { PRACTICE_PROBLEM_CONTRACT_VERSION } from "@/lib/practice-problem-contract";
+import {
+  buildStructuredPracticeProblemContractInstructions,
+  PRACTICE_PROBLEM_CONTRACT_VERSION,
+} from "@/lib/practice-problem-contract";
 import type { PracticeProblemLanguage } from "@/lib/practice-problem-contract";
 import {
   buildStructuredPracticeHiddenTestsInsert,
@@ -34,6 +37,7 @@ function practiceSystemPrompt() {
     "Visible and hidden tests must use primitive JSON values or flat primitive arrays for arguments and expected.",
     "Every hiddenTestThemes item must match at least one hidden test theme.",
     "Starter code must include TODO comments but no full solution.",
+    buildStructuredPracticeProblemContractInstructions(),
   ].join(" ");
 }
 

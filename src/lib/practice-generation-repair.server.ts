@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { buildStructuredPracticeProblemContractInstructions } from "@/lib/practice-problem-contract";
 
 type PracticeGenerationWorkflowInput<TSchema extends z.ZodTypeAny> = {
   systemPrompt: string;
@@ -25,6 +26,7 @@ export function buildPracticeGenerationRepairPrompt(input: {
     "Return one valid JSON object only.",
     "Keep the same curriculum node, mastery band, objective, language signatures, tests, hints, and success criteria required by the original request.",
     "Fix missing fields, invalid field values, unsupported bands, extra prose, or invalid JSON.",
+    buildStructuredPracticeProblemContractInstructions(),
     "Original request:",
     input.originalUserPrompt,
     "Previous invalid response:",

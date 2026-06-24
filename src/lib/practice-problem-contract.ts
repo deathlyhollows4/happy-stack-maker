@@ -13,6 +13,39 @@ export const PracticeProblemMasteryBandSchema = z.enum([
 
 export const PracticeProblemLanguageSchema = z.enum(["python", "javascript", "java", "cpp", "go"]);
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeLanguageSignaturesInput(value: unknown) {
+  if (Array.isArray(value)) return value;
+  if (!isRecord(value)) return value;
+
+  return Object.entries(value).map(([language, signature]) => {
+    if (!isRecord(signature)) return signature;
+    return {
+      ...signature,
+      language: typeof signature.language === "string" ? signature.language : language,
+    };
+  });
+}
+
+function normalizePracticeTestCaseInput(value: unknown) {
+  if (!isRecord(value)) return value;
+
+  const normalized: Record<string, unknown> = { ...value };
+  if (!("expected" in normalized) && "expectedOutput" in normalized) {
+    normalized.expected = normalized.expectedOutput;
+  }
+  if (!("arguments" in normalized) && Array.isArray(normalized.args)) {
+    normalized.arguments = normalized.args;
+  }
+  if (!("arguments" in normalized) && Array.isArray(normalized.inputArguments)) {
+    normalized.arguments = normalized.inputArguments;
+  }
+  return normalized;
+}
+
 export const PracticeProblemTagSchema = z.object({
   slug: z.string().trim().min(1).max(80),
   label: z.string().trim().min(1).max(120),
@@ -51,7 +84,10 @@ export const PracticeProblemFunctionSignatureSchema = z.object({
     .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, "Function name must be a valid identifier."),
   parameters: z.array(PracticeProblemParameterSchema).min(1).max(6),
   returnType: z.string().trim().min(1).max(120),
-  languageSignatures: z.array(PracticeProblemLanguageSignatureSchema).min(1).max(5),
+  languageSignatures: z.preprocess(
+    normalizeLanguageSignaturesInput,
+    z.array(PracticeProblemLanguageSignatureSchema).min(1).max(5),
+  ),
 });
 
 export type PracticeProblemTestValue =
@@ -73,7 +109,7 @@ export const PracticeProblemTestValueSchema: z.ZodType<PracticeProblemTestValue>
   z.array(z.boolean()),
 ]);
 
-export const PracticeProblemTestCaseSchema = z.object({
+const PracticeProblemTestCaseObjectSchema = z.object({
   name: z.string().trim().min(1).max(120),
   arguments: z.array(PracticeProblemTestValueSchema).max(8),
   expected: PracticeProblemTestValueSchema,
@@ -81,6 +117,8 @@ export const PracticeProblemTestCaseSchema = z.object({
   comparator: z.enum(["deepEqual", "numberTolerance"]).default("deepEqual"),
   visibility: z.enum(["visible", "hidden"]),
 });
+
+export const PracticeProblemTestCaseSchema = PracticeProblemTestCaseObjectSchema;
 
 export const PracticeProblemHintSchema = z.object({
   order: z.number().int().min(1).max(5),
@@ -102,11 +140,21 @@ export const StructuredPracticeProblemSchema = z
     constraints: z.array(z.string().trim().min(1).max(240)).min(1).max(8),
     functionSignature: PracticeProblemFunctionSignatureSchema,
     visibleTests: z
-      .array(PracticeProblemTestCaseSchema.extend({ visibility: z.literal("visible") }))
+      .array(
+        z.preprocess(
+          normalizePracticeTestCaseInput,
+          PracticeProblemTestCaseObjectSchema.extend({ visibility: z.literal("visible") }),
+        ),
+      )
       .min(1)
       .max(6),
     hiddenTests: z
-      .array(PracticeProblemTestCaseSchema.extend({ visibility: z.literal("hidden") }))
+      .array(
+        z.preprocess(
+          normalizePracticeTestCaseInput,
+          PracticeProblemTestCaseObjectSchema.extend({ visibility: z.literal("hidden") }),
+        ),
+      )
       .min(1)
       .max(8),
     hiddenTestThemes: z.array(z.string().trim().min(1).max(160)).min(1).max(8),
@@ -187,6 +235,18 @@ export interface StructuredPracticeProblemValidationResult {
   ok: boolean;
   problem?: StructuredPracticeProblem;
   issues: string[];
+}
+
+export function buildStructuredPracticeProblemContractInstructions() {
+  return [
+    "Nested JSON shape:",
+    "functionSignature.languageSignatures must be an array with one object for each language: python, javascript, java, cpp, and go.",
+    "Each language signature object must use language, callableName, signature, and starterCode.",
+    "visibleTests and hiddenTests must be arrays of objects with name, arguments, expected, theme, comparator, and visibility.",
+    "Use arguments as an array of function arguments. Use expected for the expected return value.",
+    'Use visibility: "visible" for visibleTests and visibility: "hidden" for hiddenTests.',
+    "hiddenTestThemes must exactly match theme values from hiddenTests.",
+  ].join(" ");
 }
 
 export function parseStructuredPracticeProblem(input: unknown): StructuredPracticeProblem {

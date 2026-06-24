@@ -49,6 +49,10 @@ describe("practice generation repair", () => {
     expect(runWorkflow.mock.calls[1]?.[0].userPrompt).toContain(
       "Repair the previous structured practice problem response.",
     );
+    expect(runWorkflow.mock.calls[1]?.[0].userPrompt).toContain(
+      "functionSignature.languageSignatures",
+    );
+    expect(runWorkflow.mock.calls[1]?.[0].userPrompt).toContain("visibleTests and hiddenTests");
     expect(runWorkflow.mock.calls[1]?.[0].userPrompt).toContain("original user prompt");
     expect(runWorkflow.mock.calls[1]?.[0].userPrompt).toContain('{"title":1}');
   });
