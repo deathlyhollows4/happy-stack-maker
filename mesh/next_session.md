@@ -2,7 +2,7 @@
 
 ## Objective
 
-Continue with Day 7 Session 4 after Day 7 Session 3 completion.
+Continue with Day 7 Session 5 after Day 7 Session 4 completion.
 
 ## Current Status
 
@@ -21,6 +21,7 @@ Continue with Day 7 Session 4 after Day 7 Session 3 completion.
 - Day 7 Session 1 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 7 Session 2 is implemented and marked complete in `version2_implementation_plan.md`.
 - Day 7 Session 3 is implemented and marked complete in `version2_implementation_plan.md`.
+- Day 7 Session 4 is implemented and marked complete in `version2_implementation_plan.md`.
 - `practice_events` records typed generation, visible-test run, hint reveal, hidden-test check, attempt submission, completion, and review-quality events.
 - `src/lib/practice-mastery-scoring.ts` now derives conservative mastery movement from correctness, failed attempt count, hint usage, review quality, repeat performance, and speed as a secondary signal.
 - `src/lib/practice-mastery-progress.server.ts` reads the existing `progress` row and upserts mastery, attempts, last review date, retrievability, next review date, difficulty, and stability for the primary topic plus smaller prerequisite-topic updates.
@@ -92,11 +93,15 @@ Continue with Day 7 Session 4 after Day 7 Session 3 completion.
 - Day 7 Session 3 full verification passed: `npm test` with 227 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Day 7 Session 3 build verification passed: `npm run build` with existing Lovable context notices, chunk-size warning, and TanStack unused-import warnings.
 - Day 7 Session 3 GitNexus staged detect reported LOW risk across 3 files and 8 symbols, with 0 affected processes.
+- Day 7 Session 4 GitNexus impact reported LOW risk for `submitPracticeAttempt`, `buildPracticeVisibleTestRunEvent`, `buildPracticeHintUsageEvent`, `buildConservativePracticeAttemptScore`, `updatePracticeMasteryProgress`, `buildPracticeMasteryProgressUpdate`, `buildPracticeAttemptSubmittedEvent`, `buildPracticeHiddenTestCheckEvent`, and `buildPracticeCompletionEvent`.
+- Day 7 Session 4 added `tests/lib/practice-analytics-flow.test.ts` to verify that visible-test run events, hint reveal events, conservative hidden-test scoring, hidden-test check events, submitted-attempt events, conditional completion events, and mastery deltas stay aligned for the same beginner attempt.
+- Day 7 Session 4 focused verification passed outside the sandbox after the known OneDrive `vitest.config.ts` access boundary: `npx vitest run tests\lib\practice-analytics-flow.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts` with 31 tests.
+- Day 7 Session 4 scoped lint passed for `tests/lib/practice-analytics-flow.test.ts`.
 
 ## Resume Steps
 
-1. Start Day 7 Session 4: verify visible tests, hidden tests, hint events, attempt events, and mastery deltas.
-2. Inspect the Day 7 Session 4 requirement in `version2_implementation_plan.md` before changing files.
-3. Inspect current visible-test execution, hidden-test scoring, practice event logging, attempt submission, and mastery delta paths before editing behavior.
-4. Run GitNexus impact before editing indexed symbols and keep fixes scoped to test and analytics verification.
+1. Start Day 7 Session 5: browser-test authenticated practice flow, dashboard weak-topic entry, learn-page practice link, and mobile layout.
+2. Inspect the Day 7 Session 5 requirement in `version2_implementation_plan.md` before changing files.
+3. Inspect current authenticated practice flow, dashboard weak-topic entry, learn-page practice link, mobile layout, and existing Playwright coverage before editing behavior.
+4. Run GitNexus impact before editing indexed symbols and keep fixes scoped to browser-flow verification.
 5. Run focused verification plus `npx gitnexus detect-changes --repo . --scope staged` before committing.

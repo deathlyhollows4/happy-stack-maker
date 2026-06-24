@@ -561,7 +561,7 @@ Session 6 evidence:
 1. ✅ Seed or mock a beginner user with empty mastery and verify first generated problem starts at true beginner level.
 2. ✅ Verify manual advanced topic selection creates guided bridge plus preview, not a random advanced problem.
 3. ✅ Verify all five language harnesses on the same beginner problem.
-4. Verify visible tests, hidden tests, hint events, attempt events, and mastery deltas.
+4. ✅ Verify visible tests, hidden tests, hint events, attempt events, and mastery deltas.
 5. Browser-test authenticated practice flow, dashboard weak-topic entry, learn-page practice link, and mobile layout.
 6. Prepare release checklist: migrations, environment assumptions, rollback plan, known risks, test evidence, GitNexus risk summary, and production deploy steps.
 
@@ -604,6 +604,15 @@ Session 3 evidence:
 - Full verification passed: `npm test` with 227 tests and 3 skipped tests. Existing `tests/lib/ai-workflow.test.ts` stderr covered rate-limit and malformed-JSON retry fixtures.
 - Build verification passed: `npm run build` with existing Lovable context notices, chunk-size warning, and TanStack unused-import warnings.
 - GitNexus staged detect reported LOW risk across 3 files and 8 symbols, with 0 affected processes.
+
+Session 4 evidence:
+
+- Inspected the Day 7 Session 4 requirement plus visible-test execution, hidden-test scoring, practice event logging, attempt submission, authenticated practice run/submit handlers, and mastery delta paths before editing.
+- GitNexus impact before the test edit reported LOW risk for `submitPracticeAttempt`, `buildPracticeVisibleTestRunEvent`, `buildPracticeHintUsageEvent`, `buildConservativePracticeAttemptScore`, `updatePracticeMasteryProgress`, `buildPracticeMasteryProgressUpdate`, `buildPracticeAttemptSubmittedEvent`, `buildPracticeHiddenTestCheckEvent`, and `buildPracticeCompletionEvent`.
+- Added `tests/lib/practice-analytics-flow.test.ts` as a focused lifecycle verification proving visible-test run events, hint reveal events, conservative hidden-test scoring, hidden-test check events, submitted-attempt events, conditional completion events, and mastery deltas agree for the same beginner attempt.
+- The lifecycle test verifies partial hidden failures reduce mastery gain without exposing hidden-test themes, while severe hidden failures keep the attempt failed, skip the completion event, and avoid mastery gain.
+- Focused verification passed after rerunning outside the OneDrive sandbox boundary: `npx vitest run tests\lib\practice-analytics-flow.test.ts tests\lib\practice-attempt-scoring.test.ts tests\lib\practice-event-model.test.ts tests\lib\practice-mastery-scoring.test.ts tests\lib\practice-mastery-progress.test.ts` with 31 tests.
+- Scoped lint passed for `tests/lib/practice-analytics-flow.test.ts`.
 
 ## Execution Order
 
