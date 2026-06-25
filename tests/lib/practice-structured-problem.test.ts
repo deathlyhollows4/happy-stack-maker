@@ -166,6 +166,60 @@ describe("structured practice problem generation helpers", () => {
     expect(parsed.functionSignature.languageSignatures[0]?.language).toBe("python");
   });
 
+  it("normalizes common AI alias fields during generation", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const base = validProblem();
+    const aiProblem = {
+      contract_version: "ignored",
+      curriculum_node_id: "ignored",
+      name: base.title,
+      tags: ["foundation"],
+      prerequisites: [],
+      mastery_band: "81-100",
+      objective: "ignored",
+      prompt: base.statement,
+      examples: [{ input: { a: 2, b: 3 }, expectedOutput: 5 }],
+      constraints: "a and b are integers",
+      function_signature: {
+        function_name: "sum_two",
+        params: base.functionSignature.parameters,
+        return_type: "int",
+        starter_code: "def sum_two(a: int, b: int) -> int:\n    # TODO\n    pass",
+      },
+      visible_tests: [{ title: "positive values", args: [2, 3], expectedOutput: 5 }],
+      hidden_tests: [{ title: "negative values", inputs: [-2, -3], output: -5 }],
+      hints: ["Add the two input values."],
+      success_criteria: ["Returns the expected sum."],
+    };
+
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).parse(aiProblem);
+
+    expect(parsed.title).toBe(base.title);
+    expect(parsed.topicTags).toEqual([{ slug: "foundation", label: "foundation" }]);
+    expect(parsed.constraints).toEqual(["a and b are integers"]);
+    expect(parsed.functionSignature.languageSignatures).toEqual([
+      {
+        language: "python",
+        callableName: "sum_two",
+        signature: "def sum_two(a: int, b: int) -> int:",
+        starterCode: "def sum_two(a: int, b: int) -> int:\n    # TODO\n    pass",
+      },
+    ]);
+    expect(parsed.visibleTests[0]).toMatchObject({
+      name: "positive values",
+      arguments: [2, 3],
+      expected: 5,
+      theme: "positive values",
+      visibility: "visible",
+    });
+    expect(parsed.hiddenTestThemes).toEqual(["negative values"]);
+    expect(parsed.hintLadder).toEqual([
+      { order: 1, title: "Hint 1", body: "Add the two input values." },
+    ]);
+  });
+
   it("rejects generated content that is missing the selected language signature", () => {
     const generationPlan = buildPracticeGenerationPlan({});
     const aiProblem = {

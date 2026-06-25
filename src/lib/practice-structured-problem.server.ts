@@ -13,11 +13,230 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function firstPresent(input: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    if (key in input && input[key] !== undefined && input[key] !== null) {
+      return input[key];
+    }
+  }
+
+  return undefined;
+}
+
+function stringArrayFromUnknown(value: unknown) {
+  if (typeof value === "string") return [value];
+  if (!Array.isArray(value)) return value;
+
+  return value
+    .map((item) => {
+      if (typeof item === "string") return item;
+      if (isRecord(item)) {
+        const text = firstPresent(item, ["body", "text", "criterion", "value", "description"]);
+        return typeof text === "string" ? text : "";
+      }
+      return "";
+    })
+    .filter(Boolean);
+}
+
+function normalizeTagList(value: unknown) {
+  if (!Array.isArray(value)) return value;
+
+  return value.map((tag) => {
+    if (typeof tag === "string") {
+      const label = tag.trim();
+      return {
+        slug: label
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, ""),
+        label,
+      };
+    }
+
+    if (!isRecord(tag)) return tag;
+    const label = firstPresent(tag, ["label", "name", "title", "slug"]);
+    const slug = firstPresent(tag, ["slug", "id", "name", "label"]);
+    return {
+      ...tag,
+      slug: typeof slug === "string" ? slug : tag.slug,
+      label: typeof label === "string" ? label : tag.label,
+    };
+  });
+}
+
+function normalizeExampleList(value: unknown) {
+  if (!Array.isArray(value)) return value;
+
+  return value.map((example) => {
+    if (!isRecord(example)) return example;
+
+    const input = firstPresent(example, ["input", "arguments", "args", "inputArguments"]);
+    const output = firstPresent(example, ["output", "expected", "expectedOutput"]);
+    return {
+      ...example,
+      input: typeof input === "string" ? input : JSON.stringify(input),
+      output: typeof output === "string" ? output : JSON.stringify(output),
+    };
+  });
+}
+
+function normalizeLanguageSignatureList(
+  value: unknown,
+  selectedLanguage?: PracticeProblemLanguage,
+) {
+  const parentCallableName = isRecord(value)
+    ? firstPresent(value, [
+        "callableName",
+        "callable_name",
+        "functionName",
+        "function_name",
+        "name",
+      ])
+    : undefined;
+  const signatureInput = isRecord(value)
+    ? firstPresent(value, [
+        "languageSignatures",
+        "language_signatures",
+        "signatures",
+        "starterCodeByLanguage",
+        "starter_code_by_language",
+      ])
+    : value;
+
+  if (signatureInput === undefined && isRecord(value)) {
+    const starterCode = firstPresent(value, ["starterCode", "starter_code", "code"]);
+    const callableName = firstPresent(value, [
+      "callableName",
+      "callable_name",
+      "functionName",
+      "function_name",
+      "name",
+    ]);
+    const signature = firstPresent(value, ["signature", "declaration"]);
+    if (selectedLanguage && typeof starterCode === "string") {
+      return [
+        {
+          language: selectedLanguage,
+          callableName,
+          signature: typeof signature === "string" ? signature : starterCode.split("\n")[0],
+          starterCode,
+        },
+      ];
+    }
+  }
+
+  if (Array.isArray(signatureInput)) {
+    return signatureInput.map((signature) => {
+      if (!isRecord(signature)) return signature;
+      return {
+        ...signature,
+        callableName: firstPresent(signature, ["callableName", "callable_name", "functionName"]),
+        starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
+      };
+    });
+  }
+
+  if (!isRecord(signatureInput)) return signatureInput;
+
+  return Object.entries(signatureInput).map(([language, signature]) => {
+    if (typeof signature === "string") {
+      return {
+        language,
+        callableName: parentCallableName,
+        signature: signature,
+        starterCode: signature,
+      };
+    }
+
+    if (!isRecord(signature)) return signature;
+    return {
+      ...signature,
+      language: typeof signature.language === "string" ? signature.language : language,
+      callableName:
+        firstPresent(signature, ["callableName", "callable_name", "functionName"]) ??
+        parentCallableName,
+      starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
+    };
+  });
+}
+
+function normalizeFunctionSignature(value: unknown, selectedLanguage?: PracticeProblemLanguage) {
+  if (!isRecord(value)) return value;
+
+  const parameters = firstPresent(value, ["parameters", "params", "arguments", "args"]);
+  return {
+    ...value,
+    functionName: firstPresent(value, ["functionName", "function_name", "name", "callableName"]),
+    returnType: firstPresent(value, ["returnType", "return_type", "returns"]),
+    parameters,
+    languageSignatures: normalizeLanguageSignatureList(value, selectedLanguage),
+  };
+}
+
+function normalizeTestCaseList(value: unknown, visibility: "visible" | "hidden") {
+  if (!Array.isArray(value)) return value;
+
+  return value.map((test, index) => {
+    if (!isRecord(test)) return test;
+
+    const args = firstPresent(test, ["arguments", "args", "inputArguments", "inputs", "input"]);
+    const name = firstPresent(test, ["name", "title", "case"]);
+    const theme = firstPresent(test, ["theme", "category", "scenario", "name", "title"]);
+
+    return {
+      ...test,
+      name: typeof name === "string" ? name : `${visibility} case ${index + 1}`,
+      arguments: Array.isArray(args) ? args : args === undefined ? test.arguments : [args],
+      expected: firstPresent(test, ["expected", "expectedOutput", "output"]),
+      theme: typeof theme === "string" ? theme : `${visibility} case ${index + 1}`,
+      visibility,
+    };
+  });
+}
+
+function normalizeHintList(value: unknown) {
+  if (!Array.isArray(value)) return value;
+
+  return value.map((hint, index) => {
+    if (typeof hint === "string") {
+      return {
+        order: index + 1,
+        title: `Hint ${index + 1}`,
+        body: hint,
+      };
+    }
+
+    if (!isRecord(hint)) return hint;
+    const title = firstPresent(hint, ["title", "name", "label"]);
+    const body = firstPresent(hint, ["body", "text", "hint", "description"]);
+    return {
+      ...hint,
+      title: typeof title === "string" ? title : `Hint ${index + 1}`,
+      body: typeof body === "string" ? body : "",
+    };
+  });
+}
+
 function canonicalizeGeneratedPracticeProblemInput(
   input: unknown,
   generationPlan: PracticeGenerationPlan,
+  selectedLanguage?: PracticeProblemLanguage,
 ) {
   if (!isRecord(input)) return input;
+
+  const functionSignature = normalizeFunctionSignature(
+    firstPresent(input, ["functionSignature", "function_signature", "signature", "function"]),
+    selectedLanguage,
+  );
+  const visibleTests = normalizeTestCaseList(
+    firstPresent(input, ["visibleTests", "visible_tests", "sampleTests", "examplesAsTests"]),
+    "visible",
+  );
+  const hiddenTests = normalizeTestCaseList(
+    firstPresent(input, ["hiddenTests", "hidden_tests", "privateTests", "edgeTests"]),
+    "hidden",
+  );
 
   const canonical: Record<string, unknown> = {
     ...input,
@@ -25,6 +244,21 @@ function canonicalizeGeneratedPracticeProblemInput(
     curriculumNodeId: generationPlan.practicePlan.node.id,
     masteryBand: generationPlan.practicePlan.masteryBand.id,
     objective: generationPlan.practicePlan.node.objective,
+    title: firstPresent(input, ["title", "name", "problemTitle"]),
+    topicTags: normalizeTagList(firstPresent(input, ["topicTags", "topic_tags", "tags"])),
+    prerequisiteTags: normalizeTagList(
+      firstPresent(input, ["prerequisiteTags", "prerequisite_tags", "prerequisites"]),
+    ),
+    statement: firstPresent(input, ["statement", "prompt", "description"]),
+    examples: normalizeExampleList(firstPresent(input, ["examples", "sampleExamples"])),
+    constraints: stringArrayFromUnknown(firstPresent(input, ["constraints", "limits"])),
+    functionSignature,
+    visibleTests,
+    hiddenTests,
+    hintLadder: normalizeHintList(firstPresent(input, ["hintLadder", "hint_ladder", "hints"])),
+    successCriteria: stringArrayFromUnknown(
+      firstPresent(input, ["successCriteria", "success_criteria", "criteria"]),
+    ),
   };
 
   if (Array.isArray(canonical.hiddenTests)) {
@@ -61,7 +295,7 @@ export function buildStructuredPracticeProblemSchema(
 
   return z
     .preprocess(
-      (input) => canonicalizeGeneratedPracticeProblemInput(input, generationPlan),
+      (input) => canonicalizeGeneratedPracticeProblemInput(input, generationPlan, language),
       StructuredPracticeProblemSchema,
     )
     .superRefine((problem, ctx) => {

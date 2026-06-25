@@ -119,14 +119,23 @@ export function useSubscription() {
           return;
         }
 
-        if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
+        if (status === "CLOSED") {
+          if (channelRef.current === channel) {
+            channelRef.current = null;
+          }
+          return;
+        }
+
+        if (["CHANNEL_ERROR", "TIMED_OUT"].includes(status)) {
           refresh();
           if (retryTimer) clearTimeout(retryTimer);
           retryTimer = setTimeout(() => {
             if (active) refresh();
           }, 5000);
+          if (channelRef.current === channel) {
+            channelRef.current = null;
+          }
           supabase.removeChannel(channel);
-          channelRef.current = null;
         }
       });
 
@@ -137,8 +146,9 @@ export function useSubscription() {
       activeRef.current = false;
       if (retryTimer) clearTimeout(retryTimer);
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        const channel = channelRef.current;
         channelRef.current = null;
+        supabase.removeChannel(channel);
       }
     };
   }, [user, env, refresh]);
