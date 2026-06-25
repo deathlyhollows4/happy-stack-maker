@@ -3,6 +3,7 @@ import type { Json } from "@/integrations/supabase/types";
 import type { PracticeGenerationPlan } from "@/lib/practice-generation-plan.server";
 import {
   PRACTICE_PROBLEM_CONTRACT_VERSION,
+  PracticeProblemLanguageSignatureSchema,
   PracticeProblemLanguageSchema,
   StructuredPracticeProblemSchema,
   type PracticeProblemLanguage,
@@ -85,6 +86,33 @@ function normalizeLanguageSignatureList(
   value: unknown,
   selectedLanguage?: PracticeProblemLanguage,
 ) {
+  const keepSupportedSignatures = (signatures: unknown) => {
+    if (!selectedLanguage || !Array.isArray(signatures)) return signatures;
+
+    const selectedCandidates = signatures.filter(
+      (signature) => isRecord(signature) && signature.language === selectedLanguage,
+    );
+    const selectedSignature =
+      selectedCandidates.find(
+        (signature) => PracticeProblemLanguageSignatureSchema.safeParse(signature).success,
+      ) ?? selectedCandidates[0];
+    const seenLanguages = new Set<PracticeProblemLanguage>();
+    const kept = selectedSignature ? [selectedSignature] : [];
+    if (selectedSignature && isRecord(selectedSignature)) {
+      seenLanguages.add(selectedLanguage);
+    }
+
+    for (const signature of signatures) {
+      const parsed = PracticeProblemLanguageSignatureSchema.safeParse(signature);
+      if (!parsed.success || parsed.data.language === selectedLanguage) continue;
+      if (seenLanguages.has(parsed.data.language)) continue;
+      seenLanguages.add(parsed.data.language);
+      kept.push(parsed.data);
+    }
+
+    return kept;
+  };
+
   const parentCallableName = isRecord(value)
     ? firstPresent(value, [
         "callableName",
@@ -115,50 +143,54 @@ function normalizeLanguageSignatureList(
     ]);
     const signature = firstPresent(value, ["signature", "declaration"]);
     if (selectedLanguage && typeof starterCode === "string") {
-      return [
+      return keepSupportedSignatures([
         {
           language: selectedLanguage,
           callableName,
           signature: typeof signature === "string" ? signature : starterCode.split("\n")[0],
           starterCode,
         },
-      ];
+      ]);
     }
   }
 
   if (Array.isArray(signatureInput)) {
-    return signatureInput.map((signature) => {
-      if (!isRecord(signature)) return signature;
-      return {
-        ...signature,
-        callableName: firstPresent(signature, ["callableName", "callable_name", "functionName"]),
-        starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
-      };
-    });
+    return keepSupportedSignatures(
+      signatureInput.map((signature) => {
+        if (!isRecord(signature)) return signature;
+        return {
+          ...signature,
+          callableName: firstPresent(signature, ["callableName", "callable_name", "functionName"]),
+          starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
+        };
+      }),
+    );
   }
 
   if (!isRecord(signatureInput)) return signatureInput;
 
-  return Object.entries(signatureInput).map(([language, signature]) => {
-    if (typeof signature === "string") {
-      return {
-        language,
-        callableName: parentCallableName,
-        signature: signature,
-        starterCode: signature,
-      };
-    }
+  return keepSupportedSignatures(
+    Object.entries(signatureInput).map(([language, signature]) => {
+      if (typeof signature === "string") {
+        return {
+          language,
+          callableName: parentCallableName,
+          signature: signature,
+          starterCode: signature,
+        };
+      }
 
-    if (!isRecord(signature)) return signature;
-    return {
-      ...signature,
-      language: typeof signature.language === "string" ? signature.language : language,
-      callableName:
-        firstPresent(signature, ["callableName", "callable_name", "functionName"]) ??
-        parentCallableName,
-      starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
-    };
-  });
+      if (!isRecord(signature)) return signature;
+      return {
+        ...signature,
+        language: typeof signature.language === "string" ? signature.language : language,
+        callableName:
+          firstPresent(signature, ["callableName", "callable_name", "functionName"]) ??
+          parentCallableName,
+        starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
+      };
+    }),
+  );
 }
 
 function normalizeFunctionSignature(value: unknown, selectedLanguage?: PracticeProblemLanguage) {

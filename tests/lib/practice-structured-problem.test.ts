@@ -166,6 +166,41 @@ describe("structured practice problem generation helpers", () => {
     expect(parsed.functionSignature.languageSignatures[0]?.language).toBe("python");
   });
 
+  it("strips invalid non-selected language signatures during generation", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const pythonSignature = validProblem().functionSignature.languageSignatures.find(
+      (signature) => signature.language === "python",
+    )!;
+    const javascriptSignature = validProblem().functionSignature.languageSignatures.find(
+      (signature) => signature.language === "javascript",
+    )!;
+    const aiProblem = {
+      ...validProblem(),
+      functionSignature: {
+        ...validProblem().functionSignature,
+        languageSignatures: [
+          pythonSignature,
+          {
+            language: "go",
+            callableName: "main.solve",
+            signature: "func solve(a int, b int) int",
+            starterCode: "func solve(a int, b int) int {\n\treturn 0\n}",
+          },
+          javascriptSignature,
+        ],
+      },
+    };
+
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).parse(aiProblem);
+
+    expect(parsed.functionSignature.languageSignatures).toEqual([
+      pythonSignature,
+      javascriptSignature,
+    ]);
+  });
+
   it("normalizes common AI alias fields during generation", () => {
     const generationPlan = buildPracticeGenerationPlan({});
     const base = validProblem();
