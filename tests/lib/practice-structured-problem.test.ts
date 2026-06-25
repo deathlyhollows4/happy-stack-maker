@@ -166,7 +166,7 @@ describe("structured practice problem generation helpers", () => {
     expect(parsed.functionSignature.languageSignatures[0]?.language).toBe("python");
   });
 
-  it("strips invalid non-selected language signatures during generation", () => {
+  it("recovers callable names from valid starter code during generation", () => {
     const generationPlan = buildPracticeGenerationPlan({});
     const pythonSignature = validProblem().functionSignature.languageSignatures.find(
       (signature) => signature.language === "python",
@@ -197,7 +197,57 @@ describe("structured practice problem generation helpers", () => {
 
     expect(parsed.functionSignature.languageSignatures).toEqual([
       pythonSignature,
+      {
+        language: "go",
+        callableName: "solve",
+        signature: "func solve(a int, b int) int",
+        starterCode: "func solve(a int, b int) int {\n\treturn 0\n}",
+      },
       javascriptSignature,
+    ]);
+  });
+
+  it("strips invalid non-selected language signatures that cannot be recovered", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const pythonSignature = validProblem().functionSignature.languageSignatures.find(
+      (signature) => signature.language === "python",
+    )!;
+    const aiProblem = {
+      ...validProblem(),
+      functionSignature: {
+        ...validProblem().functionSignature,
+        languageSignatures: [
+          pythonSignature,
+          {
+            language: "go",
+            callableName: "main.solve",
+            signature: "not a callable",
+            starterCode: "package main\n// TODO",
+          },
+        ],
+      },
+    };
+
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).parse(aiProblem);
+
+    expect(parsed.functionSignature.languageSignatures).toEqual([pythonSignature]);
+  });
+
+  it("uses the generation plan as a fallback when topic tags are missing", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const aiProblem = {
+      ...validProblem(),
+      topicTags: [],
+    };
+
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).parse(aiProblem);
+
+    expect(parsed.topicTags).toEqual([
+      { slug: "foundation-io", label: "Input, Output, And Values" },
     ]);
   });
 

@@ -66,6 +66,14 @@ function normalizeTagList(value: unknown) {
   });
 }
 
+function fallbackTagForGenerationPlan(generationPlan: PracticeGenerationPlan) {
+  const slug = generationPlan.practicePlan.topicSlug ?? generationPlan.practicePlan.node.id;
+  return {
+    slug,
+    label: generationPlan.practicePlan.node.title,
+  };
+}
+
 function normalizeExampleList(value: unknown) {
   if (!Array.isArray(value)) return value;
 
@@ -80,6 +88,47 @@ function normalizeExampleList(value: unknown) {
       output: typeof output === "string" ? output : JSON.stringify(output),
     };
   });
+}
+
+function isValidCallableName(value: unknown) {
+  return typeof value === "string" && /^[A-Za-z_][A-Za-z0-9_]*$/.test(value.trim());
+}
+
+function inferCallableNameFromStarterCode(
+  language: unknown,
+  starterCode: unknown,
+): string | undefined {
+  if (typeof language !== "string" || typeof starterCode !== "string") return undefined;
+
+  const patterns: Record<string, RegExp[]> = {
+    python: [/\bdef\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/],
+    javascript: [/\b(?:export\s+)?function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/],
+    java: [
+      /\b(?:public|private|protected|static|\s)+[\w<>]+(?:\[\])?\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/,
+    ],
+    cpp: [/(?:^|\n)\s*[\w:<>,*&\s]+\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/],
+    go: [/\bfunc\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/],
+  };
+
+  for (const pattern of patterns[language] ?? []) {
+    const match = starterCode.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
+  return undefined;
+}
+
+function normalizeCallableName(input: {
+  callableName: unknown;
+  language: unknown;
+  starterCode: unknown;
+  fallbackName: unknown;
+}) {
+  if (isValidCallableName(input.callableName)) return (input.callableName as string).trim();
+  const inferred = inferCallableNameFromStarterCode(input.language, input.starterCode);
+  if (inferred) return inferred;
+  if (isValidCallableName(input.fallbackName)) return (input.fallbackName as string).trim();
+  return input.callableName;
 }
 
 function normalizeLanguageSignatureList(
@@ -146,7 +195,12 @@ function normalizeLanguageSignatureList(
       return keepSupportedSignatures([
         {
           language: selectedLanguage,
-          callableName,
+          callableName: normalizeCallableName({
+            callableName,
+            language: selectedLanguage,
+            starterCode,
+            fallbackName: parentCallableName,
+          }),
           signature: typeof signature === "string" ? signature : starterCode.split("\n")[0],
           starterCode,
         },
@@ -158,10 +212,23 @@ function normalizeLanguageSignatureList(
     return keepSupportedSignatures(
       signatureInput.map((signature) => {
         if (!isRecord(signature)) return signature;
+        const language =
+          typeof signature.language === "string" ? signature.language : selectedLanguage;
+        const starterCode = firstPresent(signature, ["starterCode", "starter_code", "code"]);
         return {
           ...signature,
-          callableName: firstPresent(signature, ["callableName", "callable_name", "functionName"]),
-          starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
+          language,
+          callableName: normalizeCallableName({
+            callableName: firstPresent(signature, [
+              "callableName",
+              "callable_name",
+              "functionName",
+            ]),
+            language,
+            starterCode,
+            fallbackName: language === selectedLanguage ? parentCallableName : undefined,
+          }),
+          starterCode,
         };
       }),
     );
@@ -174,20 +241,33 @@ function normalizeLanguageSignatureList(
       if (typeof signature === "string") {
         return {
           language,
-          callableName: parentCallableName,
+          callableName: normalizeCallableName({
+            callableName: parentCallableName,
+            language,
+            starterCode: signature,
+            fallbackName: language === selectedLanguage ? parentCallableName : undefined,
+          }),
           signature: signature,
           starterCode: signature,
         };
       }
 
       if (!isRecord(signature)) return signature;
+      const starterCode = firstPresent(signature, ["starterCode", "starter_code", "code"]);
+      const normalizedLanguage =
+        typeof signature.language === "string" ? signature.language : language;
       return {
         ...signature,
-        language: typeof signature.language === "string" ? signature.language : language,
-        callableName:
-          firstPresent(signature, ["callableName", "callable_name", "functionName"]) ??
-          parentCallableName,
-        starterCode: firstPresent(signature, ["starterCode", "starter_code", "code"]),
+        language: normalizedLanguage,
+        callableName: normalizeCallableName({
+          callableName:
+            firstPresent(signature, ["callableName", "callable_name", "functionName"]) ??
+            parentCallableName,
+          language: normalizedLanguage,
+          starterCode,
+          fallbackName: normalizedLanguage === selectedLanguage ? parentCallableName : undefined,
+        }),
+        starterCode,
       };
     }),
   );
@@ -292,6 +372,10 @@ function canonicalizeGeneratedPracticeProblemInput(
       firstPresent(input, ["successCriteria", "success_criteria", "criteria"]),
     ),
   };
+
+  if (!Array.isArray(canonical.topicTags) || canonical.topicTags.length === 0) {
+    canonical.topicTags = [fallbackTagForGenerationPlan(generationPlan)];
+  }
 
   if (Array.isArray(canonical.hiddenTests)) {
     const themes = canonical.hiddenTests
