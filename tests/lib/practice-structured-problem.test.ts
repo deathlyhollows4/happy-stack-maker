@@ -110,6 +110,90 @@ describe("structured practice problem generation helpers", () => {
     expect(result.success).toBe(true);
   });
 
+  it("canonicalizes server-owned metadata before validating AI content", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const aiProblem = {
+      ...validProblem(),
+      contractVersion: "wrong-contract",
+      curriculumNodeId: "wrong-node",
+      masteryBand: "81-100",
+      objective: "Return the sum of two integers.",
+      hiddenTestThemes: ["wrong theme"],
+      hintLadder: [
+        {
+          order: 3,
+          title: "Use addition",
+          body: "Return the result of adding both inputs.",
+        },
+      ],
+      solution: "return a + b",
+    };
+
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).parse(aiProblem) as StructuredPracticeProblem & { solution?: string };
+
+    expect(parsed.contractVersion).toBe(PRACTICE_PROBLEM_CONTRACT_VERSION);
+    expect(parsed.curriculumNodeId).toBe("foundation-io");
+    expect(parsed.masteryBand).toBe("0-20");
+    expect(parsed.objective).toBe(
+      "Read small values, store them in variables, and return or print a direct result.",
+    );
+    expect(parsed.hiddenTestThemes).toEqual(["negative values"]);
+    expect(parsed.hintLadder.map((hint) => hint.order)).toEqual([1]);
+    expect(parsed.solution).toBeUndefined();
+  });
+
+  it("accepts missing non-selected language signatures during generation", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const aiProblem = {
+      ...validProblem(),
+      functionSignature: {
+        ...validProblem().functionSignature,
+        languageSignatures: [
+          validProblem().functionSignature.languageSignatures.find(
+            (signature) => signature.language === "python",
+          )!,
+        ],
+      },
+    };
+
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).parse(aiProblem);
+
+    expect(parsed.functionSignature.languageSignatures).toHaveLength(1);
+    expect(parsed.functionSignature.languageSignatures[0]?.language).toBe("python");
+  });
+
+  it("rejects generated content that is missing the selected language signature", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const aiProblem = {
+      ...validProblem(),
+      functionSignature: {
+        ...validProblem().functionSignature,
+        languageSignatures: [
+          validProblem().functionSignature.languageSignatures.find(
+            (signature) => signature.language === "javascript",
+          )!,
+        ],
+      },
+    };
+
+    const result = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).safeParse(aiProblem);
+
+    expect(result.success).toBe(false);
+    expect(
+      result.error?.issues.some(
+        (issue) =>
+          issue.path.join(".") === "functionSignature.languageSignatures" &&
+          issue.message === "Missing python function signature.",
+      ),
+    ).toBe(true);
+  });
+
   it("stores a true-beginner first generated problem for an empty-mastery learner", () => {
     const generationPlan = buildPracticeGenerationPlan({ progressRows: [] });
     const parsedProblem =
@@ -182,15 +266,14 @@ describe("structured practice problem generation helpers", () => {
     });
   });
 
-  it("rejects structured JSON for the wrong mastery band", () => {
+  it("overrides structured JSON for the wrong mastery band", () => {
     const generationPlan = buildPracticeGenerationPlan({});
-    const result = buildStructuredPracticeProblemSchema(generationPlan).safeParse({
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan).parse({
       ...validProblem(),
       masteryBand: "21-40",
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error?.issues.some((issue) => issue.path.join(".") === "masteryBand")).toBe(true);
+    expect(parsed.masteryBand).toBe("0-20");
   });
 
   it("formats the stored prompt from structured JSON instead of AI markdown", () => {

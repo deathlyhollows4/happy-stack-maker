@@ -11,7 +11,7 @@ type PracticeGenerationWorkflowInput<TSchema extends z.ZodTypeAny> = {
 
 export type PracticeGenerationWorkflowResult<TData> =
   | { ok: true; data: TData }
-  | { ok: false; error: string; status?: number; rawContent?: string };
+  | { ok: false; error: string; status?: number; rawContent?: string; diagnosticId?: string };
 
 export type PracticeGenerationWorkflowRunner<TSchema extends z.ZodTypeAny> = (
   input: PracticeGenerationWorkflowInput<TSchema>,
@@ -72,10 +72,17 @@ export async function runPracticeGenerationWithRepair<TSchema extends z.ZodTypeA
     return { ...repairAttempt, repaired: true };
   }
 
+  const diagnosticId = repairAttempt.diagnosticId ?? firstAttempt.diagnosticId;
+
   return {
     ok: false,
-    error: input.malformedError,
+    error: formatMalformedError(input.malformedError, diagnosticId),
     status: repairAttempt.status,
     rawContent: repairAttempt.rawContent ?? firstAttempt.rawContent,
+    ...(diagnosticId ? { diagnosticId } : {}),
   };
+}
+
+function formatMalformedError(message: string, diagnosticId: string | undefined) {
+  return diagnosticId ? `${message} Reference: ${diagnosticId}.` : message;
 }

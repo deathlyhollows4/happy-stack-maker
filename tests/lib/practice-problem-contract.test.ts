@@ -96,16 +96,15 @@ describe("StructuredPracticeProblemSchema", () => {
     expect(parseStructuredPracticeProblem(validProblem()).title).toBe("Count Positive Numbers");
   });
 
-  it("rejects missing language signatures", () => {
+  it("accepts missing non-selected language signatures", () => {
     const problem = validProblem();
     problem.functionSignature.languageSignatures =
       problem.functionSignature.languageSignatures.filter((item) => item.language !== "go");
 
-    const result = validateStructuredPracticeProblem(problem);
+    const parsed = parseStructuredPracticeProblem(problem);
 
-    expect(result.ok).toBe(false);
-    expect(result.issues).toContain(
-      "functionSignature.languageSignatures: Missing go function signature.",
+    expect(parsed.functionSignature.languageSignatures.map((item) => item.language)).not.toContain(
+      "go",
     );
   });
 
@@ -214,14 +213,13 @@ describe("StructuredPracticeProblemSchema", () => {
     );
   });
 
-  it("rejects vague extra fields from AI output", () => {
-    const result = validateStructuredPracticeProblem({
+  it("strips vague extra fields from AI output", () => {
+    const parsed = parseStructuredPracticeProblem({
       ...validProblem(),
       markdownPrompt: "Solve this however you want.",
-    });
+    }) as Record<string, unknown>;
 
-    expect(result.ok).toBe(false);
-    expect(result.issues.some((issue) => issue.includes("Unrecognized key"))).toBe(true);
+    expect(parsed.markdownPrompt).toBeUndefined();
   });
 
   it("rejects non-contiguous hint order values", () => {

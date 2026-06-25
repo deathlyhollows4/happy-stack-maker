@@ -2,37 +2,106 @@ import { z } from "zod";
 import type { Json } from "@/integrations/supabase/types";
 import type { PracticeGenerationPlan } from "@/lib/practice-generation-plan.server";
 import {
+  PRACTICE_PROBLEM_CONTRACT_VERSION,
+  PracticeProblemLanguageSchema,
   StructuredPracticeProblemSchema,
   type PracticeProblemLanguage,
   type StructuredPracticeProblem,
 } from "@/lib/practice-problem-contract";
 
-export function buildStructuredPracticeProblemSchema(generationPlan: PracticeGenerationPlan) {
-  return StructuredPracticeProblemSchema.superRefine((problem, ctx) => {
-    if (problem.curriculumNodeId !== generationPlan.practicePlan.node.id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["curriculumNodeId"],
-        message: `Expected curriculum node ${generationPlan.practicePlan.node.id}.`,
-      });
-    }
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
-    if (problem.masteryBand !== generationPlan.practicePlan.masteryBand.id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["masteryBand"],
-        message: `Expected mastery band ${generationPlan.practicePlan.masteryBand.id}.`,
-      });
-    }
+function canonicalizeGeneratedPracticeProblemInput(
+  input: unknown,
+  generationPlan: PracticeGenerationPlan,
+) {
+  if (!isRecord(input)) return input;
 
-    if (problem.objective !== generationPlan.practicePlan.node.objective) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["objective"],
-        message: "Objective must match the selected curriculum node.",
-      });
-    }
-  });
+  const canonical: Record<string, unknown> = {
+    ...input,
+    contractVersion: PRACTICE_PROBLEM_CONTRACT_VERSION,
+    curriculumNodeId: generationPlan.practicePlan.node.id,
+    masteryBand: generationPlan.practicePlan.masteryBand.id,
+    objective: generationPlan.practicePlan.node.objective,
+  };
+
+  if (Array.isArray(canonical.hiddenTests)) {
+    const themes = canonical.hiddenTests
+      .map((test) => (isRecord(test) && typeof test.theme === "string" ? test.theme.trim() : ""))
+      .filter(Boolean);
+    canonical.hiddenTestThemes = [...new Set(themes)];
+  }
+
+  if (Array.isArray(canonical.hintLadder)) {
+    canonical.hintLadder = canonical.hintLadder
+      .filter(isRecord)
+      .sort((left, right) => {
+        const leftOrder = typeof left.order === "number" ? left.order : Number.MAX_SAFE_INTEGER;
+        const rightOrder = typeof right.order === "number" ? right.order : Number.MAX_SAFE_INTEGER;
+        return leftOrder - rightOrder;
+      })
+      .map((hint, index) => ({
+        ...hint,
+        order: index + 1,
+      }));
+  }
+
+  return canonical;
+}
+
+export function buildStructuredPracticeProblemSchema(
+  generationPlan: PracticeGenerationPlan,
+  options: { language?: PracticeProblemLanguage } = {},
+) {
+  const language = options.language
+    ? PracticeProblemLanguageSchema.parse(options.language)
+    : undefined;
+
+  return z
+    .preprocess(
+      (input) => canonicalizeGeneratedPracticeProblemInput(input, generationPlan),
+      StructuredPracticeProblemSchema,
+    )
+    .superRefine((problem, ctx) => {
+      if (problem.curriculumNodeId !== generationPlan.practicePlan.node.id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["curriculumNodeId"],
+          message: `Expected curriculum node ${generationPlan.practicePlan.node.id}.`,
+        });
+      }
+
+      if (problem.masteryBand !== generationPlan.practicePlan.masteryBand.id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["masteryBand"],
+          message: `Expected mastery band ${generationPlan.practicePlan.masteryBand.id}.`,
+        });
+      }
+
+      if (problem.objective !== generationPlan.practicePlan.node.objective) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["objective"],
+          message: "Objective must match the selected curriculum node.",
+        });
+      }
+
+      if (language) {
+        const languageSignature = problem.functionSignature.languageSignatures.find(
+          (signature) => signature.language === language,
+        );
+        if (!languageSignature) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["functionSignature", "languageSignatures"],
+            message: `Missing ${language} function signature.`,
+          });
+        }
+      }
+    });
 }
 
 export function getStructuredStarterCode(

@@ -83,4 +83,42 @@ describe("AI workflow", () => {
     expect(result).toEqual({ ok: true, data: { summary: "retried" } });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("returns a diagnostic id and logs sanitized schema issues for malformed content", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => mockAiResponse('{"summary":1,"token":"secret-value"}')),
+    );
+
+    const result = await runJsonAiWorkflow({
+      apiKey: "test-key",
+      flowName: "testFlow",
+      systemPrompt: "system",
+      userPrompt: "user",
+      schema,
+      malformedError: "Bad JSON",
+      maxAttempts: 1,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.diagnosticId).toMatch(/^testflow-/);
+      expect(result.error).toContain(`Reference: ${result.diagnosticId}.`);
+    }
+    expect(errorSpy).toHaveBeenCalledWith(
+      "testFlow parse attempt failed",
+      expect.objectContaining({
+        diagnosticId: expect.stringMatching(/^testflow-/),
+        issues: [
+          expect.objectContaining({
+            path: "summary",
+            message: "Expected string, received number",
+          }),
+        ],
+        rawPreview: expect.not.stringContaining("secret-value"),
+        rawHash: expect.any(String),
+      }),
+    );
+  });
 });

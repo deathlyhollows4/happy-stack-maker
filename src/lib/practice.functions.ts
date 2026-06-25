@@ -140,7 +140,9 @@ export const generatePractice = createServerFn({ method: "POST" })
         }),
       systemPrompt,
       userPrompt,
-      schema: buildStructuredPracticeProblemSchema(generationPlan),
+      schema: buildStructuredPracticeProblemSchema(generationPlan, {
+        language: data.language as PracticeProblemLanguage,
+      }),
       malformedError: "AI returned an unexpected response. Please try again.",
     });
 

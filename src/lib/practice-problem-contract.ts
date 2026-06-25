@@ -161,7 +161,6 @@ export const StructuredPracticeProblemSchema = z
     hintLadder: z.array(PracticeProblemHintSchema).min(1).max(5),
     successCriteria: z.array(z.string().trim().min(1).max(240)).min(1).max(8),
   })
-  .strict()
   .superRefine((problem, ctx) => {
     const signatureLanguages = new Set(
       problem.functionSignature.languageSignatures.map((item) => item.language),
@@ -173,16 +172,6 @@ export const StructuredPracticeProblemSchema = z
         path: ["functionSignature", "languageSignatures"],
         message: "Language signatures must include each language once.",
       });
-    }
-
-    for (const language of PracticeProblemLanguageSchema.options) {
-      if (!signatureLanguages.has(language)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["functionSignature", "languageSignatures"],
-          message: `Missing ${language} function signature.`,
-        });
-      }
     }
 
     const hiddenThemes = new Set(problem.hiddenTests.map((test) => test.theme));

@@ -111,6 +111,39 @@ describe("practice generation repair", () => {
     expect(runWorkflow).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps the latest diagnostic id when both generation attempts fail", async () => {
+    const runWorkflow = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false as const,
+        error: "Safe error. Reference: first-id.",
+        rawContent: "{}",
+        diagnosticId: "first-id",
+      })
+      .mockResolvedValueOnce({
+        ok: false as const,
+        error: "Safe error. Reference: repair-id.",
+        rawContent: "not json",
+        diagnosticId: "repair-id",
+      });
+
+    const result = await runPracticeGenerationWithRepair({
+      runWorkflow,
+      systemPrompt: "system",
+      userPrompt: "user",
+      schema,
+      malformedError: "Safe error.",
+    });
+
+    expect(result).toEqual({
+      ok: false,
+      error: "Safe error. Reference: repair-id.",
+      rawContent: "not json",
+      status: undefined,
+      diagnosticId: "repair-id",
+    });
+  });
+
   it("truncates invalid raw content in the repair prompt", () => {
     const repairPrompt = buildPracticeGenerationRepairPrompt({
       originalUserPrompt: "user",
