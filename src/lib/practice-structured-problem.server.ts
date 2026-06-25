@@ -40,6 +40,10 @@ function stringArrayFromUnknown(value: unknown) {
     .filter(Boolean);
 }
 
+function hasItems(value: unknown): value is unknown[] {
+  return Array.isArray(value) && value.length > 0;
+}
+
 function normalizeTagList(value: unknown) {
   if (!Array.isArray(value)) return value;
 
@@ -129,6 +133,100 @@ function normalizeCallableName(input: {
   if (inferred) return inferred;
   if (isValidCallableName(input.fallbackName)) return (input.fallbackName as string).trim();
   return input.callableName;
+}
+
+function splitSignatureParameters(value: string) {
+  const parameters = value.match(/\(([^)]*)\)/)?.[1]?.trim();
+  if (!parameters) return [];
+
+  return parameters
+    .split(",")
+    .map((parameter) => parameter.trim())
+    .filter(Boolean);
+}
+
+function normalizeParameterToken(language: unknown, value: string) {
+  const token = value.replace(/=.*$/, "").trim();
+  if (!token) return undefined;
+
+  if (language === "python") {
+    const [name, type] = token.split(":").map((part) => part.trim());
+    if (isValidCallableName(name)) {
+      return { name, type: type || "unknown" };
+    }
+  }
+
+  if (language === "go") {
+    const [name, type] = token.split(/\s+/);
+    if (isValidCallableName(name)) {
+      return { name, type: type || "unknown" };
+    }
+  }
+
+  const parts = token.split(/\s+/).filter(Boolean);
+  const name = parts.at(-1);
+  const type = parts.length > 1 ? parts.slice(0, -1).join(" ") : "unknown";
+  if (isValidCallableName(name)) {
+    return { name, type };
+  }
+
+  return undefined;
+}
+
+function inferParametersFromSignature(language: unknown, value: unknown) {
+  if (typeof value !== "string") return [];
+
+  return splitSignatureParameters(value)
+    .map((parameter) => normalizeParameterToken(language, parameter))
+    .filter((parameter): parameter is { name: string; type: string } => Boolean(parameter));
+}
+
+function normalizeParameterList(value: unknown, language: unknown, signature: unknown) {
+  const inferred = inferParametersFromSignature(language, signature);
+  if (!Array.isArray(value)) return inferred.length ? inferred : value;
+
+  const normalized = value
+    .map((parameter) => {
+      if (typeof parameter === "string") {
+        return normalizeParameterToken(language, parameter);
+      }
+
+      if (!isRecord(parameter)) return undefined;
+      const name = firstPresent(parameter, ["name", "param", "parameter", "identifier"]);
+      const type = firstPresent(parameter, ["type", "dataType", "data_type", "annotation"]);
+      const description = firstPresent(parameter, ["description", "desc", "details"]);
+      if (!isValidCallableName(name)) return undefined;
+      return {
+        name: (name as string).trim(),
+        type: typeof type === "string" && type.trim() ? type.trim() : "unknown",
+        ...(typeof description === "string" && description.trim()
+          ? { description: description.trim() }
+          : {}),
+      };
+    })
+    .filter((parameter): parameter is { name: string; type: string; description?: string } =>
+      Boolean(parameter),
+    );
+
+  return normalized.length ? normalized : inferred.length ? inferred : value;
+}
+
+function inferReturnTypeFromSignature(language: unknown, value: unknown) {
+  if (typeof value !== "string") return undefined;
+
+  if (language === "python") {
+    return value.match(/->\s*([^:]+)\s*:/)?.[1]?.trim();
+  }
+
+  if (language === "go") {
+    return value.match(/\)\s*([^\s{]+)\s*(?:\{|$)/)?.[1]?.trim();
+  }
+
+  if (language === "java" || language === "cpp") {
+    return value.match(/^\s*(.+?)\s+[A-Za-z_][A-Za-z0-9_]*\s*\(/)?.[1]?.trim();
+  }
+
+  return undefined;
 }
 
 function normalizeLanguageSignatureList(
@@ -277,12 +375,39 @@ function normalizeFunctionSignature(value: unknown, selectedLanguage?: PracticeP
   if (!isRecord(value)) return value;
 
   const parameters = firstPresent(value, ["parameters", "params", "arguments", "args"]);
+  const languageSignatures = normalizeLanguageSignatureList(value, selectedLanguage);
+  const selectedSignature =
+    Array.isArray(languageSignatures) && selectedLanguage
+      ? languageSignatures.find(
+          (signature) => isRecord(signature) && signature.language === selectedLanguage,
+        )
+      : undefined;
+  const selectedStarterCode = isRecord(selectedSignature)
+    ? firstPresent(selectedSignature, ["starterCode", "starter_code", "code"])
+    : undefined;
+  const selectedSignatureText = isRecord(selectedSignature)
+    ? (firstPresent(selectedSignature, ["signature", "declaration"]) ?? selectedStarterCode)
+    : undefined;
+  const selectedCallableName = isRecord(selectedSignature)
+    ? firstPresent(selectedSignature, ["callableName", "callable_name", "functionName"])
+    : undefined;
+  const returnType = firstPresent(value, ["returnType", "return_type", "returns"]);
+  const inferredReturnType = inferReturnTypeFromSignature(selectedLanguage, selectedSignatureText);
+
   return {
     ...value,
-    functionName: firstPresent(value, ["functionName", "function_name", "name", "callableName"]),
-    returnType: firstPresent(value, ["returnType", "return_type", "returns"]),
-    parameters,
-    languageSignatures: normalizeLanguageSignatureList(value, selectedLanguage),
+    functionName: normalizeCallableName({
+      callableName: firstPresent(value, ["functionName", "function_name", "name", "callableName"]),
+      language: selectedLanguage,
+      starterCode: selectedStarterCode,
+      fallbackName: selectedCallableName,
+    }),
+    returnType:
+      typeof returnType === "string" && returnType.trim()
+        ? returnType
+        : inferredReturnType || "unknown",
+    parameters: normalizeParameterList(parameters, selectedLanguage, selectedSignatureText),
+    languageSignatures,
   };
 }
 
@@ -300,6 +425,10 @@ function normalizeTestCaseList(value: unknown, visibility: "visible" | "hidden")
       ...test,
       name: typeof name === "string" ? name : `${visibility} case ${index + 1}`,
       arguments: Array.isArray(args) ? args : args === undefined ? test.arguments : [args],
+      comparator:
+        test.comparator === "numberTolerance" || test.comparator === "deepEqual"
+          ? test.comparator
+          : "deepEqual",
       expected: firstPresent(test, ["expected", "expectedOutput", "output"]),
       theme: typeof theme === "string" ? theme : `${visibility} case ${index + 1}`,
       visibility,
@@ -328,6 +457,43 @@ function normalizeHintList(value: unknown) {
       body: typeof body === "string" ? body : "",
     };
   });
+}
+
+function fallbackExamplesFromVisibleTests(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter(isRecord)
+    .slice(0, 4)
+    .map((test) => ({
+      input: `arguments: ${JSON.stringify(test.arguments ?? [])}`,
+      output: JSON.stringify(test.expected),
+      explanation: "The expected output matches the visible test case.",
+    }));
+}
+
+function fallbackConstraints() {
+  return [
+    "Use only the provided function arguments.",
+    "Return the expected value without reading external input.",
+  ];
+}
+
+function fallbackHints() {
+  return [
+    {
+      order: 1,
+      title: "Start with the function contract",
+      body: "Use the parameters from the selected starter code and return the value described by the prompt.",
+    },
+  ];
+}
+
+function fallbackSuccessCriteria() {
+  return [
+    "Uses the selected function signature.",
+    "Returns the expected value for visible and hidden tests.",
+  ];
 }
 
 function canonicalizeGeneratedPracticeProblemInput(
@@ -375,6 +541,26 @@ function canonicalizeGeneratedPracticeProblemInput(
 
   if (!Array.isArray(canonical.topicTags) || canonical.topicTags.length === 0) {
     canonical.topicTags = [fallbackTagForGenerationPlan(generationPlan)];
+  }
+
+  if (!hasItems(canonical.prerequisiteTags)) {
+    canonical.prerequisiteTags = [];
+  }
+
+  if (!hasItems(canonical.examples)) {
+    canonical.examples = fallbackExamplesFromVisibleTests(canonical.visibleTests);
+  }
+
+  if (!hasItems(canonical.constraints)) {
+    canonical.constraints = fallbackConstraints();
+  }
+
+  if (!hasItems(canonical.hintLadder)) {
+    canonical.hintLadder = fallbackHints();
+  }
+
+  if (!hasItems(canonical.successCriteria)) {
+    canonical.successCriteria = fallbackSuccessCriteria();
   }
 
   if (Array.isArray(canonical.hiddenTests)) {

@@ -251,6 +251,59 @@ describe("structured practice problem generation helpers", () => {
     ]);
   });
 
+  it("recovers presentation metadata without relaxing selected starter code", () => {
+    const generationPlan = buildPracticeGenerationPlan({});
+    const pythonSignature = validProblem().functionSignature.languageSignatures.find(
+      (signature) => signature.language === "python",
+    )!;
+    const aiProblem = {
+      ...validProblem(),
+      examples: [],
+      constraints: [],
+      hintLadder: [],
+      successCriteria: [],
+      functionSignature: {
+        functionName: "sum-two()",
+        params: [
+          { param: "a", dataType: "int" },
+          { param: "b", data_type: "int" },
+        ],
+        returns: "",
+        languageSignatures: [pythonSignature],
+      },
+      visibleTests: [
+        {
+          name: "positive values",
+          args: [2, 3],
+          expectedOutput: 5,
+          comparator: "exact",
+        },
+      ],
+    };
+
+    const parsed = buildStructuredPracticeProblemSchema(generationPlan, {
+      language: "python",
+    }).parse(aiProblem);
+
+    expect(parsed.functionSignature.functionName).toBe("sum_two");
+    expect(parsed.functionSignature.parameters).toEqual([
+      { name: "a", type: "int" },
+      { name: "b", type: "int" },
+    ]);
+    expect(parsed.functionSignature.returnType).toBe("int");
+    expect(parsed.visibleTests[0]?.comparator).toBe("deepEqual");
+    expect(parsed.examples).toEqual([
+      {
+        input: "arguments: [2,3]",
+        output: "5",
+        explanation: "The expected output matches the visible test case.",
+      },
+    ]);
+    expect(parsed.constraints).toHaveLength(2);
+    expect(parsed.hintLadder).toHaveLength(1);
+    expect(parsed.successCriteria).toHaveLength(2);
+  });
+
   it("normalizes common AI alias fields during generation", () => {
     const generationPlan = buildPracticeGenerationPlan({});
     const base = validProblem();
